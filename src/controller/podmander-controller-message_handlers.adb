@@ -1,0 +1,75 @@
+--  Copyright (C) 2026 Jochen Lillich
+--  All rights reserved.
+
+with Ada.Calendar;
+with Ada.Text_IO;
+with CZMQ.Messages;
+with Podmander.Messages.Register_Requests;
+with Podmander.Messages.Register_Responses;
+with Podmander.Messages.Heartbeats;
+
+package body Podmander.Controller.Message_Handlers is
+
+   overriding procedure Handle_Register_Request
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Register_Request_Type'Class)
+   is
+      use Podmander.Messages.Register_Requests;
+      use Podmander.Messages.Register_Responses;
+      Req     : constant Register_Request := Register_Request (M);
+      Name    : constant String := To_String (Req.Agent_Name);
+      Node_Id : constant String := To_String (H.Identity);
+      Info    : constant Podmander.Types.Agent_Info :=
+        (Name      => Req.Agent_Name,
+         Node_Id   => To_Unbounded_String (Node_Id),
+         State     => Podmander.Types.Registered,
+         Last_Seen => Ada.Calendar.Clock);
+   begin
+      H.Ctrl.Agents.Include (Node_Id, Info);
+      Ada.Text_IO.Put_Line
+        ("Registered agent """ & Name & """ as " & Node_Id);
+
+      --  Guard Send so handler is callable from tests without a live socket.
+      if H.Ctrl.Socket /= null then
+         declare
+            Reply     : constant Register_Response :=
+              (Node_Id => To_Unbounded_String (Node_Id));
+            Reply_Msg : CZMQ.Messages.Message :=
+              CZMQ.Messages.New_Message;
+         begin
+            Reply_Msg.Add_String (Node_Id);
+            Reply.Encode (Reply_Msg);
+            Reply_Msg.Send (H.Ctrl.Socket.all);
+         end;
+      end if;
+   end Handle_Register_Request;
+
+   overriding procedure Handle_Heartbeat
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Heartbeat_Message_Type'Class)
+   is
+      use Podmander.Messages.Heartbeats;
+      HB       : constant Heartbeat_Message := Heartbeat_Message (M);
+      Agent_Id : constant String := To_String (HB.Agent_Id);
+   begin
+      if H.Ctrl.Agents.Contains (Agent_Id) then
+         declare
+            Info : Podmander.Types.Agent_Info := H.Ctrl.Agents (Agent_Id);
+         begin
+            Info.Last_Seen := Ada.Calendar.Clock;
+            if Info.State /= Podmander.Types.Registered then
+               Ada.Text_IO.Put_Line
+                 ("Agent " & Agent_Id & " reconnected");
+               Info.State := Podmander.Types.Registered;
+            end if;
+            H.Ctrl.Agents.Replace (Agent_Id, Info);
+            Ada.Text_IO.Put_Line ("Heartbeat from " & Agent_Id);
+         end;
+      else
+         Ada.Text_IO.Put_Line
+           ("WARNING: Heartbeat from unregistered agent "
+            & To_String (H.Identity) & ", ignoring");
+      end if;
+   end Handle_Heartbeat;
+
+end Podmander.Controller.Message_Handlers;

@@ -1,0 +1,24 @@
+--  Copyright (C) 2026 Jochen Lillich
+--  All rights reserved.
+
+with "config/podmander_config.gpr";
+with "podmander.gpr";
+
+project Podmander_Tests is
+
+   for Source_Dirs use ("tests/");
+   for Object_Dir use "obj/" & Podmander_Config.Build_Profile & "/tests";
+   for Create_Missing_Dirs use "True";
+   for Exec_Dir use "bin/";
+   for Main use ("test_runner.adb");
+
+   package Compiler is
+      for Default_Switches ("Ada") use
+        Podmander_Config.Ada_Compiler_Switches;
+   end Compiler;
+
+   package Binder is
+      for Switches ("Ada") use ("-Es");
+   end Binder;
+
+end Podmander_Tests;

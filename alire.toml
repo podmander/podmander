@@ -1,0 +1,16 @@
+name = "podmander"
+description = "Container orchestration for small multi-node deployments"
+version = "0.1.0-dev"
+authors = ["Jochen Lillich"]
+maintainers = ["Jochen Lillich <contact@geewiz.dev>"]
+maintainers-logins = ["geewiz"]
+licenses = "custom-license"
+
+[[depends-on]]
+czmq_ada = "~0.4.0"
+aunit = "~26.0.0"
+
+[build-switches]
+"*".style_checks = "yes"
+"*".ada_version = "ada2022"
+

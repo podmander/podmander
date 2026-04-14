@@ -6,6 +6,19 @@ Compose but less than Kubernetes. It generates configuration for specialized
 tools (systemd, Podman, Caddy, Restic) rather than reimplementing their
 functionality.
 
+## Dev Environment
+
+All build, test, and analysis commands run inside the `ada_dev` distrobox container.
+Use Alire (`alr`) for builds and dependency management.
+
+```bash
+# Enter an interactive shell
+distrobox enter ada_dev
+
+# Run a single command
+distrobox enter ada_dev -- alr build
+```
+
 ## Code Style Guidelines
 
 ### File Organization
@@ -44,6 +57,8 @@ functionality.
 - Prefer enumerations over magic strings or integers for state values.
 - Use `not null access` when a pointer must never be null.
 - Avoid `Unchecked_Deallocation` — prefer controlled types or container ownership.
+- Prefer tagged types (OOP style) for polymorphism and extensibility.
+- Use interface types for driver abstractions (e.g., tool backends, storage). Promote to abstract tagged types only when implementations share state or behavior.
 
 ### Error Handling
 
@@ -72,10 +87,10 @@ functionality.
 
 - Use `--` comments, not block comments.
 - Keep comments factual. Describe "why," not "what" when the code is self-explanatory.
-- At the beginning of each source code file, add a header stating copyright, and license (as an SPDX ID). Template:
-    ```text
-    Copyright (C) <year> <name of author>
-    This program is free software: you can redistribute it and/or modify it under the terms of the <license>.
+- At the beginning of each source code file, add a copyright header. Template:
+    ```ada
+    --  Copyright (C) <year> Jochen Lillich
+    --  All rights reserved.
     ```
 
 ## Testing Strategy
