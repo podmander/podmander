@@ -6,3 +6,4 @@ alire/build_hash_inputs
 alire/flags/
 alire/settings.toml
 alire/*.prev
+alire/alr_test_local.*

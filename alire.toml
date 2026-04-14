@@ -14,3 +14,7 @@ aunit = "~26.0.0"
 "*".style_checks = "yes"
 "*".ada_version = "ada2022"
 
+[[actions]]
+type = "test"
+command = ["scripts/run_tests.sh"]
+
