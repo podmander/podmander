@@ -29,5 +29,5 @@ managed automatically via Let's Encrypt.
 ## Open Items
 
 - Internal ingress mechanism
-- Multi-node ingress (load balancing across multiple ingress nodes)
+- Multi-node ingress (load balancing across multiple ingress nodes) — see [TLS certificate distribution](../open-questions.md#tls-certificate-distribution-across-multiple-ingress-nodes)
 - TLS configuration for non-HTTP services
