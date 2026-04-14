@@ -4,7 +4,7 @@ version = "0.1.0-dev"
 authors = ["Jochen Lillich"]
 maintainers = ["Jochen Lillich <contact@geewiz.dev>"]
 maintainers-logins = ["geewiz"]
-licenses = "custom-license"
+licenses = "Apache-2.0"
 
 [[depends-on]]
 czmq_ada = "~0.4.0"

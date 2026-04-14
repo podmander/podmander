@@ -1,5 +1,5 @@
 --  Copyright (C) 2026 Jochen Lillich
---  All rights reserved.
+--  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
 with Ada.Strings.Unbounded;

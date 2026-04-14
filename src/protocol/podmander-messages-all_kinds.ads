@@ -1,5 +1,5 @@
 --  Copyright (C) 2026 Jochen Lillich
---  All rights reserved.
+--  SPDX-License-Identifier: Apache-2.0
 
 --  Aggregator that forces elaboration of every concrete message child
 --  package. Consumers that need a fully-populated decoder registry

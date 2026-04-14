@@ -87,10 +87,10 @@ distrobox enter ada_dev -- alr build
 
 - Use `--` comments, not block comments.
 - Keep comments factual. Describe "why," not "what" when the code is self-explanatory.
-- At the beginning of each source code file, add a copyright header. Template:
+- At the beginning of each source code file, add the SPDX-style Apache 2.0 header. The full license text lives in the top-level `LICENSE` file. Template:
     ```ada
     --  Copyright (C) <year> Jochen Lillich
-    --  All rights reserved.
+    --  SPDX-License-Identifier: Apache-2.0
     ```
 
 ## Testing Strategy

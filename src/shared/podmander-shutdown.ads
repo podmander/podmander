@@ -1,5 +1,5 @@
 --  Copyright (C) 2026 Jochen Lillich
---  All rights reserved.
+--  SPDX-License-Identifier: Apache-2.0
 
 --  Shutdown detection via CZMQ's built-in signal handling.
 --  CZMQ installs its own SIGINT/SIGTERM handler that sets

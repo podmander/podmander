@@ -1,5 +1,5 @@
 --  Copyright (C) 2026 Jochen Lillich
---  All rights reserved.
+--  SPDX-License-Identifier: Apache-2.0
 
 --  Minimal CLI argument parsing for --key=value style arguments.
 

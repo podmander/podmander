@@ -1,5 +1,5 @@
 --  Copyright (C) 2026 Jochen Lillich
---  All rights reserved.
+--  SPDX-License-Identifier: Apache-2.0
 
 with AUnit.Run;
 with AUnit.Reporter.Text;
