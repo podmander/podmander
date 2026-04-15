@@ -76,7 +76,8 @@ package body Podmander.Controller_Tests is
       pragma Unreferenced (T);
       use Podmander.Messages.Register_Requests;
       Req : constant Register_Request :=
-        (Agent_Name => To_Unbounded_String ("web-1"));
+        (Agent_Name        => To_Unbounded_String ("web-1"),
+         Enrollment_Secret => To_Unbounded_String ("secret"));
       Spy : Spy_Handler;
    begin
       Req.Dispatch_To (Spy);
@@ -112,7 +113,8 @@ package body Podmander.Controller_Tests is
       pragma Unreferenced (T);
       use Podmander.Messages.Register_Requests;
       Req : constant Register_Request :=
-        (Agent_Name => To_Unbounded_String ("poly"));
+        (Agent_Name        => To_Unbounded_String ("poly"),
+         Enrollment_Secret => To_Unbounded_String ("secret"));
       Msg : constant Podmander.Messages.Protocol_Message'Class := Req;
       Spy : Spy_Handler;
    begin
@@ -168,7 +170,8 @@ package body Podmander.Controller_Tests is
       H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
         Make_Handler (Ctrl'Access, "node-abc");
       Req  : constant Podmander.Messages.Register_Requests.Register_Request :=
-        (Agent_Name => To_Unbounded_String ("web-1"));
+        (Agent_Name        => To_Unbounded_String ("web-1"),
+         Enrollment_Secret => To_Unbounded_String ("secret"));
    begin
       H.Handle_Register_Request (Req);
       Assert

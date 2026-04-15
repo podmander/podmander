@@ -32,11 +32,12 @@ package body Podmander.Messages_Tests is
       pragma Unreferenced (T);
       use Podmander.Messages.Register_Requests;
       Original : constant Register_Request :=
-        (Agent_Name => To_Unbounded_String ("web-1"));
+        (Agent_Name        => To_Unbounded_String ("web-1"),
+         Enrollment_Secret => To_Unbounded_String ("secret123"));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 2, "Expected 2 frames, got" & Msg.Size'Image);
+      Assert (Msg.Size = 3, "Expected 3 frames, got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -48,6 +49,10 @@ package body Podmander.Messages_Tests is
          Assert
            (To_String (Register_Request (Decoded).Agent_Name) = "web-1",
             "Agent name mismatch");
+         Assert
+           (To_String (Register_Request (Decoded).Enrollment_Secret) =
+              "secret123",
+            "Enrollment secret mismatch");
       end;
    end Test_Register_Request_Round_Trip;
 
@@ -123,7 +128,8 @@ package body Podmander.Messages_Tests is
       pragma Unreferenced (Msg);
    begin
       return Podmander.Messages.Register_Requests.Register_Request'
-        (Agent_Name => To_Unbounded_String (""));
+        (Agent_Name        => To_Unbounded_String (""),
+         Enrollment_Secret => To_Unbounded_String (""));
    end Stub_Decoder;
 
    --  Test: Registering an already-registered kind raises Already_Registered

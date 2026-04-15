@@ -10,17 +10,24 @@ package body Podmander.CLI is
      (Key     : String;
       Default : String := "") return String
    is
-      Prefix : constant String := "--" & Key & "=";
+      Equal_Prefix : constant String := "--" & Key & "=";
+      Name_Prefix  : constant String := "--" & Key;
    begin
       for I in 1 .. Ada.Command_Line.Argument_Count loop
          declare
             Arg : constant String := Ada.Command_Line.Argument (I);
          begin
-            if Arg'Length > Prefix'Length
-              and then Arg (Arg'First .. Arg'First + Prefix'Length - 1)
-                       = Prefix
+            if Arg'Length > Equal_Prefix'Length
+              and then Arg (Arg'First .. Arg'First + Equal_Prefix'Length - 1)
+                       = Equal_Prefix
             then
-               return Arg (Arg'First + Prefix'Length .. Arg'Last);
+               return Arg (Arg'First + Equal_Prefix'Length .. Arg'Last);
+            end if;
+
+            if Arg = Name_Prefix
+              and then I < Ada.Command_Line.Argument_Count
+            then
+               return Ada.Command_Line.Argument (I + 1);
             end if;
          end;
       end loop;
