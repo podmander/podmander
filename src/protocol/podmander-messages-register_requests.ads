@@ -10,7 +10,8 @@ package Podmander.Messages.Register_Requests is
 
    --  Agent -> Controller: request registration
    type Register_Request is new Register_Request_Type with record
-      Agent_Name : Unbounded_String;
+      Agent_Name      : Unbounded_String;
+      Enrollment_Secret : Unbounded_String;
    end record;
 
    overriding procedure Encode

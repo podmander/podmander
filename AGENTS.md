@@ -101,3 +101,11 @@ distrobox enter ada_dev -- alr build
 - Test procedure names describe the scenario: `Test_Deploy_Creates_Version_Record`.
 - Test against interfaces, not internals. Mock external tools (BTRFS, ZFS, Podman, systemd) behind driver abstractions.
 - Integration tests that exercise actual tool execution go in `tests/integration/` and are gated behind a flag so they don't run in CI without the required host tooling.
+
+## Implementation Process
+
+1. Create an issue via the Forgejo MCP describing the goal of the session.
+2. Based on the issue number, create a new branch using the naming schema: `<issue-number>-<short-stub>`.
+3. Do all coding work in this branch.
+4. If the session gets paused, save the current state in a comment on the issue.
+5. When finished, clean up the branch for merging (squash related changes etc) and submit a pull request.

@@ -19,17 +19,27 @@ package body Podmander.Controller.Message_Handlers is
       Req     : constant Register_Request := Register_Request (M);
       Name    : constant String := To_String (Req.Agent_Name);
       Node_Id : constant String := To_String (H.Identity);
-      Info    : constant Podmander.Types.Agent_Info :=
-        (Name      => Req.Agent_Name,
-         Node_Id   => To_Unbounded_String (Node_Id),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Ada.Calendar.Clock);
    begin
-      H.Ctrl.Agents.Include (Node_Id, Info);
-      Ada.Text_IO.Put_Line
-        ("Registered agent """ & Name & """ as " & Node_Id);
+      if To_String (H.Ctrl.Config.Enrollment_Secret) /=
+          To_String (Req.Enrollment_Secret)
+      then
+         Ada.Text_IO.Put_Line
+           ("WARNING: Invalid enrollment secret from agent """ & Name & """");
+         return;
+      end if;
 
-      --  Guard Send so handler is callable from tests without a live socket.
+      declare
+         Info : constant Podmander.Types.Agent_Info :=
+           (Name      => Req.Agent_Name,
+            Node_Id   => To_Unbounded_String (Node_Id),
+            State     => Podmander.Types.Registered,
+            Last_Seen => Ada.Calendar.Clock);
+      begin
+         H.Ctrl.Agents.Include (Node_Id, Info);
+         Ada.Text_IO.Put_Line
+           ("Registered agent """ & Name & """ as " & Node_Id);
+      end;
+
       if H.Ctrl.Socket /= null then
          declare
             Reply     : constant Register_Response :=

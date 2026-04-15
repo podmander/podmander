@@ -9,6 +9,7 @@ package body Podmander.Messages.Register_Requests is
    begin
       Msg.Add_String (Register_Kind);
       Msg.Add_String (To_String (Self.Agent_Name));
+      Msg.Add_String (To_String (Self.Enrollment_Secret));
    end Encode;
 
    overriding procedure Dispatch_To
@@ -21,11 +22,12 @@ package body Podmander.Messages.Register_Requests is
    function Decode_Impl
      (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
    begin
-      if Msg.Size < 1 then
-         raise Decode_Error with "register: missing agent_name frame";
+      if Msg.Size < 2 then
+         raise Decode_Error with "register: missing frames";
       end if;
       return Register_Request'
-        (Agent_Name => To_Unbounded_String (Msg.Pop_String));
+        (Agent_Name        => To_Unbounded_String (Msg.Pop_String),
+         Enrollment_Secret => To_Unbounded_String (Msg.Pop_String));
    end Decode_Impl;
 
 begin

@@ -2,6 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Strings.Unbounded;
+with CZMQ.Certificates;
 with CZMQ.Sockets;
 with Podmander.Types;
 
@@ -10,21 +11,28 @@ package Podmander.Agent is
    type Agent_Config is record
       Controller_Address   : Ada.Strings.Unbounded.Unbounded_String;
       Agent_Name           : Ada.Strings.Unbounded.Unbounded_String;
+      Join_Token           : Ada.Strings.Unbounded.Unbounded_String;
       Heartbeat_Interval   : Duration := 30.0;
       Registration_Timeout : Duration := 5.0;
       Max_Backoff          : Duration := 60.0;
    end record;
 
+   Parse_Error : exception;
+
+   type Certificate_Access is access CZMQ.Certificates.Certificate;
+
    type Socket_Access is access CZMQ.Sockets.Socket;
 
    type Agent_Instance is tagged limited record
-      Config  : Agent_Config;
-      Socket  : Socket_Access := null;
-      State   : Podmander.Types.Connection_State :=
+      Config           : Agent_Config;
+      Certificate      : Certificate_Access := null;
+      Socket           : Socket_Access := null;
+      State            : Podmander.Types.Connection_State :=
         Podmander.Types.Disconnected;
-      Node_Id : Ada.Strings.Unbounded.Unbounded_String;
-      Running : Boolean := False;
-      Backoff : Duration := 1.0;
+      Node_Id          : Ada.Strings.Unbounded.Unbounded_String;
+      Running          : Boolean := False;
+      Backoff          : Duration := 1.0;
+      Enrollment_Secret : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    procedure Initialize
@@ -36,5 +44,8 @@ package Podmander.Agent is
    procedure Run (Self : in out Agent_Instance);
 
    procedure Stop (Self : in out Agent_Instance);
+
+   function Get_Server_Public_Key
+     (Self : Agent_Instance) return String;
 
 end Podmander.Agent;
