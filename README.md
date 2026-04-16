@@ -6,7 +6,7 @@ Podmander generates configuration for proven tools — systemd, Podman, Caddy, R
 
 ## Status
 
-**Early implementation.** Controller and agent daemons communicate over ZeroMQ with CURVE encryption. Agents register via join tokens and exchange heartbeats. Structured logging with level filtering and journald integration.
+**Early implementation.** See the [issue queue](https://code.monospacementor.com/podmander/podmander/issues) and [closed PRs](https://code.monospacementor.com/podmander/podmander/pulls?q=is%3Aclosed) for progress.
 
 ## Key Ideas
 
