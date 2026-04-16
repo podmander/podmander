@@ -2,15 +2,27 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
 with Podmander.CLI;
 with Podmander.Controller;
+with Podmander.Logging;
 
 procedure Pod_Controller is
    use Ada.Strings.Unbounded;
    Config : Podmander.Controller.Controller_Config;
    Token  : Unbounded_String;
 begin
+   declare
+      Level_Str : constant String := Podmander.CLI.Get ("log-level", "info");
+   begin
+      Podmander.Logging.Set_Level
+        (Podmander.Logging.Log_Level'Value (Level_Str));
+   exception
+      when Constraint_Error =>
+         Podmander.Logging.Set_Level (Podmander.Logging.Info);
+         Podmander.Logging.Warning
+           ("controller", "Invalid log level '" & Level_Str & "', using Info");
+   end;
+
    Podmander.Controller.Set_Bind_Address
      (Config,
       Podmander.CLI.Get ("bind", "tcp://*:5555"));
@@ -20,10 +32,10 @@ begin
    begin
       Ctrl.Initialize (Config);
       Ctrl.Generate_Join_Token (Token);
-      Ada.Text_IO.Put_Line
-        ("Join token: " & To_String (Token));
+      Podmander.Logging.Info
+        ("controller", "Join token: " & To_String (Token));
       Ctrl.Run;
    end;
 
-   Ada.Text_IO.Put_Line ("Controller stopped.");
+   Podmander.Logging.Info ("controller", "Controller stopped.");
 end Pod_Controller;

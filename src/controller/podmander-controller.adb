@@ -3,10 +3,9 @@
 
 with Ada.Calendar;
 with Ada.Numerics.Discrete_Random;
-with Ada.Strings.Unbounded;
-with Ada.Text_IO;
 with CZMQ.Messages;
 with Podmander.Controller.Message_Handlers;
+with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
@@ -76,8 +75,8 @@ package body Podmander.Controller is
         new CZMQ.Pollers.Poller'
           (CZMQ.Pollers.New_Poller (Self.Socket.all));
       Self.Running := True;
-      Ada.Text_IO.Put_Line
-        ("Controller listening on " & Get_Bind_Address (Config));
+      Podmander.Logging.Info
+        ("controller", "Listening on " & Get_Bind_Address (Config));
    end Initialize;
 
    procedure Handle_Message (Self : in out Controller_Instance) is
@@ -103,8 +102,8 @@ package body Podmander.Controller is
          Decoded.Dispatch_To (Handler);
       exception
          when Podmander.Messages.Decode_Error =>
-            Ada.Text_IO.Put_Line
-              ("WARNING: Malformed message from "
+            Podmander.Logging.Warning
+              ("controller", "Malformed message from "
                & To_String (Handler.Identity));
       end;
    end Handle_Message;
@@ -130,15 +129,15 @@ package body Podmander.Controller is
             then
                Info.State := Podmander.Types.Lost;
                Self.Agents.Replace (Key, Info);
-               Ada.Text_IO.Put_Line
-                 ("Agent " & Key & " DISCONNECTED");
+               Podmander.Logging.Warning
+                 ("controller", "Agent " & Key & " disconnected");
             elsif Elapsed >= Unresponsive_Threshold
               and then Info.State = Podmander.Types.Registered
             then
                Info.State := Podmander.Types.Unresponsive;
                Self.Agents.Replace (Key, Info);
-               Ada.Text_IO.Put_Line
-                 ("Agent " & Key & " UNRESPONSIVE");
+               Podmander.Logging.Warning
+                 ("controller", "Agent " & Key & " unresponsive");
             end if;
          end;
       end loop;

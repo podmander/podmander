@@ -2,7 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Command_Line;
-with Ada.Text_IO;
+with Podmander.Logging;
 
 package body Podmander.CLI is
 
@@ -46,15 +46,16 @@ package body Podmander.CLI is
       return Duration'Value (Value);
    exception
       when Constraint_Error =>
-         Ada.Text_IO.Put_Line
-           ("WARNING: Invalid value for --" & Key
+         Podmander.Logging.Warning
+           ("cli", "Invalid value for --" & Key
             & ", using default" & Duration'Image (Default));
          return Default;
    end Get_Duration;
 
    procedure Print_Usage (Usage : String) is
    begin
-      Ada.Text_IO.Put_Line ("Usage: " & Usage);
+      Ada.Command_Line.Set_Exit_Status (1);
+      Podmander.Logging.Critical ("cli", "Usage: " & Usage);
    end Print_Usage;
 
 end Podmander.CLI;

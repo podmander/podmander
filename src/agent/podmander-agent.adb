@@ -2,8 +2,8 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
-with Ada.Text_IO;
 with CZMQ.Messages;
+with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
@@ -80,7 +80,7 @@ package body Podmander.Agent is
    begin
       Req.Encode (Msg);
       Msg.Send (Self.Socket.all);
-      Ada.Text_IO.Put_Line ("Sent registration request");
+      Podmander.Logging.Debug ("agent", "Sent registration request");
    end Send_Register;
 
    procedure Send_Heartbeat (Self : in out Agent_Instance) is
@@ -92,12 +92,12 @@ package body Podmander.Agent is
    begin
       Hb.Encode (Msg);
       Msg.Send (Self.Socket.all);
-      Ada.Text_IO.Put_Line ("Sent heartbeat");
+      Podmander.Logging.Debug ("agent", "Sent heartbeat");
    end Send_Heartbeat;
 
    procedure Handle_Disconnected (Self : in out Agent_Instance) is
    begin
-      Ada.Text_IO.Put_Line ("Connecting to controller...");
+      Podmander.Logging.Info ("agent", "Connecting to controller...");
       Create_Socket (Self);
       Self.Socket.Set_Receive_Timeout
         (Integer (Self.Config.Registration_Timeout * 1000.0));
@@ -112,8 +112,8 @@ package body Podmander.Agent is
       CZMQ.Messages.Receive (Self.Socket.all, Msg, Status);
 
       if Status = CZMQ.Messages.Timeout then
-         Ada.Text_IO.Put_Line
-           ("Registration timeout, retrying in"
+         Podmander.Logging.Warning
+           ("agent", "Registration timeout, retrying in"
             & Duration'Image (Self.Backoff) & "s");
          Self.Socket := null;
          delay Self.Backoff;
@@ -132,17 +132,17 @@ package body Podmander.Agent is
             Self.Node_Id := Register_Response (Decoded).Node_Id;
             Self.State := Podmander.Types.Connected;
             Self.Backoff := 1.0;
-            Ada.Text_IO.Put_Line
-              ("Registered as " & To_String (Self.Node_Id));
+            Podmander.Logging.Info
+              ("agent", "Registered as " & To_String (Self.Node_Id));
          else
-            Ada.Text_IO.Put_Line
-              ("WARNING: Unexpected response during enrollment");
+            Podmander.Logging.Warning
+              ("agent", "Unexpected response during enrollment");
          end if;
       end;
    exception
       when Podmander.Messages.Decode_Error =>
-         Ada.Text_IO.Put_Line
-           ("WARNING: Malformed response during enrollment");
+         Podmander.Logging.Warning
+           ("agent", "Malformed response during enrollment");
          Self.Socket := null;
          Self.State := Podmander.Types.Disconnected;
    end Handle_Enrolling;
@@ -170,7 +170,8 @@ package body Podmander.Agent is
       end loop;
    exception
       when CZMQ.CZMQ_Error =>
-         Ada.Text_IO.Put_Line ("Connection lost, reconnecting...");
+         Podmander.Logging.Warning
+           ("agent", "Connection lost, reconnecting...");
          Self.Socket := null;
          Self.State := Podmander.Types.Disconnected;
    end Handle_Connected;
@@ -181,8 +182,8 @@ package body Podmander.Agent is
    begin
       Self.Config := Config;
       Self.Running := True;
-      Ada.Text_IO.Put_Line
-        ("Agent """ & To_String (Config.Agent_Name)
+      Podmander.Logging.Info
+        ("agent", "Agent """ & To_String (Config.Agent_Name)
          & """ starting, controller at "
          & To_String (Config.Controller_Address));
    end Initialize;
