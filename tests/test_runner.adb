@@ -5,6 +5,7 @@ with AUnit.Run;
 with AUnit.Reporter.Text;
 with AUnit.Test_Suites;
 with Podmander.Controller_Tests;
+with Podmander.Logging_Tests;
 with Podmander.Messages_Tests;
 
 procedure Test_Runner is
@@ -15,6 +16,7 @@ procedure Test_Runner is
    begin
       AUnit.Test_Suites.Add_Test (Result, Podmander.Messages_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Controller_Tests.Suite);
+      AUnit.Test_Suites.Add_Test (Result, Podmander.Logging_Tests.Suite);
       return Result;
    end All_Suites;
 

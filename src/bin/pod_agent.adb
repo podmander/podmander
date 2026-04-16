@@ -2,34 +2,48 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Strings.Unbounded;
-with Ada.Text_IO;
 with Podmander.Agent;
 with Podmander.CLI;
+with Podmander.Logging;
 
 procedure Pod_Agent is
    use Ada.Strings.Unbounded;
-
-   Config : constant Podmander.Agent.Agent_Config :=
-      (Controller_Address =>
-         To_Unbounded_String
-           (Podmander.CLI.Get ("connect", "tcp://localhost:5555")),
-       Agent_Name =>
-         To_Unbounded_String
-           (Podmander.CLI.Get ("name", "agent-1")),
-       Join_Token =>
-         To_Unbounded_String
-           (Podmander.CLI.Get ("token", "")),
-       Heartbeat_Interval =>
-         Podmander.CLI.Get_Duration ("interval", 30.0),
-       Registration_Timeout => 5.0,
-       Max_Backoff          => 60.0);
 begin
    declare
-      Agt : Podmander.Agent.Agent_Instance;
+      Level_Str : constant String := Podmander.CLI.Get ("log-level", "info");
    begin
-      Agt.Initialize (Config);
-      Agt.Run;
+      Podmander.Logging.Set_Level
+        (Podmander.Logging.Log_Level'Value (Level_Str));
+   exception
+      when Constraint_Error =>
+         Podmander.Logging.Set_Level (Podmander.Logging.Info);
+         Podmander.Logging.Warning
+           ("agent", "Invalid log level '" & Level_Str & "', using Info");
    end;
 
-   Ada.Text_IO.Put_Line ("Agent stopped.");
+   declare
+      Config : constant Podmander.Agent.Agent_Config :=
+         (Controller_Address =>
+            To_Unbounded_String
+              (Podmander.CLI.Get ("connect", "tcp://localhost:5555")),
+          Agent_Name =>
+            To_Unbounded_String
+              (Podmander.CLI.Get ("name", "agent-1")),
+          Join_Token =>
+            To_Unbounded_String
+              (Podmander.CLI.Get ("token", "")),
+          Heartbeat_Interval =>
+            Podmander.CLI.Get_Duration ("interval", 30.0),
+          Registration_Timeout => 5.0,
+          Max_Backoff          => 60.0);
+   begin
+      declare
+         Agt : Podmander.Agent.Agent_Instance;
+      begin
+         Agt.Initialize (Config);
+         Agt.Run;
+      end;
+   end;
+
+   Podmander.Logging.Info ("agent", "Agent stopped.");
 end Pod_Agent;

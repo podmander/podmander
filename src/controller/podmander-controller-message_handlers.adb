@@ -2,8 +2,8 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
-with Ada.Text_IO;
 with CZMQ.Messages;
+with Podmander.Logging;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
 with Podmander.Messages.Heartbeats;
@@ -23,8 +23,10 @@ package body Podmander.Controller.Message_Handlers is
       if To_String (H.Ctrl.Config.Enrollment_Secret) /=
           To_String (Req.Enrollment_Secret)
       then
-         Ada.Text_IO.Put_Line
-           ("WARNING: Invalid enrollment secret from agent """ & Name & """");
+         Podmander.Logging.Warning
+           ("controller",
+            "Invalid enrollment secret from agent """
+            & Name & """");
          return;
       end if;
 
@@ -36,8 +38,9 @@ package body Podmander.Controller.Message_Handlers is
             Last_Seen => Ada.Calendar.Clock);
       begin
          H.Ctrl.Agents.Include (Node_Id, Info);
-         Ada.Text_IO.Put_Line
-           ("Registered agent """ & Name & """ as " & Node_Id);
+         Podmander.Logging.Info
+           ("controller",
+            "Registered agent """ & Name & """ as " & Node_Id);
       end;
 
       if H.Ctrl.Socket /= null then
@@ -68,16 +71,19 @@ package body Podmander.Controller.Message_Handlers is
          begin
             Info.Last_Seen := Ada.Calendar.Clock;
             if Info.State /= Podmander.Types.Registered then
-               Ada.Text_IO.Put_Line
-                 ("Agent " & Agent_Id & " reconnected");
+               Podmander.Logging.Info
+                 ("controller",
+                  "Agent " & Agent_Id & " reconnected");
                Info.State := Podmander.Types.Registered;
             end if;
             H.Ctrl.Agents.Replace (Agent_Id, Info);
-            Ada.Text_IO.Put_Line ("Heartbeat from " & Agent_Id);
+            Podmander.Logging.Debug
+              ("controller", "Heartbeat from " & Agent_Id);
          end;
       else
-         Ada.Text_IO.Put_Line
-           ("WARNING: Heartbeat from unregistered agent "
+         Podmander.Logging.Warning
+           ("controller",
+            "Heartbeat from unregistered agent "
             & To_String (H.Identity) & ", ignoring");
       end if;
    end Handle_Heartbeat;
