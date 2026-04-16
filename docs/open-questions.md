@@ -40,3 +40,33 @@ errors for clients.
 - [ADR-0022 — Agent-mediated secret delivery](adr/0022-agent-mediated-secret-delivery.md)
 - [Ingress spec — Open Items](spec/ingress.md#open-items)
 - Caddy `storage` module docs: https://caddyserver.com/docs/caddyfile/options#storage
+
+---
+
+## Ada Logging Library Landscape
+
+**Context:** Podmander currently ships a minimal `Podmander.Logging` package that supports
+log levels, TTY-based format detection (`isatty`), and syslog priority prefixes for journald.
+This covers immediate needs but has known gaps (see below).
+
+**Question:** Should Podmander adopt an existing Ada logging library instead of growing its own?
+
+**Why it matters:** Custom logging tends to accumulate features over time (structured output,
+JSON format, `JOURNAL_STREAM` detection, configurable handlers, log rotation). Before we go
+down that path, we should evaluate what's already available in the Ada ecosystem.
+
+**Known gaps in current implementation:**
+
+| Gap | Impact |
+|-----|--------|
+| `isatty`-only detection | Piped output (not journald) gets syslog `<N>` prefixes instead of human-readable format |
+| No `JOURNAL_STREAM` support | Cannot distinguish "piped to journald" from "piped elsewhere" |
+| No explicit format override | No `--log-format=text\|syslog` flag to bypass detection |
+| No structured/JSON output | Future monitoring pipelines may need machine-readable logs |
+
+**Action:** Research existing Ada logging libraries (e.g., on AdaForge, GitHub, or Alire crates)
+for feature coverage, license compatibility, and maintenance status before extending
+`Podmander.Logging` further.
+
+**References:**
+- Issue #5 — Logging facility implementation
