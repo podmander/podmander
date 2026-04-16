@@ -146,7 +146,7 @@ package body Podmander.Controller_Tests is
      return Podmander.Controller.Controller_Instance is
    begin
       return C : Podmander.Controller.Controller_Instance do
-         null;  --  defaults: Socket => null, Agents empty, Running => False
+         Podmander.Controller.Set_Enrollment_Secret (C.Config, "secret");
       end return;
    end Make_Ctrl;
 
