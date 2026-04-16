@@ -6,7 +6,7 @@ Podmander generates configuration for proven tools — systemd, Podman, Caddy, R
 
 ## Status
 
-**Specification phase.** No code yet. See `docs/adr/` for architecture decisions and `docs/spec/` for specifications.
+**Early implementation.** Controller and agent daemons communicate over ZeroMQ with CURVE encryption. Agents register via join tokens and exchange heartbeats. Structured logging with level filtering and journald integration.
 
 ## Key Ideas
 
@@ -20,8 +20,7 @@ Podmander generates configuration for proven tools — systemd, Podman, Caddy, R
 
 ## Documentation
 
-- [`docs/adr/`](docs/adr/README.md) — Architecture Decision Records (why decisions were made)
-- [`docs/spec/`](docs/spec/) — Specifications (how things should work)
-- [`docs/domains.md`](docs/domains.md) — Entity relationships and glossary
-- [`docs/considerations.md`](docs/considerations.md) — Features not yet specified
+- [`docs/adr/`](docs/adr/) — Architecture Decision Records
+- [`docs/spec/`](docs/spec/) — Specifications
+- [`docs/plans/`](docs/plans/) — Implementation plans
 - [`docs/brainstorms/`](docs/brainstorms/) — Design explorations
