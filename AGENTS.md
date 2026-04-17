@@ -102,10 +102,34 @@ distrobox enter ada_dev -- alr build
 - Test against interfaces, not internals. Mock external tools (BTRFS, ZFS, Podman, systemd) behind driver abstractions.
 - Integration tests that exercise actual tool execution go in `tests/integration/` and are gated behind a flag so they don't run in CI without the required host tooling.
 
+## Project Management
+
+All work is tracked in Forgejo (owner: `podmander`, repo: `podmander`).
+
+### Labels
+
+- `kind/` prefix: `epic`, `feature`, `refactor`, `bug`, `docs`, `infra`
+- `area/` prefix: `controller`, `agent`, `protocol`, `cli`, `generator`, `ssh`, `secrets`
+
+Epic issues (label: `kind/epic`) are top-level tracking issues with a checklist breakdown of work items.
+
+### Milestones
+
+Issues are grouped by release target. Current milestone: **v0.1 MVP**.
+
+### Session Handoff
+
+When work on an epic pauses, leave a comment on the epic issue describing:
+- What's done
+- What's blocked
+- What to do next
+
+This is the handoff point for resuming work in a later session.
+
 ## Implementation Process
 
 1. Create an issue via the Forgejo MCP describing the goal of the session.
 2. Based on the issue number, create a new branch using the naming schema: `<issue-number>-<short-stub>`.
 3. Do all coding work in this branch.
-4. If the session gets paused, save the current state in a comment on the issue.
+4. If the session gets paused, save the current state in a comment on the issue (session handoff).
 5. When finished, clean up the branch for merging (squash related changes etc) and submit a pull request.

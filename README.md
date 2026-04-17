@@ -6,7 +6,7 @@ Podmander generates configuration for proven tools — systemd, Podman, Caddy, R
 
 ## Status
 
-**Early implementation.** See the [issue queue](https://code.monospacementor.com/podmander/podmander/issues) and [closed PRs](https://code.monospacementor.com/podmander/podmander/pulls?q=is%3Aclosed) for progress.
+**Early implementation.** See the [v0.1 MVP milestone](https://code.monospacementor.com/podmander/podmander/milestones) and [project board](https://code.monospacementor.com/podmander/podmander/projects) for progress.
 
 ## Key Ideas
 
@@ -24,3 +24,34 @@ Podmander generates configuration for proven tools — systemd, Podman, Caddy, R
 - [`docs/spec/`](docs/spec/) — Specifications
 - [`docs/plans/`](docs/plans/) — Implementation plans
 - [`docs/brainstorms/`](docs/brainstorms/) — Design explorations
+
+## Project Management
+
+We track all work in Forgejo issues, organized as follows:
+
+### Labels
+
+Labels group issues by category (`kind/`) and code area (`area/`).
+
+| Prefix | Values | Purpose |
+|--------|--------|---------|
+| `kind/` | `epic`, `feature`, `refactor`, `bug`, `docs`, `infra` | What kind of work is this? |
+| `area/` | `controller`, `agent`, `protocol`, `cli`, `generator`, `ssh`, `secrets` | Which part of the codebase? |
+
+The `kind/epic` label marks top-level tracking issues with a checklist breakdown.
+
+### Epics
+
+Epic issues are long-lived tracking issues that describe a major capability (e.g., "SQLite state storage"). Each epic contains:
+
+- **Goal** — what the epic achieves
+- **Context** — why it matters and relates to ADRs
+- **Breakdown** — a checklist of concrete work items
+- **Out of Scope** — explicitly excluded work
+- **Dependencies** — blocking issues (via Forgejo issue dependencies)
+
+Work issues reference their epic with `Part of #N` in the body and are set as blocking dependencies on the epic.
+
+### Milestones
+
+Milestones group issues by release target. The current milestone is **v0.1 MVP**: controller and agent can deploy a single service to a node, with SQLite state storage, TOML config, and basic CLI.
