@@ -3,6 +3,7 @@
 
 with Ada.Calendar;
 with CZMQ.Messages;
+with Podmander.Agent.Message_Handlers;
 with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
@@ -153,10 +154,10 @@ package body Podmander.Agent is
       use type Ada.Calendar.Time;
       Next_Heartbeat : constant Ada.Calendar.Time :=
         Ada.Calendar.Clock + Self.Config.Heartbeat_Interval;
+      Handler : Message_Handlers.Agent_Handler :=
+        (Agt => Self'Unchecked_Access);
    begin
       Send_Heartbeat (Self);
-      --  Poll with short timeout until next heartbeat is due,
-      --  checking the shutdown flag each iteration.
       Self.Socket.Set_Receive_Timeout (Poll_Interval_Ms);
       while not Podmander.Shutdown.Requested loop
          declare
@@ -164,7 +165,19 @@ package body Podmander.Agent is
             Status : CZMQ.Messages.Receive_Status;
          begin
             CZMQ.Messages.Receive (Self.Socket.all, Msg, Status);
-            --  Future: process controller commands on Success
+            if Status /= CZMQ.Messages.Timeout then
+               declare
+                  Decoded : constant
+                    Podmander.Messages.Protocol_Message'Class :=
+                    Podmander.Messages.Decode (Msg);
+               begin
+                  Decoded.Dispatch_To (Handler);
+               exception
+                  when Podmander.Messages.Decode_Error =>
+                     Podmander.Logging.Warning
+                       ("agent", "Malformed message from controller");
+               end;
+            end if;
          end;
          exit when Ada.Calendar.Clock >= Next_Heartbeat;
       end loop;

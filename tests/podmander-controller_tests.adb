@@ -11,6 +11,8 @@ with Podmander.Controller.Message_Handlers;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
+with Podmander.Messages.Deploy_Commands;
+with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
@@ -32,16 +34,19 @@ package body Podmander.Controller_Tests is
    --  A Message_Handler that records which primitive was invoked and
    --  a copy of the received message. Used to verify Dispatch_To routes
    --  polymorphically to the right typed handler method.
-   type Spy_Kind is (None, Register_Seen, Heartbeat_Seen);
+   type Spy_Kind is (None, Register_Seen, Heartbeat_Seen,
+                     Deploy_Command_Seen, Deploy_Result_Seen);
 
    package Reg_Reqs renames Podmander.Messages.Register_Requests;
    package Heartbeats renames Podmander.Messages.Heartbeats;
 
    type Spy_Handler is limited new Podmander.Messages.Message_Handler
    with record
-      Kind           : Spy_Kind := None;
-      Last_Register  : Reg_Reqs.Register_Request;
-      Last_Heartbeat : Heartbeats.Heartbeat_Message;
+      Kind             : Spy_Kind := None;
+      Last_Register    : Reg_Reqs.Register_Request;
+      Last_Heartbeat   : Heartbeats.Heartbeat_Message;
+      Last_Deploy_Cmd  : Podmander.Messages.Deploy_Commands.Deploy_Command;
+      Last_Deploy_Res  : Podmander.Messages.Deploy_Results.Deploy_Result;
    end record;
 
    overriding procedure Handle_Register_Request
@@ -51,6 +56,14 @@ package body Podmander.Controller_Tests is
    overriding procedure Handle_Heartbeat
      (H : in out Spy_Handler;
       M : Podmander.Messages.Heartbeat_Message_Type'Class);
+
+   overriding procedure Handle_Deploy_Command
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Deploy_Command_Type'Class);
+
+   overriding procedure Handle_Deploy_Result
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Deploy_Result_Type'Class);
 
    overriding procedure Handle_Register_Request
      (H : in out Spy_Handler;
@@ -69,6 +82,24 @@ package body Podmander.Controller_Tests is
       H.Last_Heartbeat :=
         Podmander.Messages.Heartbeats.Heartbeat_Message (M);
    end Handle_Heartbeat;
+
+   overriding procedure Handle_Deploy_Command
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Deploy_Command_Type'Class) is
+   begin
+      H.Kind := Deploy_Command_Seen;
+      H.Last_Deploy_Cmd :=
+        Podmander.Messages.Deploy_Commands.Deploy_Command (M);
+   end Handle_Deploy_Command;
+
+   overriding procedure Handle_Deploy_Result
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Deploy_Result_Type'Class) is
+   begin
+      H.Kind := Deploy_Result_Seen;
+      H.Last_Deploy_Res :=
+        Podmander.Messages.Deploy_Results.Deploy_Result (M);
+   end Handle_Deploy_Result;
 
    --  Test: Register_Request.Dispatch_To routes to Handle_Register_Request
    procedure Test_Dispatch_Register_Request
