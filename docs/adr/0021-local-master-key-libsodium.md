@@ -20,10 +20,10 @@ Secrets are encrypted at rest in SQLite using libsodium's `secretbox` (XSalsa20-
 The master key can be provided via:
 
 1. **Passphrase** — prompted at CLI invocation or via environment variable.
-2. **Key file** — stored at `~/.config/podmander/master.key` with restrictive permissions.
+2. **Key file** — stored at `~/.config/podctl/master.key` with restrictive permissions.
 3. **Hardware token** — future extension.
 
-The master key is required for any operation that reads or writes secrets (`podmander secret set/get/rm`, `podmander deploy` when services reference secrets).
+The master key is required for any operation that reads or writes secrets (`podctl secret set/get/rm`, `podctl deploy` when services reference secrets).
 
 ## Consequences
 

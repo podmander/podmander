@@ -26,15 +26,15 @@ resource limits, and placement constraints.
 ## CLI Shape
 
 ```bash
-podmander deploy cluster.toml
-podmander status
-podmander logs <service>
-podmander scale <service> <count>
-podmander secret set|list|rm
-podmander node list|label|drain|rm
-podmander backup status|run|list
-podmander volume restore <name>
-podmander convert docker-compose.yml  # Migration helper
+podctl deploy cluster.toml
+podctl status
+podctl logs <service>
+podctl scale <service> <count>
+podctl secret set|list|rm
+podctl node list|label|drain|rm
+podctl backup status|run|list
+podctl volume restore <name>
+podctl convert docker-compose.yml  # Migration helper
 ```
 
 ## Stack Collections

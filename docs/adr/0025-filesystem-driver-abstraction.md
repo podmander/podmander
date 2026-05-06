@@ -24,7 +24,7 @@ Volumes declare a driver. Podmander provides a consistent interface while behavi
 | `btrfs` | Mainline Linux kernel | Yes | Yes |
 | `zfs` | Requires OpenZFS | Yes | Yes |
 
-The CLI abstracts driver differences — `podmander volume rollback` works identically regardless of driver. Under the hood, the implementation differs:
+The CLI abstracts driver differences — `podctl volume rollback` works identically regardless of driver. Under the hood, the implementation differs:
 
 - **ZFS**: native `zfs rollback` command.
 - **BTRFS**: stop services, rename current subvolume, create snapshot from target, restart.

@@ -12,9 +12,9 @@ Logs remain in the systemd journal on each node. The CLI queries logs via SSH.
 ## CLI Query Interface
 
 ```bash
-podmander logs api --since 1h --grep "error"
-podmander logs api --node web-1            # Specific node only
-podmander logs api --follow                # Tail logs (streams via SSH)
+podctl logs api --since 1h --grep "error"
+podctl logs api --node web-1            # Specific node only
+podctl logs api --follow                # Tail logs (streams via SSH)
 ```
 
 Under the hood:

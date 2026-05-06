@@ -20,12 +20,12 @@ Options for providing the master encryption key:
 - Hardware token (future)
 
 The master key is required for any operation that reads or writes secrets:
-- `podmander secret set/get/rm`
-- `podmander deploy` (if services reference secrets)
+- `podctl secret set/get/rm`
+- `podctl deploy` (if services reference secrets)
 
 ## Delivery Flow
 
-1. Operator runs `podmander deploy`
+1. Operator runs `podctl deploy`
 2. CLI identifies secrets referenced by services being deployed
 3. CLI decrypts secrets locally using master key
 4. Decrypted values are transmitted to the agent via the control/data plane
@@ -46,8 +46,8 @@ Podman stores secrets encrypted in the user's local storage:
 When a secret value changes:
 
 ```bash
-podmander secret set myapp-db-password    # Prompts for new value
-podmander deploy myapp.toml               # Re-deploys affected services
+podctl secret set myapp-db-password    # Prompts for new value
+podctl deploy myapp.toml               # Re-deploys affected services
 ```
 
 The deploy:
@@ -61,10 +61,10 @@ mechanism.
 ## CLI Commands
 
 ```bash
-podmander secret set <name>                # Set secret value (prompts for input)
-podmander secret set <name> --file <path>  # Set from file
-podmander secret list                      # List secret names (not values)
-podmander secret rm <name>                 # Remove secret
+podctl secret set <name>                # Set secret value (prompts for input)
+podctl secret set <name> --file <path>  # Set from file
+podctl secret list                      # List secret names (not values)
+podctl secret rm <name>                 # Remove secret
 ```
 
 ## Transport Security

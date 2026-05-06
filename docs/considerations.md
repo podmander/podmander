@@ -144,7 +144,7 @@ error_pages_path = "public/errors"        # relative to project root
 Automatically install container runtime and dependencies on fresh nodes.
 
 ```bash
-podmander node setup web-1                # install Podman, configure user
+podctl node setup web-1                # install Podman, configure user
 ```
 
 ### Audit Log
@@ -214,8 +214,8 @@ podmander prune --older-than 7d
 Deploy the same application to different environments using layered configuration.
 
 ```bash
-podmander deploy -d staging               # uses deploy.toml + deploy.staging.toml
-podmander deploy -d production
+podctl deploy -d staging               # uses deploy.toml + deploy.staging.toml
+podctl deploy -d production
 ```
 
 ### Command Aliases

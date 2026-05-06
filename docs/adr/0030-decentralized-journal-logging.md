@@ -41,7 +41,7 @@ Operators who need centralized logging can deploy their own stack (Promtail + Lo
 
 ### Neutral
 
-- `podmander logs --follow` streams via SSH, providing real-time log tailing.
+- `podctl logs --follow` streams via SSH, providing real-time log tailing.
 - This decision does not prevent operators from deploying centralized logging — it just means Podmander does not require or manage it.
 
 ## Alternatives Considered

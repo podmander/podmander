@@ -38,7 +38,7 @@ Cluster-wide point-in-time rollback is available as "roll back all services to t
 ### What is not versioned
 
 - Current placement decisions (operational, not declarative)
-- Secrets (separate lifecycle via `podmander secret` commands)
+- Secrets (separate lifecycle via `podctl secret` commands)
 
 ## Consequences
 

@@ -40,7 +40,7 @@ The supervisor loop compares expected against actual. The scheduler produces exp
 
 ### Neutral
 
-- The `podmander status` command can show divergences at each level, giving operators a clear picture of where issues lie.
+- The `podctl status` command can show divergences at each level, giving operators a clear picture of where issues lie.
 
 ## Alternatives Considered
 

@@ -62,16 +62,16 @@ efficient incremental backups. See [Volume Snapshots](volume-snapshots.md).
 ## CLI Commands
 
 ```bash
-podmander backup status              # SSH to nodes, check timer status
-podmander backup run postgres-data   # Trigger immediate backup
-podmander backup list postgres-data  # List snapshots in repository
+podctl backup status              # SSH to nodes, check timer status
+podctl backup run postgres-data   # Trigger immediate backup
+podctl backup list postgres-data  # List snapshots in repository
 ```
 
 ## Restore
 
 ```bash
-podmander volume restore postgres-data --snapshot latest
-podmander volume restore postgres-data --snapshot 2024-01-15T10:30:00
+podctl volume restore postgres-data --snapshot latest
+podctl volume restore postgres-data --snapshot 2024-01-15T10:30:00
 ```
 
 Restore process:

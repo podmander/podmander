@@ -10,7 +10,7 @@ For architectural decisions and rationale, see:
 ### Human-Readable Output
 
 ```bash
-podmander status
+podctl status
 ```
 
 Shows cluster health with divergence detection:
@@ -21,7 +21,7 @@ Shows cluster health with divergence detection:
 ### Machine-Readable Output
 
 ```bash
-podmander status --json
+podctl status --json
 ```
 
 ```json
@@ -68,10 +68,10 @@ podmander status --json
 All state-changing commands support `--yes` for automated execution:
 
 ```bash
-podmander repair --yes                    # Fix all divergences without prompting
-podmander repair --service=api --yes      # Fix specific service
-podmander restart api --yes               # Restart service
-podmander deploy cluster.toml --yes       # Deploy without confirmation
+podctl repair --yes                    # Fix all divergences without prompting
+podctl repair --service=api --yes      # Fix specific service
+podctl restart api --yes               # Restart service
+podctl deploy cluster.toml --yes       # Deploy without confirmation
 ```
 
 ## Integration Patterns
@@ -80,17 +80,17 @@ podmander deploy cluster.toml --yes       # Deploy without confirmation
 
 ```bash
 # /etc/cron.d/podmander-status
-*/5 * * * * operator /usr/local/bin/podmander status --json >> /var/log/podmander-status.json
+*/5 * * * * operator /usr/local/bin/podctl status --json >> /var/log/podmander-status.json
 ```
 
 ### Pattern 2: Prometheus + Alertmanager
 
 Create a status exporter script, configure Alertmanager webhooks to trigger
-`podmander repair --yes` for automated remediation.
+`podctl repair --yes` for automated remediation.
 
 ### Pattern 3: Uptime Kuma
 
-Configure Uptime Kuma to run `podmander status` via SSH or exec monitor and
+Configure Uptime Kuma to run `podctl status` via SSH or exec monitor and
 alert on non-zero exit codes.
 
 ### Pattern 4: Systemd Timer Watchdog
@@ -115,7 +115,7 @@ Description=Podmander health check
 
 [Service]
 Type=oneshot
-ExecStart=/usr/local/bin/podmander status
+ExecStart=/usr/local/bin/podctl status
 ```
 
 ## Service Health Checks
@@ -127,7 +127,7 @@ port = 3000
 timeout = 5
 ```
 
-When configured, `podmander status` queries the health endpoint for each running
+When configured, `podctl status` queries the health endpoint for each running
 instance and includes health status in output.
 
 ## Recommended Stack
@@ -143,7 +143,7 @@ All deployable as Podmander services.
 
 ## Open Items
 
-- Native Prometheus metrics endpoint (`podmander status --prometheus`)
+- Native Prometheus metrics endpoint (`podctl status --prometheus`)
 - Webhook server mode for receiving alerts directly
 - Pre-built Grafana dashboard
 - Health check protocols beyond HTTP (TCP, gRPC)

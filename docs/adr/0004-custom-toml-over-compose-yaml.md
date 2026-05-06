@@ -12,7 +12,7 @@ Key forces:
 - The Ada ecosystem lacks a maintained YAML library (AdaYaml is abandoned).
 - Podmander's feature set diverges from Docker Compose (placement rules, multi-node scheduling, infrastructure components, stack parameters). Adopting Compose syntax would mean extending it in non-standard ways or constraining Podmander's design.
 - TOML is already the configuration language of the Podman ecosystem (Quadlets, `containers.conf`).
-- A migration helper (`podmander convert`) can reduce the barrier for users coming from Docker Compose.
+- A migration helper (`podctl convert`) can reduce the barrier for users coming from Docker Compose.
 
 ## Decision
 
@@ -33,7 +33,7 @@ Stack definitions use Jinja-style `{{ name }}` placeholders with a `[params]` se
 
 - No existing tooling ecosystem (linters, IDE extensions, documentation) for the custom schema.
 - Users migrating from Docker Compose must learn a new format.
-- The `podmander convert` migration helper adds development scope.
+- The `podctl convert` migration helper adds development scope.
 
 ### Neutral
 

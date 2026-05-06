@@ -131,7 +131,7 @@ CREATE INDEX idx_volume_snapshots_by_service
 ### Rollback Flow
 
 ```
-$ podmander rollback api
+$ podctl rollback api
 
 Rolling back api from v5 to v4...
 
@@ -170,13 +170,13 @@ volumes must use `mode = "rootful"`.
 ### BTRFS
 
 ```bash
-podmander node setup-snapshots storage-1 --driver btrfs --path /srv/containers
+podctl node setup-snapshots storage-1 --driver btrfs --path /srv/containers
 ```
 
 ### ZFS
 
 ```bash
-podmander node setup-snapshots storage-1 --driver zfs --dataset tank/containers
+podctl node setup-snapshots storage-1 --driver zfs --dataset tank/containers
 ```
 
 ## CLI
@@ -184,19 +184,19 @@ podmander node setup-snapshots storage-1 --driver zfs --dataset tank/containers
 ### Volume Commands
 
 ```bash
-podmander volume list                              # Shows driver, node, snapshot count
-podmander volume show <name>                       # Details including snapshots
-podmander volume create <name> --driver btrfs --path /srv/containers/foo
-podmander volume destroy <name>                    # Requires confirmation
+podctl volume list                              # Shows driver, node, snapshot count
+podctl volume show <name>                       # Details including snapshots
+podctl volume create <name> --driver btrfs --path /srv/containers/foo
+podctl volume destroy <name>                    # Requires confirmation
 ```
 
 ### Snapshot Commands
 
 ```bash
-podmander volume snapshots <name>                  # List snapshots with linked versions
-podmander volume snapshot <name>                   # Create manual snapshot
-podmander volume rollback <name> --to <snapshot>   # Rollback (stops dependent services)
-podmander volume prune <name>                      # Remove snapshots beyond retain policy
+podctl volume snapshots <name>                  # List snapshots with linked versions
+podctl volume snapshot <name>                   # Create manual snapshot
+podctl volume rollback <name> --to <snapshot>   # Rollback (stops dependent services)
+podctl volume prune <name>                      # Remove snapshots beyond retain policy
 ```
 
 ### Snapshot List Output
@@ -218,7 +218,7 @@ SNAPSHOT                        TYPE    SERVICE  VERSION  CREATED
 | Subvolume/dataset doesn't exist at deploy time | Create with default properties. |
 | Parent path not on BTRFS | Error: "Path is not on a BTRFS filesystem." |
 | Snapshot target doesn't exist | Error with available snapshots listed. |
-| Snapshots not configured on node | Error: "Node lacks snapshot support. Run `podmander node setup-snapshots`." |
+| Snapshots not configured on node | Error: "Node lacks snapshot support. Run `podctl node setup-snapshots`." |
 | Mixed driver volumes per service | Allowed. Snapshot-capable volumes snapshot; directory volumes get warning on rollback. |
 | Multiple services share a volume | Snapshot triggers on any dependent service deploy. |
 | Rollback to version with no snapshot | Warning: "No snapshot exists for v2. Volume will retain current state." |
