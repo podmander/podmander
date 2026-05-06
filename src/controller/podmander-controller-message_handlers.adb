@@ -5,44 +5,30 @@ with Ada.Calendar;
 with CZMQ.Messages;
 with Podmander.Enrollment;
 with Podmander.Logging;
-with Podmander.Messages.Deploy_Commands;
 with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
 with Podmander.Messages.Heartbeats;
+with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
 
 package body Podmander.Controller.Message_Handlers is
 
-   LF : constant Character := Character'Val (10);
-
-   procedure Send_Demo_Deploy
+   procedure Send_Status_Query
      (H       : in out Controller_Handler;
       Node_Id : String) is
-      use Podmander.Messages.Deploy_Commands;
-      Demo_Quadlet : constant String :=
-        "[Unit]" & LF
-        & "Description=Podmander demo service" & LF
-        & LF
-        & "[Container]" & LF
-        & "Image=quay.io/libpod/alpine" & LF
-        & "Exec=sleep infinity" & LF
-        & LF
-        & "[Install]" & LF
-        & "WantedBy=default.target" & LF;
-      Cmd     : constant Deploy_Command :=
-        (Service_Name => To_Unbounded_String ("podmander-demo"),
-         Quadlet      => To_Unbounded_String (Demo_Quadlet));
-      Msg     : CZMQ.Messages.Message :=
+      use Podmander.Messages.Status_Queries;
+      Query : constant Status_Query := (null record);
+      Msg   : CZMQ.Messages.Message :=
         CZMQ.Messages.New_Message;
    begin
       Msg.Add_String (Node_Id);
-      Cmd.Encode (Msg);
+      Query.Encode (Msg);
       Msg.Send (H.Ctrl.Socket.all);
       Podmander.Logging.Info
         ("controller",
-         "Sent demo deploy to " & Node_Id);
-   end Send_Demo_Deploy;
+         "Sent status query to " & Node_Id);
+   end Send_Status_Query;
 
    overriding procedure Handle_Register_Request
      (H : in out Controller_Handler;
@@ -89,7 +75,7 @@ package body Podmander.Controller.Message_Handlers is
             Reply_Msg.Send (H.Ctrl.Socket.all);
          end;
 
-         Send_Demo_Deploy (H, Node_Id);
+         Send_Status_Query (H, Node_Id);
       end if;
    end Handle_Register_Request;
 

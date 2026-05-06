@@ -40,4 +40,8 @@ package Podmander.Controller.Message_Handlers is
      (H : in out Controller_Handler;
       M : Podmander.Messages.Status_Response_Type'Class);
 
+   procedure Send_Status_Query
+     (H       : in out Controller_Handler;
+      Node_Id : String);
+
 end Podmander.Controller.Message_Handlers;
