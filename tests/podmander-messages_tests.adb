@@ -4,11 +4,14 @@
 with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
+with Ada.Characters.Latin_1;
 with Ada.Strings.Unbounded;
 with CZMQ.Messages;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
+with Podmander.Messages.Deploy_Commands;
+with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
@@ -16,6 +19,7 @@ with Podmander.Messages.Register_Responses;
 package body Podmander.Messages_Tests is
 
    use Ada.Strings.Unbounded;
+   use Ada.Characters.Latin_1;
    use AUnit.Assertions;
 
    type Message_Test is new AUnit.Test_Cases.Test_Case with null record;
@@ -116,6 +120,100 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Heartbeat_Round_Trip;
 
+   --  Test: Deploy_Command round-trip encode/decode
+   procedure Test_Deploy_Command_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Deploy_Commands;
+      Original : constant Deploy_Command :=
+        (Service_Name => To_Unbounded_String ("api"),
+         Quadlet      => To_Unbounded_String ("[Unit]" & ASCII.LF
+                           & "Name=api" & ASCII.LF));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Original.Encode (Msg);
+      Assert (Msg.Size = 3, "Expected 3 frames, got" & Msg.Size'Image);
+
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+      begin
+         Assert
+           (Decoded in Deploy_Command,
+            "Expected Deploy_Command");
+         Assert
+           (To_String (Deploy_Command (Decoded).Service_Name) = "api",
+            "Service name mismatch");
+         Assert
+           (To_String (Deploy_Command (Decoded).Quadlet) =
+              To_String (Original.Quadlet),
+            "Quadlet content mismatch");
+      end;
+   end Test_Deploy_Command_Round_Trip;
+
+   --  Test: Deploy_Result round-trip encode/decode (success)
+   procedure Test_Deploy_Result_Success_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Deploy_Results;
+      Original : constant Deploy_Result :=
+        (Service_Name  => To_Unbounded_String ("api"),
+         Success       => True,
+         Error_Message => To_Unbounded_String (""));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Original.Encode (Msg);
+      Assert (Msg.Size = 4, "Expected 4 frames, got" & Msg.Size'Image);
+
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+      begin
+         Assert
+           (Decoded in Deploy_Result,
+            "Expected Deploy_Result");
+         Assert
+           (To_String (Deploy_Result (Decoded).Service_Name) = "api",
+            "Service name mismatch");
+         Assert
+           (Deploy_Result (Decoded).Success,
+            "Expected Success = True");
+         Assert
+           (To_String (Deploy_Result (Decoded).Error_Message) = "",
+            "Expected empty error message");
+      end;
+   end Test_Deploy_Result_Success_Round_Trip;
+
+   --  Test: Deploy_Result round-trip encode/decode (failure)
+   procedure Test_Deploy_Result_Failure_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Deploy_Results;
+      Original : constant Deploy_Result :=
+        (Service_Name  => To_Unbounded_String ("db"),
+         Success       => False,
+         Error_Message => To_Unbounded_String ("image pull failed"));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Original.Encode (Msg);
+
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+      begin
+         Assert
+           (Deploy_Result (Decoded).Success = False,
+            "Expected Success = False");
+         Assert
+           (To_String (Deploy_Result (Decoded).Error_Message) =
+              "image pull failed",
+            "Error message mismatch");
+      end;
+   end Test_Deploy_Result_Failure_Round_Trip;
+
    --  Stub decoder for Register test (library-level so 'Access is valid).
    function Stub_Decoder
      (Msg : in out CZMQ.Messages.Message)
@@ -178,6 +276,15 @@ package body Podmander.Messages_Tests is
       Register_Routine
         (T, Test_Heartbeat_Round_Trip'Access,
          "Heartbeat_Message round-trip encode/decode");
+      Register_Routine
+        (T, Test_Deploy_Command_Round_Trip'Access,
+         "Deploy_Command round-trip encode/decode");
+      Register_Routine
+        (T, Test_Deploy_Result_Success_Round_Trip'Access,
+         "Deploy_Result (success) round-trip encode/decode");
+      Register_Routine
+        (T, Test_Deploy_Result_Failure_Round_Trip'Access,
+         "Deploy_Result (failure) round-trip encode/decode");
       Register_Routine
         (T, Test_Decode_Unknown_Kind'Access,
          "Decode of unknown message kind raises Decode_Error");

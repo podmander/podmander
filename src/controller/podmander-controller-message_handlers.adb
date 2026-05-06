@@ -5,6 +5,7 @@ with Ada.Calendar;
 with CZMQ.Messages;
 with Podmander.Enrollment;
 with Podmander.Logging;
+with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
 with Podmander.Messages.Heartbeats;
@@ -88,5 +89,34 @@ package body Podmander.Controller.Message_Handlers is
             & To_String (H.Identity) & ", ignoring");
       end if;
    end Handle_Heartbeat;
+
+   overriding procedure Handle_Deploy_Command
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Deploy_Command_Type'Class)
+   is
+      pragma Unreferenced (H, M);
+   begin
+      Podmander.Logging.Warning
+        ("controller", "Deploy_Command is controller-to-agent only");
+   end Handle_Deploy_Command;
+
+   overriding procedure Handle_Deploy_Result
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Deploy_Result_Type'Class)
+   is
+      use Podmander.Messages.Deploy_Results;
+      Result : constant Deploy_Result := Deploy_Result (M);
+   begin
+      if Result.Success then
+         Podmander.Logging.Info
+           ("controller",
+            "Deploy succeeded for " & To_String (Result.Service_Name));
+      else
+         Podmander.Logging.Warning
+           ("controller",
+            "Deploy failed for " & To_String (Result.Service_Name)
+            & ": " & To_String (Result.Error_Message));
+      end if;
+   end Handle_Deploy_Result;
 
 end Podmander.Controller.Message_Handlers;
