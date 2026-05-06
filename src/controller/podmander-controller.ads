@@ -2,12 +2,12 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Containers.Indefinite_Hashed_Maps;
-with Ada.Containers.Indefinite_Vectors;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 with CZMQ.Certificates;
 with CZMQ.Pollers;
 with CZMQ.Sockets;
+with Podmander.Enrollment;
 with Podmander.Types;
 
 package Podmander.Controller is
@@ -20,7 +20,7 @@ package Podmander.Controller is
       Bind_Address       : String (1 .. 120) := [others => ' '];
       Bind_Address_Last  : Natural := 0;
       Agent_Timeout      : Duration := Default_Agent_Timeout;
-      Enrollment_Secret  : Ada.Strings.Unbounded.Unbounded_String;
+      Enrollment         : Podmander.Enrollment.Enrollment_Config;
    end record;
 
    procedure Set_Bind_Address
@@ -28,14 +28,6 @@ package Podmander.Controller is
       Address : String);
 
    function Get_Bind_Address (Config : Controller_Config) return String;
-
-   Token_Prefix : constant String := "PTKN-";
-
-   procedure Set_Enrollment_Secret
-     (Config : in out Controller_Config;
-      Secret : String);
-
-   function Get_Enrollment_Secret (Config : Controller_Config) return String;
 
    package Agent_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,
@@ -73,5 +65,7 @@ package Podmander.Controller is
    procedure Generate_Join_Token
      (Self  : in out Controller_Instance;
       Token : out Ada.Strings.Unbounded.Unbounded_String);
+   --  Delegates to Podmander.Enrollment.Generate_Join_Token
+   --  using this controller's public key and enrollment config.
 
 end Podmander.Controller;

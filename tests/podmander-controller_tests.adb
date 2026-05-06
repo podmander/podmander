@@ -6,6 +6,7 @@ with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with Podmander.Controller;
+with Podmander.Enrollment;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
@@ -146,7 +147,8 @@ package body Podmander.Controller_Tests is
      return Podmander.Controller.Controller_Instance is
    begin
       return C : Podmander.Controller.Controller_Instance do
-         Podmander.Controller.Set_Enrollment_Secret (C.Config, "secret");
+         Podmander.Enrollment.Set_Secret
+           (C.Config.Enrollment, "secret");
       end return;
    end Make_Ctrl;
 

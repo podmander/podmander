@@ -3,6 +3,7 @@
 
 with Ada.Calendar;
 with CZMQ.Messages;
+with Podmander.Enrollment;
 with Podmander.Logging;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
@@ -20,8 +21,8 @@ package body Podmander.Controller.Message_Handlers is
       Name    : constant String := To_String (Req.Agent_Name);
       Node_Id : constant String := To_String (H.Identity);
    begin
-      if To_String (H.Ctrl.Config.Enrollment_Secret) /=
-          To_String (Req.Enrollment_Secret)
+      if not Podmander.Enrollment.Secret_Matches
+        (H.Ctrl.Config.Enrollment, To_String (Req.Enrollment_Secret))
       then
          Podmander.Logging.Warning
            ("controller",

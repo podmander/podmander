@@ -2,7 +2,6 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
-with Ada.Numerics.Discrete_Random;
 with CZMQ.Messages;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Logging;
@@ -16,25 +15,6 @@ package body Podmander.Controller is
    use Ada.Strings.Unbounded;
    use type CZMQ.Messages.Receive_Status;
 
-   Hex_Chars : constant String := "0123456789abcdef";
-
-   subtype Hex_Range is Natural range 0 .. 15;
-   package Hex_Rand is new Ada.Numerics.Discrete_Random (Hex_Range);
-
-   function Random_Hex (Length : Positive) return String is
-      Gen : Hex_Rand.Generator;
-   begin
-      Hex_Rand.Reset (Gen);
-      declare
-         Result : String (1 .. Length);
-      begin
-         for I in Result'Range loop
-            Result (I) := Hex_Chars (Hex_Rand.Random (Gen) + 1);
-         end loop;
-         return Result;
-      end;
-   end Random_Hex;
-
    procedure Set_Bind_Address
      (Config  : in out Controller_Config;
       Address : String) is
@@ -47,18 +27,6 @@ package body Podmander.Controller is
    begin
       return Config.Bind_Address (1 .. Config.Bind_Address_Last);
    end Get_Bind_Address;
-
-   procedure Set_Enrollment_Secret
-     (Config : in out Controller_Config;
-      Secret : String) is
-   begin
-      Config.Enrollment_Secret := To_Unbounded_String (Secret);
-   end Set_Enrollment_Secret;
-
-   function Get_Enrollment_Secret (Config : Controller_Config) return String is
-   begin
-      return To_String (Config.Enrollment_Secret);
-   end Get_Enrollment_Secret;
 
    procedure Initialize
       (Self   : in out Controller_Instance;
@@ -179,11 +147,11 @@ package body Podmander.Controller is
    procedure Generate_Join_Token
      (Self  : in out Controller_Instance;
       Token : out Ada.Strings.Unbounded.Unbounded_String) is
-      Secret : constant String := Random_Hex (32);
    begin
-      Self.Config.Enrollment_Secret := To_Unbounded_String (Secret);
-      Token := To_Unbounded_String
-        (Token_Prefix & Self.Get_Public_Key & "-" & Secret);
+      Podmander.Enrollment.Generate_Join_Token
+        (Public_Key => Self.Get_Public_Key,
+         Config     => Self.Config.Enrollment,
+         Token      => Token);
    end Generate_Join_Token;
 
 end Podmander.Controller;
