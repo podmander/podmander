@@ -51,6 +51,9 @@ package body Podmander.Agent.Message_Handlers is
    begin
       Result.Service_Name := Cmd.Service_Name;
 
+      Podmander.Logging.Info
+        ("agent", "Deploying " & Name);
+
       Ada.Directories.Create_Path (Base_Dir);
 
       Write_Quadlet :
@@ -79,6 +82,8 @@ package body Podmander.Agent.Message_Handlers is
             Result.Success := False;
             Result.Error_Message :=
               To_Unbounded_String ("daemon-reload failed");
+            Podmander.Logging.Error
+              ("agent", "daemon-reload failed for " & Name);
             Send_Deploy_Result (H, Result);
             return;
          end if;
@@ -101,6 +106,8 @@ package body Podmander.Agent.Message_Handlers is
             Result.Success := False;
             Result.Error_Message :=
               To_Unbounded_String ("systemctl start failed");
+            Podmander.Logging.Error
+              ("agent", "systemctl start failed for " & Name);
             Send_Deploy_Result (H, Result);
             return;
          end if;
@@ -108,6 +115,8 @@ package body Podmander.Agent.Message_Handlers is
 
       Result.Success := True;
       Result.Error_Message := To_Unbounded_String ("");
+      Podmander.Logging.Info
+        ("agent", "Deployed " & Name & " successfully");
       Send_Deploy_Result (H, Result);
    exception
       when E : others =>
