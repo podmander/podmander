@@ -35,8 +35,8 @@ package body Podmander.Controller.Message_Handlers is
       Msg     : CZMQ.Messages.Message :=
         CZMQ.Messages.New_Message;
    begin
-      Cmd.Encode (Msg);
       Msg.Add_String (Node_Id);
+      Cmd.Encode (Msg);
       Msg.Send (H.Ctrl.Socket.all);
       Podmander.Logging.Info
         ("controller",
