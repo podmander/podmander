@@ -10,7 +10,8 @@ package Podmander.Agent.Message_Handlers is
    use Ada.Strings.Unbounded;
 
    --  Concrete Message_Handler for the agent.
-   --  Receives commands from the controller and mutates Agent_Instance.
+   --  Receives commands from the controller and dispatches to
+   --  domain packages (Deployer, Status_Collector).
    type Agent_Handler is limited new Podmander.Messages.Message_Handler
    with record
       Agt : access Podmander.Agent.Agent_Instance;
