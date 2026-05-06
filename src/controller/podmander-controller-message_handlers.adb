@@ -10,6 +10,7 @@ with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
 with Podmander.Messages.Heartbeats;
+with Podmander.Messages.Status_Responses;
 
 package body Podmander.Controller.Message_Handlers is
 
@@ -151,5 +152,27 @@ package body Podmander.Controller.Message_Handlers is
             & ": " & To_String (Result.Error_Message));
       end if;
    end Handle_Deploy_Result;
+
+   overriding procedure Handle_Status_Query
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Status_Query_Type'Class)
+   is
+      pragma Unreferenced (H, M);
+   begin
+      Podmander.Logging.Warning
+        ("controller", "Status_Query is controller-to-agent only");
+   end Handle_Status_Query;
+
+   overriding procedure Handle_Status_Response
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Status_Response_Type'Class)
+   is
+      use Podmander.Messages.Status_Responses;
+      Resp : constant Status_Response := Status_Response (M);
+   begin
+      Podmander.Logging.Info
+        ("controller", "Agent status: "
+         & To_String (Resp.Containers));
+   end Handle_Status_Response;
 
 end Podmander.Controller.Message_Handlers;

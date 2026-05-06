@@ -3,6 +3,7 @@
 
 with Podmander.Messages;
 with Podmander.Messages.Deploy_Results;
+with Podmander.Messages.Status_Responses;
 
 package Podmander.Agent.Message_Handlers is
 
@@ -31,8 +32,20 @@ package Podmander.Agent.Message_Handlers is
      (H : in out Agent_Handler;
       M : Podmander.Messages.Deploy_Result_Type'Class);
 
+   overriding procedure Handle_Status_Query
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Status_Query_Type'Class);
+
+   overriding procedure Handle_Status_Response
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Status_Response_Type'Class);
+
    procedure Send_Deploy_Result
      (H      : in out Agent_Handler;
       Result : Podmander.Messages.Deploy_Results.Deploy_Result);
+
+   procedure Send_Status_Response
+     (H      : in out Agent_Handler;
+      Result : Podmander.Messages.Status_Responses.Status_Response);
 
 end Podmander.Agent.Message_Handlers;

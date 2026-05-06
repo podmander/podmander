@@ -32,4 +32,12 @@ package Podmander.Controller.Message_Handlers is
      (H : in out Controller_Handler;
       M : Podmander.Messages.Deploy_Result_Type'Class);
 
+   overriding procedure Handle_Status_Query
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Status_Query_Type'Class);
+
+   overriding procedure Handle_Status_Response
+     (H : in out Controller_Handler;
+      M : Podmander.Messages.Status_Response_Type'Class);
+
 end Podmander.Controller.Message_Handlers;
