@@ -99,7 +99,7 @@ package body Podmander.Controller.Message_Handlers is
                Info.State := Podmander.Types.Registered;
             end if;
             H.Ctrl.Agents.Replace (Agent_Id, Info);
-            Podmander.Logging.Info
+            Podmander.Logging.Debug
               ("controller", "Heartbeat from " & Agent_Id);
          end;
       else
