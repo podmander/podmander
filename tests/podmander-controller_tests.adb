@@ -14,6 +14,7 @@ pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Deploy_Commands;
 with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
+with Podmander.Messages.Status_Responses;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
 with Podmander.Types;
@@ -35,7 +36,8 @@ package body Podmander.Controller_Tests is
    --  a copy of the received message. Used to verify Dispatch_To routes
    --  polymorphically to the right typed handler method.
    type Spy_Kind is (None, Register_Seen, Heartbeat_Seen,
-                     Deploy_Command_Seen, Deploy_Result_Seen);
+                     Deploy_Command_Seen, Deploy_Result_Seen,
+                     Status_Query_Seen, Status_Response_Seen);
 
    package Reg_Reqs renames Podmander.Messages.Register_Requests;
    package Heartbeats renames Podmander.Messages.Heartbeats;
@@ -47,6 +49,7 @@ package body Podmander.Controller_Tests is
       Last_Heartbeat   : Heartbeats.Heartbeat_Message;
       Last_Deploy_Cmd  : Podmander.Messages.Deploy_Commands.Deploy_Command;
       Last_Deploy_Res  : Podmander.Messages.Deploy_Results.Deploy_Result;
+      Last_Status_Resp : Podmander.Messages.Status_Responses.Status_Response;
    end record;
 
    overriding procedure Handle_Register_Request
@@ -64,6 +67,14 @@ package body Podmander.Controller_Tests is
    overriding procedure Handle_Deploy_Result
      (H : in out Spy_Handler;
       M : Podmander.Messages.Deploy_Result_Type'Class);
+
+   overriding procedure Handle_Status_Query
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Status_Query_Type'Class);
+
+   overriding procedure Handle_Status_Response
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Status_Response_Type'Class);
 
    overriding procedure Handle_Register_Request
      (H : in out Spy_Handler;
@@ -100,6 +111,23 @@ package body Podmander.Controller_Tests is
       H.Last_Deploy_Res :=
         Podmander.Messages.Deploy_Results.Deploy_Result (M);
    end Handle_Deploy_Result;
+
+   overriding procedure Handle_Status_Query
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Status_Query_Type'Class) is
+      pragma Unreferenced (M);
+   begin
+      H.Kind := Status_Query_Seen;
+   end Handle_Status_Query;
+
+   overriding procedure Handle_Status_Response
+     (H : in out Spy_Handler;
+      M : Podmander.Messages.Status_Response_Type'Class) is
+   begin
+      H.Kind := Status_Response_Seen;
+      H.Last_Status_Resp :=
+        Podmander.Messages.Status_Responses.Status_Response (M);
+   end Handle_Status_Response;
 
    --  Test: Register_Request.Dispatch_To routes to Handle_Register_Request
    procedure Test_Dispatch_Register_Request

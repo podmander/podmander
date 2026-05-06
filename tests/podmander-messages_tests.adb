@@ -4,7 +4,6 @@
 with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
-with Ada.Characters.Latin_1;
 with Ada.Strings.Unbounded;
 with CZMQ.Messages;
 with Podmander.Messages;
@@ -15,11 +14,12 @@ with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
+with Podmander.Messages.Status_Queries;
+with Podmander.Messages.Status_Responses;
 
 package body Podmander.Messages_Tests is
 
    use Ada.Strings.Unbounded;
-   use Ada.Characters.Latin_1;
    use AUnit.Assertions;
 
    type Message_Test is new AUnit.Test_Cases.Test_Case with null record;
@@ -127,9 +127,11 @@ package body Podmander.Messages_Tests is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Commands;
       Original : constant Deploy_Command :=
-        (Service_Name => To_Unbounded_String ("api"),
-         Quadlet      => To_Unbounded_String ("[Unit]" & ASCII.LF
-                           & "Name=api" & ASCII.LF));
+         (Service_Name => To_Unbounded_String ("api"),
+          Quadlet      => To_Unbounded_String ("[Unit]"
+                            & Character'Val (10)
+                            & "Name=api"
+                            & Character'Val (10)));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
@@ -214,6 +216,58 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Deploy_Result_Failure_Round_Trip;
 
+   --  Test: Status_Query round-trip encode/decode
+   procedure Test_Status_Query_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Status_Queries;
+      Original : constant Status_Query := (null record);
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Original.Encode (Msg);
+      Assert (Msg.Size = 1, "Expected 1 frame, got" & Msg.Size'Image);
+
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+      begin
+         Assert
+           (Decoded in Status_Query,
+            "Expected Status_Query");
+      end;
+   end Test_Status_Query_Round_Trip;
+
+   --  Test: Status_Response round-trip encode/decode
+   procedure Test_Status_Response_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Status_Responses;
+      Original : constant Status_Response :=
+         (Containers => To_Unbounded_String
+            ("web-1" & Character'Val (9) & "Up 2 hours"
+             & Character'Val (10)
+             & "db-1" & Character'Val (9) & "Up 3 hours"));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Original.Encode (Msg);
+      Assert (Msg.Size = 2, "Expected 2 frames, got" & Msg.Size'Image);
+
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+      begin
+         Assert
+           (Decoded in Status_Response,
+            "Expected Status_Response");
+         Assert
+           (To_String (Status_Response (Decoded).Containers) =
+              To_String (Original.Containers),
+            "Containers content mismatch");
+      end;
+   end Test_Status_Response_Round_Trip;
+
    --  Stub decoder for Register test (library-level so 'Access is valid).
    function Stub_Decoder
      (Msg : in out CZMQ.Messages.Message)
@@ -285,6 +339,12 @@ package body Podmander.Messages_Tests is
       Register_Routine
         (T, Test_Deploy_Result_Failure_Round_Trip'Access,
          "Deploy_Result (failure) round-trip encode/decode");
+      Register_Routine
+        (T, Test_Status_Query_Round_Trip'Access,
+         "Status_Query round-trip encode/decode");
+      Register_Routine
+        (T, Test_Status_Response_Round_Trip'Access,
+         "Status_Response round-trip encode/decode");
       Register_Routine
         (T, Test_Decode_Unknown_Kind'Access,
          "Decode of unknown message kind raises Decode_Error");

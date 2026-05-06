@@ -22,5 +22,11 @@ pragma Unreferenced (Podmander.Messages.Register_Requests);
 with Podmander.Messages.Register_Responses;
 pragma Unreferenced (Podmander.Messages.Register_Responses);
 
+with Podmander.Messages.Status_Queries;
+pragma Unreferenced (Podmander.Messages.Status_Queries);
+
+with Podmander.Messages.Status_Responses;
+pragma Unreferenced (Podmander.Messages.Status_Responses);
+
 package Podmander.Messages.All_Kinds is
 end Podmander.Messages.All_Kinds;
