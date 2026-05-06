@@ -5,12 +5,43 @@ with Ada.Calendar;
 with CZMQ.Messages;
 with Podmander.Enrollment;
 with Podmander.Logging;
+with Podmander.Messages.Deploy_Commands;
 with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
 with Podmander.Messages.Heartbeats;
 
 package body Podmander.Controller.Message_Handlers is
+
+   LF : constant Character := Character'Val (10);
+
+   procedure Send_Demo_Deploy
+     (H       : in out Controller_Handler;
+      Node_Id : String) is
+      use Podmander.Messages.Deploy_Commands;
+      Demo_Quadlet : constant String :=
+        "[Unit]" & LF
+        & "Description=Podmander demo service" & LF
+        & LF
+        & "[Container]" & LF
+        & "Image=quay.io/libpod/alpine" & LF
+        & "Exec=sleep infinity" & LF
+        & LF
+        & "[Install]" & LF
+        & "WantedBy=default.target" & LF;
+      Cmd     : constant Deploy_Command :=
+        (Service_Name => To_Unbounded_String ("podmander-demo"),
+         Quadlet      => To_Unbounded_String (Demo_Quadlet));
+      Msg     : CZMQ.Messages.Message :=
+        CZMQ.Messages.New_Message;
+   begin
+      Cmd.Encode (Msg);
+      Msg.Add_String (Node_Id);
+      Msg.Send (H.Ctrl.Socket.all);
+      Podmander.Logging.Info
+        ("controller",
+         "Sent demo deploy to " & Node_Id);
+   end Send_Demo_Deploy;
 
    overriding procedure Handle_Register_Request
      (H : in out Controller_Handler;
@@ -56,6 +87,8 @@ package body Podmander.Controller.Message_Handlers is
             Reply.Encode (Reply_Msg);
             Reply_Msg.Send (H.Ctrl.Socket.all);
          end;
+
+         Send_Demo_Deploy (H, Node_Id);
       end if;
    end Handle_Register_Request;
 
