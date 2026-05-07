@@ -8,9 +8,9 @@ package body Podmander.Messages.Deploy_Results is
       Msg  : in out CZMQ.Messages.Message) is
    begin
       Msg.Add_String (Deploy_Ack_Kind);
-      Msg.Add_String (To_String (Self.Service_Name));
-      Msg.Add_String (Boolean'Image (Self.Success));
-      Msg.Add_String (To_String (Self.Error_Message));
+      Msg.Add_String (RC.Encode_Code (Self.Code));
+      Msg.Add_String (SU.To_String (Self.Service_Name));
+      Msg.Add_String (SU.To_String (Self.Error_Message));
    end Encode;
 
    overriding procedure Dispatch_To
@@ -27,14 +27,15 @@ package body Podmander.Messages.Deploy_Results is
          raise Decode_Error with "deploy_ack: missing payload frames";
       end if;
       declare
+         Code        : constant RC.Result_Code :=
+           RC.Decode_Code (Msg.Pop_String);
          Service_Name : constant String := Msg.Pop_String;
-         Success_Str  : constant String := Msg.Pop_String;
          Error_Msg    : constant String := Msg.Pop_String;
       begin
          return Deploy_Result'
-           (Service_Name  => To_Unbounded_String (Service_Name),
-            Success       => Boolean'Value (Success_Str),
-            Error_Message => To_Unbounded_String (Error_Msg));
+           (Code          => Code,
+            Service_Name  => SU.To_Unbounded_String (Service_Name),
+            Error_Message => SU.To_Unbounded_String (Error_Msg));
       end;
    end Decode_Impl;
 

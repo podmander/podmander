@@ -9,6 +9,7 @@ with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
 with Podmander.Messages.Heartbeats;
+with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
 
@@ -125,9 +126,10 @@ package body Podmander.Controller.Message_Handlers is
       M : Podmander.Messages.Deploy_Result_Type'Class)
    is
       use Podmander.Messages.Deploy_Results;
+      use type Podmander.Messages.Result_Codes.Result_Code;
       Result : constant Deploy_Result := Deploy_Result (M);
    begin
-      if Result.Success then
+      if Result.Code = Podmander.Messages.Result_Codes.Ok then
          Podmander.Logging.Info
            ("controller",
             "Deploy succeeded for " & To_String (Result.Service_Name));
@@ -153,12 +155,20 @@ package body Podmander.Controller.Message_Handlers is
      (H : in out Controller_Handler;
       M : Podmander.Messages.Status_Response_Type'Class)
    is
+      use type Podmander.Messages.Result_Codes.Result_Code;
       use Podmander.Messages.Status_Responses;
       Resp : constant Status_Response := Status_Response (M);
    begin
-      Podmander.Logging.Info
-        ("controller", "Agent status: "
-         & To_String (Resp.Containers));
+      if Resp.Code = Podmander.Messages.Result_Codes.Ok then
+         Podmander.Logging.Info
+           ("controller", "Agent status: "
+            & To_String (Resp.Containers));
+      else
+         Podmander.Logging.Warning
+           ("controller", "Agent status query "
+            & Podmander.Messages.Result_Codes.Encode_Code (Resp.Code)
+            & ": " & To_String (Resp.Error_Message));
+      end if;
    end Handle_Status_Response;
 
 end Podmander.Controller.Message_Handlers;

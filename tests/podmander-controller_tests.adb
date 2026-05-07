@@ -14,6 +14,7 @@ pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Deploy_Commands;
 with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
+with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Responses;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;

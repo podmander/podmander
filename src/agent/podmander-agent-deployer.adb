@@ -5,13 +5,19 @@ with Ada.Directories;
 with Ada.Environment_Variables;
 with Ada.Exceptions;
 with Ada.Text_IO;
-with GNAT.OS_Lib;
+with Podmander.Agent.Host_Command;
+with Podmander.Agent.Host_Command.Result_Mapping;
 with Podmander.Logging;
+with Podmander.Messages.Result_Codes;
 
 package body Podmander.Agent.Deployer is
 
    use Ada.Strings.Unbounded;
    use Podmander.Messages.Deploy_Results;
+   use type Podmander.Messages.Result_Codes.Result_Code;
+   package HC renames Podmander.Agent.Host_Command;
+   package RM renames Podmander.Agent.Host_Command.Result_Mapping;
+   package RC renames Podmander.Messages.Result_Codes;
 
    function Execute_Deploy
      (Service_Name : String;
@@ -24,10 +30,7 @@ package body Podmander.Agent.Deployer is
         Home & "/.config/containers/systemd";
       File_Path : constant String :=
         Base_Dir & "/" & Service_Name & ".container";
-      Result    : Deploy_Result;
    begin
-      Result.Service_Name := To_Unbounded_String (Service_Name);
-
       Podmander.Logging.Info
         ("agent", "Deploying " & Service_Name);
 
@@ -45,60 +48,70 @@ package body Podmander.Agent.Deployer is
 
       Daemon_Reload :
       declare
-         Args    : GNAT.OS_Lib.Argument_List (1 .. 2);
-         Success : Boolean;
+         Reload_Args : constant HC.Argument_List :=
+           [HC."+"("--user"), HC."+"("daemon-reload")];
+         Result : constant HC.Command_Result :=
+           HC.Run_Command
+             (Program    => "/usr/bin/systemctl",
+              Args       => Reload_Args,
+              Err_To_Out => True);
+         Code : constant RC.Result_Code := RM.To_Result_Code (Result);
       begin
-         Args (1) := new String'("--user");
-         Args (2) := new String'("daemon-reload");
-         GNAT.OS_Lib.Spawn
-           ("/usr/bin/systemctl", Args, Success);
-         for J in Args'Range loop
-            GNAT.OS_Lib.Free (Args (J));
-         end loop;
-         if not Success then
-            Result.Success := False;
-            Result.Error_Message :=
-              To_Unbounded_String ("daemon-reload failed");
+         if Code /= RC.Ok then
             Podmander.Logging.Error
               ("agent", "daemon-reload failed for " & Service_Name);
-            return Result;
+            return Deploy_Result'
+              (Code          => Code,
+               Service_Name  => To_Unbounded_String (Service_Name),
+               Error_Message =>
+                 To_Unbounded_String ("daemon-reload failed"));
          end if;
       end Daemon_Reload;
 
       Start_Service :
       declare
-         Args    : GNAT.OS_Lib.Argument_List (1 .. 3);
-         Success : Boolean;
+         Start_Args : constant HC.Argument_List :=
+           [HC."+"("--user"),
+            HC."+"("start"),
+            HC."+"(Service_Name & ".service")];
+         Result : constant HC.Command_Result :=
+           HC.Run_Command
+             (Program    => "/usr/bin/systemctl",
+              Args       => Start_Args,
+              Err_To_Out => True);
+         Code : constant RC.Result_Code := RM.To_Result_Code (Result);
       begin
-         Args (1) := new String'("--user");
-         Args (2) := new String'("start");
-         Args (3) := new String'(Service_Name & ".service");
-         GNAT.OS_Lib.Spawn
-           ("/usr/bin/systemctl", Args, Success);
-         for J in Args'Range loop
-            GNAT.OS_Lib.Free (Args (J));
-         end loop;
-         if not Success then
-            Result.Success := False;
-            Result.Error_Message :=
-              To_Unbounded_String ("systemctl start failed");
+         if Code /= RC.Ok then
             Podmander.Logging.Error
               ("agent", "systemctl start failed for " & Service_Name);
-            return Result;
+            return Deploy_Result'
+              (Code          => Code,
+               Service_Name  => To_Unbounded_String (Service_Name),
+               Error_Message =>
+                 To_Unbounded_String ("systemctl start failed"));
          end if;
       end Start_Service;
 
-      Result.Success := True;
-      Result.Error_Message := To_Unbounded_String ("");
       Podmander.Logging.Info
         ("agent", "Deployed " & Service_Name & " successfully");
-      return Result;
+      return Deploy_Result'
+        (Code          => RC.Ok,
+         Service_Name  => To_Unbounded_String (Service_Name),
+         Error_Message => To_Unbounded_String (""));
    exception
       when E : others =>
-         Result.Success := False;
-         Result.Error_Message := To_Unbounded_String
-           (Ada.Exceptions.Exception_Message (E));
-         return Result;
+         Podmander.Logging.Error
+           ("agent",
+            "Deploy exception for " & Service_Name
+            & " [" & Ada.Exceptions.Exception_Name (E) & "]: "
+            & Ada.Exceptions.Exception_Message (E));
+         return Deploy_Result'
+           (Code          => RC.Internal,
+            Service_Name  => To_Unbounded_String (Service_Name),
+            Error_Message => To_Unbounded_String
+              (Ada.Exceptions.Exception_Name (E)
+               & ": "
+               & Ada.Exceptions.Exception_Message (E)));
    end Execute_Deploy;
 
 end Podmander.Agent.Deployer;

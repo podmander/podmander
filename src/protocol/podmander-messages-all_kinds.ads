@@ -22,6 +22,9 @@ pragma Unreferenced (Podmander.Messages.Register_Requests);
 with Podmander.Messages.Register_Responses;
 pragma Unreferenced (Podmander.Messages.Register_Responses);
 
+with Podmander.Messages.Result_Codes;
+pragma Unreferenced (Podmander.Messages.Result_Codes);
+
 with Podmander.Messages.Status_Queries;
 pragma Unreferenced (Podmander.Messages.Status_Queries);
 

@@ -3,16 +3,18 @@
 
 with Ada.Strings.Unbounded;
 with CZMQ.Messages;
+with Podmander.Messages.Result_Codes;
 
 package Podmander.Messages.Deploy_Results is
 
-   use Ada.Strings.Unbounded;
+   package SU renames Ada.Strings.Unbounded;
+   package RC renames Podmander.Messages.Result_Codes;
 
    --  Agent -> Controller: result of a deploy command
    type Deploy_Result is new Deploy_Result_Type with record
-      Service_Name : Unbounded_String;
-      Success      : Boolean;
-      Error_Message : Unbounded_String;
+      Code          : RC.Result_Code := RC.Ok;
+      Service_Name  : SU.Unbounded_String;
+      Error_Message : SU.Unbounded_String;
    end record;
 
    overriding procedure Encode

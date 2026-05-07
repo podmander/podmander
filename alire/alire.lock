@@ -89,4 +89,40 @@ website = "https://github.com/geewiz/czmq_ada"
 [solution.state.release.origin]
 commit = "573cf56cc18c65ab29c6a6364fa6178d86a0c812"
 url = "git+https://github.com/geewiz/czmq_ada.git"
+[[solution.state]]
+crate = "spoon"
+fulfilment = "solved"
+pinned = false
+transitivity = "direct"
+versions = "~1.0.1"
+[solution.state.release]
+authors = [
+"onox",
+]
+description = "Use posix_spawn() to spawn processes without forking"
+licenses = "Apache-2.0"
+maintainers = [
+"onox <denkpadje@gmail.com>",
+]
+maintainers-logins = [
+"onox",
+]
+name = "spoon"
+tags = [
+"posix",
+"spawn",
+"process",
+]
+version = "1.0.1"
+website = "https://github.com/onox/spoon"
+[solution.state.release.build-switches]
+[solution.state.release.build-switches."*"]
+style_checks = [
+"-gnatygAO-Is",
+]
+[solution.state.release.build-switches.validation]
+compile_checks = "warnings"
+[solution.state.release.origin]
+commit = "c07167a55d5fa2ebbfa7ff4689959e08128e8a69"
+url = "git+https://github.com/onox/spoon.git"
 

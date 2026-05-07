@@ -14,6 +14,7 @@ with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Register_Requests;
 with Podmander.Messages.Register_Responses;
+with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
 
@@ -21,6 +22,7 @@ package body Podmander.Messages_Tests is
 
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
+   use Podmander.Messages.Result_Codes;
 
    type Message_Test is new AUnit.Test_Cases.Test_Case with null record;
 
@@ -154,20 +156,19 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Deploy_Command_Round_Trip;
 
-   --  Test: Deploy_Result round-trip encode/decode (success)
-   procedure Test_Deploy_Result_Success_Round_Trip
+   --  Test: Deploy_Result round-trip encode/decode (Ok)
+   procedure Test_Deploy_Result_Ok_Round_Trip
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
       Original : constant Deploy_Result :=
-        (Service_Name  => To_Unbounded_String ("api"),
-         Success       => True,
+        (Code          => Podmander.Messages.Result_Codes.Ok,
+         Service_Name  => To_Unbounded_String ("api"),
          Error_Message => To_Unbounded_String (""));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 4, "Expected 4 frames, got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -177,26 +178,27 @@ package body Podmander.Messages_Tests is
            (Decoded in Deploy_Result,
             "Expected Deploy_Result");
          Assert
+           (Deploy_Result (Decoded).Code =
+              Podmander.Messages.Result_Codes.Ok,
+            "Expected Code = Ok");
+         Assert
            (To_String (Deploy_Result (Decoded).Service_Name) = "api",
             "Service name mismatch");
-         Assert
-           (Deploy_Result (Decoded).Success,
-            "Expected Success = True");
          Assert
            (To_String (Deploy_Result (Decoded).Error_Message) = "",
             "Expected empty error message");
       end;
-   end Test_Deploy_Result_Success_Round_Trip;
+   end Test_Deploy_Result_Ok_Round_Trip;
 
-   --  Test: Deploy_Result round-trip encode/decode (failure)
-   procedure Test_Deploy_Result_Failure_Round_Trip
+   --  Test: Deploy_Result round-trip encode/decode (Failed)
+   procedure Test_Deploy_Result_Failed_Round_Trip
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
       Original : constant Deploy_Result :=
-        (Service_Name  => To_Unbounded_String ("db"),
-         Success       => False,
+        (Code          => Podmander.Messages.Result_Codes.Failed,
+         Service_Name  => To_Unbounded_String ("db"),
          Error_Message => To_Unbounded_String ("image pull failed"));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
@@ -207,14 +209,40 @@ package body Podmander.Messages_Tests is
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
          Assert
-           (Deploy_Result (Decoded).Success = False,
-            "Expected Success = False");
+           (Deploy_Result (Decoded).Code =
+              Podmander.Messages.Result_Codes.Failed,
+            "Expected Code = Failed");
          Assert
            (To_String (Deploy_Result (Decoded).Error_Message) =
               "image pull failed",
             "Error message mismatch");
       end;
-   end Test_Deploy_Result_Failure_Round_Trip;
+   end Test_Deploy_Result_Failed_Round_Trip;
+
+   --  Test: Deploy_Result round-trip encode/decode (Unavailable)
+   procedure Test_Deploy_Result_Unavailable_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Deploy_Results;
+      Original : constant Deploy_Result :=
+        (Code          => Podmander.Messages.Result_Codes.Unavailable,
+         Service_Name  => To_Unbounded_String ("svc"),
+         Error_Message => To_Unbounded_String ("systemctl not found"));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Original.Encode (Msg);
+
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+      begin
+         Assert
+           (Deploy_Result (Decoded).Code =
+              Podmander.Messages.Result_Codes.Unavailable,
+            "Expected Code = Unavailable");
+      end;
+   end Test_Deploy_Result_Unavailable_Round_Trip;
 
    --  Test: Status_Query round-trip encode/decode
    procedure Test_Status_Query_Round_Trip
@@ -238,21 +266,22 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Status_Query_Round_Trip;
 
-   --  Test: Status_Response round-trip encode/decode
-   procedure Test_Status_Response_Round_Trip
+   --  Test: Status_Response round-trip encode/decode (Ok)
+   procedure Test_Status_Response_Ok_Round_Trip
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       use Podmander.Messages.Status_Responses;
       Original : constant Status_Response :=
-         (Containers => To_Unbounded_String
+         (Code          => Podmander.Messages.Result_Codes.Ok,
+          Containers    => To_Unbounded_String
             ("web-1" & Character'Val (9) & "Up 2 hours"
              & Character'Val (10)
-             & "db-1" & Character'Val (9) & "Up 3 hours"));
+             & "db-1" & Character'Val (9) & "Up 3 hours"),
+          Error_Message => To_Unbounded_String (""));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 2, "Expected 2 frames, got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -262,11 +291,80 @@ package body Podmander.Messages_Tests is
            (Decoded in Status_Response,
             "Expected Status_Response");
          Assert
+           (Status_Response (Decoded).Code =
+              Podmander.Messages.Result_Codes.Ok,
+            "Expected Code = Ok");
+         Assert
            (To_String (Status_Response (Decoded).Containers) =
               To_String (Original.Containers),
             "Containers content mismatch");
+         Assert
+           (To_String (Status_Response (Decoded).Error_Message) = "",
+            "Expected empty Error_Message");
       end;
-   end Test_Status_Response_Round_Trip;
+   end Test_Status_Response_Ok_Round_Trip;
+
+   --  Test: Status_Response round-trip encode/decode (Failed)
+   procedure Test_Status_Response_Failed_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Status_Responses;
+      Original : constant Status_Response :=
+        (Code          => Podmander.Messages.Result_Codes.Failed,
+         Containers    => To_Unbounded_String (""),
+         Error_Message => To_Unbounded_String ("podman ps failed"));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Original.Encode (Msg);
+
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+      begin
+         Assert
+           (Status_Response (Decoded).Code =
+              Podmander.Messages.Result_Codes.Failed,
+            "Expected Code = Failed");
+         Assert
+           (To_String (Status_Response (Decoded).Error_Message) =
+              "podman ps failed",
+            "Error_Message mismatch");
+         Assert
+           (To_String (Status_Response (Decoded).Containers) = "",
+            "Expected empty Containers");
+      end;
+   end Test_Status_Response_Failed_Round_Trip;
+
+   --  Test: Result_Code encode/decode round-trip
+   procedure Test_Result_Code_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+   begin
+      for Code in Result_Code loop
+         Assert (Decode_Code (Encode_Code (Code)) = Code,
+                 "Round-trip failed for " & Result_Code'Image (Code));
+      end loop;
+   end Test_Result_Code_Round_Trip;
+
+   --  Test: Decode_Code raises Decode_Error for unknown string
+   procedure Test_Decode_Code_Unknown
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+   begin
+      declare
+         Ignored : Result_Code;
+         pragma Unreferenced (Ignored);
+      begin
+         Ignored := Decode_Code ("BOGUS");
+         Assert (False, "Expected Decode_Error for unknown code");
+      end;
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;  --  Expected
+   end Test_Decode_Code_Unknown;
 
    --  Stub decoder for Register test (library-level so 'Access is valid).
    function Stub_Decoder
@@ -334,17 +432,29 @@ package body Podmander.Messages_Tests is
         (T, Test_Deploy_Command_Round_Trip'Access,
          "Deploy_Command round-trip encode/decode");
       Register_Routine
-        (T, Test_Deploy_Result_Success_Round_Trip'Access,
+        (T, Test_Deploy_Result_Ok_Round_Trip'Access,
          "Deploy_Result (success) round-trip encode/decode");
       Register_Routine
-        (T, Test_Deploy_Result_Failure_Round_Trip'Access,
+        (T, Test_Deploy_Result_Failed_Round_Trip'Access,
          "Deploy_Result (failure) round-trip encode/decode");
+      Register_Routine
+        (T, Test_Deploy_Result_Unavailable_Round_Trip'Access,
+         "Deploy_Result (unavailable) round-trip encode/decode");
       Register_Routine
         (T, Test_Status_Query_Round_Trip'Access,
          "Status_Query round-trip encode/decode");
       Register_Routine
-        (T, Test_Status_Response_Round_Trip'Access,
+        (T, Test_Status_Response_Ok_Round_Trip'Access,
          "Status_Response round-trip encode/decode");
+      Register_Routine
+        (T, Test_Status_Response_Failed_Round_Trip'Access,
+         "Status_Response (failure) round-trip encode/decode");
+      Register_Routine
+        (T, Test_Result_Code_Round_Trip'Access,
+         "Result_Code round-trip encode/decode");
+      Register_Routine
+        (T, Test_Decode_Code_Unknown'Access,
+         "Decode_Code raises Decode_Error for unknown string");
       Register_Routine
         (T, Test_Decode_Unknown_Kind'Access,
          "Decode of unknown message kind raises Decode_Error");

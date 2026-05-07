@@ -4,6 +4,8 @@
 with AUnit.Run;
 with AUnit.Reporter.Text;
 with AUnit.Test_Suites;
+with Podmander.Agent.Host_Command_Tests;
+with Podmander.Agent.Host_Command.Result_Mapping_Tests;
 with Podmander.Controller_Tests;
 with Podmander.Logging_Tests;
 with Podmander.Messages_Tests;
@@ -14,6 +16,9 @@ procedure Test_Runner is
       Result : constant AUnit.Test_Suites.Access_Test_Suite :=
         new AUnit.Test_Suites.Test_Suite;
    begin
+      AUnit.Test_Suites.Add_Test (Result, Podmander.Agent.Host_Command_Tests.Suite);
+      AUnit.Test_Suites.Add_Test
+        (Result, Podmander.Agent.Host_Command.Result_Mapping_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Messages_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Controller_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Logging_Tests.Suite);
