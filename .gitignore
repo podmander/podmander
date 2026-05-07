@@ -1,6 +1,6 @@
 .worktrees/
 obj/
-bin/
+/bin/
 config/
 alire/build_hash_inputs
 alire/flags/
