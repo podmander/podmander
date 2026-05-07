@@ -62,6 +62,14 @@ package body Podmander.Agent.Connection is
          "Sent heartbeat");
    end Send_Heartbeat;
 
+   --  Cert and Sock are locals rather than fields of Agent_Instance
+   --  because CZMQ.Certificates.Certificate and CZMQ.Sockets.Socket are
+   --  Limited_Controlled: Ada disallows reassignment via :=, so a
+   --  long-lived field cannot be replaced on reconnect without falling
+   --  back to heap pointers (the original leak) or Unchecked_Deallocation
+   --  (forbidden by AGENTS.md and #23). Scope-binding the resources to
+   --  one cycle lets the Limited_Controlled finalizers release the
+   --  underlying CZMQ handles on every exit path.
    procedure Run_Cycle (Self : in out Agent_Instance) is
       Cert : constant CZMQ.Certificates.Certificate :=
         CZMQ.Certificates.New_Certificate;
