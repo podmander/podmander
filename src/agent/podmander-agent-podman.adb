@@ -10,7 +10,7 @@ with Podmander.Agent.Host_Command.Result_Mapping;
 with Podmander.Logging;
 with Podmander.Messages.Result_Codes;
 
-package body Podmander.Agent.Deployer is
+package body Podmander.Agent.Podman is
 
    use Ada.Strings.Unbounded;
    use Podmander.Messages.Deploy_Results;
@@ -19,7 +19,7 @@ package body Podmander.Agent.Deployer is
    package RM renames Podmander.Agent.Host_Command.Result_Mapping;
    package RC renames Podmander.Messages.Result_Codes;
 
-   function Execute_Deploy
+   function Install_Quadlet
      (Service_Name : String;
       Quadlet      : String)
       return Deploy_Result
@@ -112,6 +112,6 @@ package body Podmander.Agent.Deployer is
               (Ada.Exceptions.Exception_Name (E)
                & ": "
                & Ada.Exceptions.Exception_Message (E)));
-   end Execute_Deploy;
+   end Install_Quadlet;
 
-end Podmander.Agent.Deployer;
+end Podmander.Agent.Podman;

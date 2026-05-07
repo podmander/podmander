@@ -2,7 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with CZMQ.Messages;
-with Podmander.Agent.Deployer;
+with Podmander.Agent.Podman;
 with Podmander.Agent.Status_Collector;
 with Podmander.Logging;
 with Podmander.Messages.Deploy_Commands;
@@ -37,7 +37,7 @@ package body Podmander.Agent.Message_Handlers is
       Cmd    : constant Deploy_Command := Deploy_Command (M);
       Name   : constant String := To_String (Cmd.Service_Name);
       Result : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
-        Podmander.Agent.Deployer.Execute_Deploy
+        Podmander.Agent.Podman.Install_Quadlet
           (Service_Name => Name,
            Quadlet      => To_String (Cmd.Quadlet));
    begin

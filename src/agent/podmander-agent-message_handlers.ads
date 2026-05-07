@@ -11,7 +11,7 @@ package Podmander.Agent.Message_Handlers is
 
    --  Concrete Message_Handler for the agent.
    --  Receives commands from the controller and dispatches to
-   --  domain packages (Deployer, Status_Collector).
+   --  domain packages (Podman, Status_Collector).
    type Agent_Handler is limited new Podmander.Messages.Message_Handler
    with record
       Agt : access Podmander.Agent.Agent_Instance;
