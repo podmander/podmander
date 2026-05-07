@@ -126,10 +126,22 @@ When work on an epic pauses, leave a comment on the epic issue describing:
 
 This is the handoff point for resuming work in a later session.
 
+## Multi-Agent Workflow
+
+All work happens in git worktrees managed by `wt`. The main worktree is reserved for `wt switch` operations only.
+
+- Create: `wt switch --create <issue>-<stub>`
+- Build: `distrobox enter ada_dev -- alr build`
+- Test: `distrobox enter ada_dev -- alr test`
+- Clean up: `wt switch main && wt remove <issue>-<stub>`
+
+Never edit or build in the main worktree while another agent is active.
+
 ## Implementation Process
 
-1. Create an issue via the Forgejo MCP describing the goal of the session.
-2. Based on the issue number, create a new branch using the naming schema: `<issue-number>-<short-stub>`.
-3. Do all coding work in this branch.
-4. If the session gets paused, save the current state in a comment on the issue (session handoff).
-5. When finished, clean up the branch for merging (squash related changes etc) and submit a pull request.
+1. Create an issue via the Forgejo MCP.
+2. In the main worktree, run `wt switch --create <issue-number>-<short-stub>`.
+3. Do all coding work in the worktree.
+4. If the session pauses, leave a handoff comment on the issue.
+5. Push the branch and submit a pull request via Forgejo MCP.
+6. After merge, remove the worktree: `wt remove <issue-number>-<short-stub>`.

@@ -1,0 +1,5 @@
+# Podmander worktree configuration
+# Worktrees live at .worktrees/<branch> (configured in user config)
+
+[[pre-merge]]
+test = "distrobox enter ada_dev -- alr test"
