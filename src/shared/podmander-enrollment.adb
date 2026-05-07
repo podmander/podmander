@@ -10,6 +10,10 @@ package body Podmander.Enrollment is
    subtype Hex_Range is Natural range 0 .. 15;
    package Hex_Rand is new Ada.Numerics.Discrete_Random (Hex_Range);
 
+   --  Total length of a well-formed join token.
+   Token_Length : constant Positive :=
+     Token_Prefix'Length + Public_Key_Length + 1 + Secret_Length;
+
    function Random_Hex (Length : Positive) return String is
       Gen : Hex_Rand.Generator;
    begin
@@ -46,12 +50,40 @@ package body Podmander.Enrollment is
    procedure Generate_Join_Token
      (Public_Key : String;
       Config     : in out Enrollment_Config;
-      Token      : out Unbounded_String) is
-      Secret : constant String := Random_Hex (32);
+      Token      : out Unbounded_String)
+   is
+      Secret : constant String := Random_Hex (Secret_Length);
    begin
       Config.Secret := To_Unbounded_String (Secret);
       Token := To_Unbounded_String
-        (Token_Prefix & Public_Key & "-" & Secret);
+        (Token_Prefix & Public_Key & Separator & Secret);
    end Generate_Join_Token;
+
+   function Parse_Join_Token (Token : String) return Parsed_Token is
+      Key_Start    : constant Positive := Token'First + Token_Prefix'Length;
+      Key_End      : constant Positive := Key_Start + Public_Key_Length - 1;
+      Separator_At : constant Positive := Key_End + 1;
+      Secret_Start : constant Positive := Separator_At + 1;
+      Secret_End   : constant Positive := Secret_Start + Secret_Length - 1;
+   begin
+      if Token'Length /= Token_Length then
+         raise Parse_Error with "Token has wrong length";
+      end if;
+
+      if Token (Token'First .. Token'First + Token_Prefix'Length - 1)
+        /= Token_Prefix
+      then
+         raise Parse_Error with "Token has wrong prefix";
+      end if;
+
+      if Token (Separator_At) /= Separator then
+         raise Parse_Error with "Token separator missing";
+      end if;
+
+      return
+        (Public_Key => To_Unbounded_String (Token (Key_Start .. Key_End)),
+         Secret     => To_Unbounded_String
+                         (Token (Secret_Start .. Secret_End)));
+   end Parse_Join_Token;
 
 end Podmander.Enrollment;
