@@ -1,0 +1,17 @@
+#  Copyright (C) 2026 Jochen Lillich
+#  SPDX-License-Identifier: Apache-2.0
+#
+#  Privileged systemd container for runtime integration testing.
+#  Built and used locally; not published to any registry.
+
+FROM registry.fedoraproject.org/fedora:43
+
+RUN dnf install -y \
+    systemd \
+    podman \
+    gcc-gnat \
+    zeromq-devel \
+    czmq-devel \
+    && dnf clean all
+
+CMD ["/usr/sbin/init"]

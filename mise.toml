@@ -1,0 +1,37 @@
+#  Copyright (C) 2026 Jochen Lillich
+#  SPDX-License-Identifier: Apache-2.0
+#
+#  mise tasks for local development and test container management.
+#  Install mise: https://mise.jdx.dev/
+
+[tasks]
+
+# --- Test Container Lifecycle ---
+
+[tasks."test:container:build"]
+description = "Build the privileged systemd test container image"
+run = "podman build -t podmander-test -f Containerfile.podmander ."
+
+[tasks."test:container:up"]
+description = "Start the test container with the workspace mounted"
+run = """
+if podman container exists podmander-test; then
+  echo "Container already exists. Remove it first with: mise run test:container:down"
+  exit 1
+fi
+podman run -d --name podmander-test \
+  --privileged \
+  --systemd=always \
+  -v "${PWD}:/workspace:Z" \
+  -w /workspace \
+  podmander-test
+"""
+
+[tasks."test:container:down"]
+description = "Stop and remove the test container"
+run = "podman rm -f podmander-test"
+
+[tasks."test:container:clean"]
+description = "Remove the test container and its image"
+depends = ["test:container:down"]
+run = "podman rmi -f podmander-test"
