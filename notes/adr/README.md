@@ -2,7 +2,7 @@
 
 This directory contains the Architecture Decision Records (ADRs) for Podmander.
 
-ADRs capture architecturally significant decisions — the *why* behind the system's design. For specifications on *how* things should work, see `docs/spec/`.
+ADRs capture architecturally significant decisions — the *why* behind the system's design. For specifications on *how* things should work, see `notes/spec/`.
 
 ## Index
 

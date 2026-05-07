@@ -18,12 +18,12 @@ Podmander generates configuration for proven tools — systemd, Podman, Caddy, R
 - Encrypted secrets with libsodium
 - Written in Ada
 
-## Documentation
+## Development notes
 
-- [`docs/adr/`](docs/adr/) — Architecture Decision Records
-- [`docs/spec/`](docs/spec/) — Specifications
-- [`docs/plans/`](docs/plans/) — Implementation plans
-- [`docs/brainstorms/`](docs/brainstorms/) — Design explorations
+- [`notes/adr/`](notes/adr/) — Architecture Decision Records
+- [`notes/spec/`](notes/spec/) — Specifications
+- [`notes/plans/`](notes/plans/) — Implementation plans
+- [`notes/brainstorms/`](notes/brainstorms/) — Design explorations
 
 ## Project Management
 

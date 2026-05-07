@@ -4,7 +4,7 @@
 **Status:** Draft
 **Date:** 2026-04-14
 **Tracking:** podmander/podmander#1
-**Requirements:** `docs/plans/handle-message-refactor-requirements.md`
+**Requirements:** `notes/plans/handle-message-refactor-requirements.md`
 
 ## Architecture
 
