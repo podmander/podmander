@@ -62,14 +62,18 @@ package body Podmander.Agent.Connection is
          "Sent heartbeat");
    end Send_Heartbeat;
 
-   --  Cert and Sock are locals rather than fields of Agent_Instance
-   --  because CZMQ.Certificates.Certificate and CZMQ.Sockets.Socket are
-   --  Limited_Controlled: Ada disallows reassignment via :=, so a
-   --  long-lived field cannot be replaced on reconnect without falling
-   --  back to heap pointers (the original leak) or Unchecked_Deallocation
-   --  (forbidden by AGENTS.md and #23). Scope-binding the resources to
-   --  one cycle lets the Limited_Controlled finalizers release the
-   --  underlying CZMQ handles on every exit path.
+   --  Cert and Sock are locals rather than long-lived fields because
+   --  CZMQ.Certificates.Certificate and CZMQ.Sockets.Socket are
+   --  Limited_Controlled: Ada forbids := reassignment, so a field
+   --  cannot be replaced on reconnect. The remaining alternatives are
+   --  raw heap pointers (which is the leak this code replaces) or a
+   --  controlled holder around a heap pointer with
+   --  Unchecked_Deallocation in its Finalize. The holder pattern
+   --  trades a structural guarantee for a behavioural one: every
+   --  Reset/Replace path must remember to free, which is the same
+   --  shape of bug just fixed. Scope-binding makes "is the resource
+   --  freed?" a property the compiler enforces on every exit path,
+   --  not a property of every call site.
    procedure Run_Cycle (Self : in out Agent_Instance) is
       Cert : constant CZMQ.Certificates.Certificate :=
         CZMQ.Certificates.New_Certificate;
