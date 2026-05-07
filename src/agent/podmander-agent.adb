@@ -31,28 +31,38 @@ package body Podmander.Agent is
       Self.Socket.Connect (To_String (Self.Config.Controller_Address));
    end Create_Socket;
 
-   procedure Send_Register (Self : in out Agent_Instance) is
-      use Podmander.Messages.Register_Requests;
-      Req : constant Register_Request :=
-        (Agent_Name        => Self.Config.Agent_Name,
-         Enrollment_Secret => Self.Enrollment_Secret);
+   procedure Send_Message
+     (Self     : in out Agent_Instance;
+      Payload  : Podmander.Messages.Protocol_Message'Class;
+      Log_Text : String)
+   is
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      Req.Encode (Msg);
+      Payload.Encode (Msg);
       Msg.Send (Self.Socket.all);
-      Podmander.Logging.Debug ("agent", "Sent registration request");
+      Podmander.Logging.Debug ("agent", Log_Text);
+   end Send_Message;
+
+   procedure Send_Register (Self : in out Agent_Instance) is
+      use Podmander.Messages.Register_Requests;
+   begin
+      Send_Message
+        (Self,
+         Register_Request'
+           (Agent_Name        => Self.Config.Agent_Name,
+            Enrollment_Secret => Self.Enrollment_Secret),
+         "Sent registration request");
    end Send_Register;
 
    procedure Send_Heartbeat (Self : in out Agent_Instance) is
       use Podmander.Messages.Heartbeats;
-      Hb  : constant Heartbeat_Message :=
-        (Agent_Id  => Self.Node_Id,
-         Timestamp => Ada.Calendar.Clock);
-      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      Hb.Encode (Msg);
-      Msg.Send (Self.Socket.all);
-      Podmander.Logging.Debug ("agent", "Sent heartbeat");
+      Send_Message
+        (Self,
+         Heartbeat_Message'
+           (Agent_Id  => Self.Node_Id,
+            Timestamp => Ada.Calendar.Clock),
+         "Sent heartbeat");
    end Send_Heartbeat;
 
    procedure Handle_Disconnected (Self : in out Agent_Instance) is
