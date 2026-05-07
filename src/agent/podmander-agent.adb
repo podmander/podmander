@@ -4,6 +4,7 @@
 with Ada.Calendar;
 with CZMQ.Messages;
 with Podmander.Agent.Message_Handlers;
+with Podmander.Enrollment;
 with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
@@ -18,56 +19,14 @@ package body Podmander.Agent is
    use Ada.Strings.Unbounded;
    use type CZMQ.Messages.Receive_Status;
 
-   Token_Prefix : constant String := "PTKN-";
-
-   procedure Parse_Join_Token
-     (Token      : String;
-      Public_Key : out Ada.Strings.Unbounded.Unbounded_String;
-      Secret     : out Ada.Strings.Unbounded.Unbounded_String) is
-   begin
-      if Token'Length < Token_Prefix'Length + 40 + 1 + 32 then
-         raise Parse_Error with "Token too short";
-      end if;
-
-      if Token (Token'First .. Token'First + Token_Prefix'Length - 1) /=
-        Token_Prefix
-      then
-         raise Parse_Error with "Invalid token prefix";
-      end if;
-
-      declare
-         Key_Start : constant Positive :=
-           Token'First + Token_Prefix'Length;
-         Key_End   : constant Positive := Key_Start + 39;
-         Secret_Start : constant Positive := Key_End + 2;
-         Secret_End   : constant Positive := Secret_Start + 31;
-      begin
-         if Key_End > Token'Last or else Secret_Start > Token'Last then
-            raise Parse_Error with "Token malformed";
-         end if;
-
-         Public_Key := To_Unbounded_String
-           (Token (Key_Start .. Key_End));
-         Secret := To_Unbounded_String
-           (Token (Secret_Start .. Secret_End));
-      end;
-   end Parse_Join_Token;
-
    procedure Create_Socket (Self : in out Agent_Instance) is
-      Public_Key : Ada.Strings.Unbounded.Unbounded_String;
-      Secret     : Ada.Strings.Unbounded.Unbounded_String;
    begin
-      Parse_Join_Token
-        (To_String (Self.Config.Join_Token), Public_Key, Secret);
-
-      Self.Enrollment_Secret := Secret;
-
       Self.Certificate := new CZMQ.Certificates.Certificate'
         (CZMQ.Certificates.New_Certificate);
 
       Self.Socket := new CZMQ.Sockets.Socket'(CZMQ.Sockets.New_Dealer);
       Self.Certificate.Apply (Self.Socket.all);
-      Self.Socket.Set_Curve_Serverkey (To_String (Public_Key));
+      Self.Socket.Set_Curve_Serverkey (To_String (Self.Server_Public_Key));
       Self.Socket.Set_Identity (To_String (Self.Config.Agent_Name));
       Self.Socket.Connect (To_String (Self.Config.Controller_Address));
    end Create_Socket;
@@ -195,6 +154,23 @@ package body Podmander.Agent is
    begin
       Self.Config := Config;
       Self.Running := True;
+
+      --  Parse the join token once at startup so a malformed token surfaces
+      --  before the run loop, and so Get_Server_Public_Key serves the
+      --  cached value rather than re-parsing on every call. Agents started
+      --  without a token (default config) defer the failure to Create_Socket
+      --  to preserve the existing pre-cache behaviour.
+      if Config.Join_Token /= Null_Unbounded_String then
+         declare
+            Parsed : constant Podmander.Enrollment.Parsed_Token :=
+              Podmander.Enrollment.Parse_Join_Token
+                (To_String (Config.Join_Token));
+         begin
+            Self.Server_Public_Key := Parsed.Public_Key;
+            Self.Enrollment_Secret := Parsed.Secret;
+         end;
+      end if;
+
       Podmander.Logging.Info
         ("agent", "Agent """ & To_String (Config.Agent_Name)
          & """ starting, controller at "
@@ -230,18 +206,7 @@ package body Podmander.Agent is
    function Get_Server_Public_Key
      (Self : Agent_Instance) return String is
    begin
-      if Self.Config.Join_Token /= Null_Unbounded_String then
-         declare
-            Public_Key : Ada.Strings.Unbounded.Unbounded_String;
-            Secret     : Ada.Strings.Unbounded.Unbounded_String;
-         begin
-            Parse_Join_Token
-              (To_String (Self.Config.Join_Token), Public_Key, Secret);
-            return To_String (Public_Key);
-         end;
-      else
-         return "";
-      end if;
+      return To_String (Self.Server_Public_Key);
    end Get_Server_Public_Key;
 
 end Podmander.Agent;

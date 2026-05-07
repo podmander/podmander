@@ -17,21 +17,20 @@ package Podmander.Agent is
       Max_Backoff          : Duration := 60.0;
    end record;
 
-   Parse_Error : exception;
-
    type Certificate_Access is access CZMQ.Certificates.Certificate;
 
    type Socket_Access is access CZMQ.Sockets.Socket;
 
    type Agent_Instance is tagged limited record
-      Config           : Agent_Config;
-      Certificate      : Certificate_Access := null;
-      Socket           : Socket_Access := null;
-      State            : Podmander.Types.Connection_State :=
+      Config            : Agent_Config;
+      Certificate       : Certificate_Access := null;
+      Socket            : Socket_Access := null;
+      State             : Podmander.Types.Connection_State :=
         Podmander.Types.Disconnected;
-      Node_Id          : Ada.Strings.Unbounded.Unbounded_String;
-      Running          : Boolean := False;
-      Backoff          : Duration := 1.0;
+      Node_Id           : Ada.Strings.Unbounded.Unbounded_String;
+      Running           : Boolean := False;
+      Backoff           : Duration := 1.0;
+      Server_Public_Key : Ada.Strings.Unbounded.Unbounded_String;
       Enrollment_Secret : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
