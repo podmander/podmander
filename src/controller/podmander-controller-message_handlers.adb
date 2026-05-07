@@ -25,7 +25,7 @@ package body Podmander.Controller.Message_Handlers is
    begin
       Msg.Add_String (Node_Id);
       Query.Encode (Msg);
-      Msg.Send (H.Ctrl.Socket.all);
+      Msg.Send (H.Ctrl.Socket);
       Podmander.Logging.Info
         ("controller",
          "Sent status query to " & Node_Id);
@@ -64,7 +64,7 @@ package body Podmander.Controller.Message_Handlers is
             "Registered agent """ & Name & """ as " & Node_Id);
       end;
 
-      if H.Ctrl.Socket /= null then
+      if H.Ctrl.Socket.Is_Valid then
          declare
             Reply     : constant Register_Response :=
               (Node_Id => To_Unbounded_String (Node_Id));
@@ -73,7 +73,7 @@ package body Podmander.Controller.Message_Handlers is
          begin
             Reply_Msg.Add_String (Node_Id);
             Reply.Encode (Reply_Msg);
-            Reply_Msg.Send (H.Ctrl.Socket.all);
+            Reply_Msg.Send (H.Ctrl.Socket);
          end;
 
          Send_Status_Query (H, Node_Id);

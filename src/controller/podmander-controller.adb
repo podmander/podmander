@@ -3,6 +3,7 @@
 
 with Ada.Calendar;
 with CZMQ.Messages;
+with CZMQ.Pollers;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Logging;
 with Podmander.Messages;
@@ -14,6 +15,8 @@ package body Podmander.Controller is
 
    use Ada.Strings.Unbounded;
    use type CZMQ.Messages.Receive_Status;
+
+   Poll_Interval_Ms : constant := 1000;
 
    procedure Set_Bind_Address
      (Config  : in out Controller_Config;
@@ -28,24 +31,23 @@ package body Podmander.Controller is
       return Config.Bind_Address (1 .. Config.Bind_Address_Last);
    end Get_Bind_Address;
 
-   procedure Initialize
-      (Self   : in out Controller_Instance;
-       Config : Controller_Config) is
+   function Make_Listening_Controller
+     (Config : Controller_Config) return Controller_Instance is
    begin
-      Self.Config := Config;
-      Self.Certificate := new CZMQ.Certificates.Certificate'
-        (CZMQ.Certificates.New_Certificate);
-      Self.Socket := new CZMQ.Sockets.Socket'(CZMQ.Sockets.New_Router);
-      Self.Certificate.Apply (Self.Socket.all);
-      Self.Socket.Set_Curve_Server (True);
-      Self.Socket.Bind (Get_Bind_Address (Config));
-      Self.Poller :=
-        new CZMQ.Pollers.Poller'
-          (CZMQ.Pollers.New_Poller (Self.Socket.all));
-      Self.Running := True;
-      Podmander.Logging.Info
-        ("controller", "Listening on " & Get_Bind_Address (Config));
-   end Initialize;
+      return C : Controller_Instance :=
+        (Config      => Config,
+         Certificate => CZMQ.Certificates.New_Certificate,
+         Socket      => CZMQ.Sockets.New_Router,
+         Agents      => <>,
+         Running     => True)
+      do
+         C.Certificate.Apply (C.Socket);
+         C.Socket.Set_Curve_Server (True);
+         C.Socket.Bind (Get_Bind_Address (Config));
+         Podmander.Logging.Info
+           ("controller", "Listening on " & Get_Bind_Address (Config));
+      end return;
+   end Make_Listening_Controller;
 
    procedure Handle_Message (Self : in out Controller_Instance) is
       Msg    : CZMQ.Messages.Message;
@@ -57,7 +59,7 @@ package body Podmander.Controller is
         (Ctrl     => Self'Unchecked_Access,
          Identity => Null_Unbounded_String);
    begin
-      CZMQ.Messages.Receive (Self.Socket.all, Msg, Status);
+      CZMQ.Messages.Receive (Self.Socket, Msg, Status);
       if Status = CZMQ.Messages.Timeout then
          return;
       end if;
@@ -111,22 +113,16 @@ package body Podmander.Controller is
       end loop;
    end Check_Timeouts;
 
-   Poll_Interval_Ms : constant := 1000;
-
-   procedure Run_Once (Self : in out Controller_Instance) is
-   begin
-      if Self.Poller.Wait (Poll_Interval_Ms) then
-         Handle_Message (Self);
-      end if;
-      Check_Timeouts (Self);
-   end Run_Once;
-
    procedure Run (Self : in out Controller_Instance) is
+      Poller : CZMQ.Pollers.Poller := CZMQ.Pollers.New_Poller (Self.Socket);
    begin
       while Self.Running
         and then not Podmander.Shutdown.Requested
       loop
-         Self.Run_Once;
+         if Poller.Wait (Poll_Interval_Ms) then
+            Handle_Message (Self);
+         end if;
+         Check_Timeouts (Self);
       end loop;
    end Run;
 
@@ -137,7 +133,7 @@ package body Podmander.Controller is
 
    function Get_Public_Key (Self : Controller_Instance) return String is
    begin
-      if Self.Certificate /= null then
+      if Self.Certificate.Is_Valid then
          return Self.Certificate.Public_Key;
       else
          return "";

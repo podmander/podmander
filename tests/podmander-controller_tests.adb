@@ -223,7 +223,7 @@ package body Podmander.Controller_Tests is
    end Make_Handler;
 
    --  Test: Handle_Register_Request adds the agent to the controller's map
-   --  when Socket is null (reply Send is guarded).
+   --  when Socket is not yet open (reply Send is guarded by Is_Valid).
    procedure Test_Handle_Register_Request_Adds_Agent
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is

@@ -28,9 +28,9 @@ begin
       Podmander.CLI.Get ("bind", "tcp://*:5555"));
 
    declare
-      Ctrl : Podmander.Controller.Controller_Instance;
+      Ctrl : Podmander.Controller.Controller_Instance :=
+        Podmander.Controller.Make_Listening_Controller (Config);
    begin
-      Ctrl.Initialize (Config);
       Ctrl.Generate_Join_Token (Token);
       Podmander.Logging.Info
         ("controller", "Join token: " & To_String (Token));

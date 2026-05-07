@@ -5,7 +5,6 @@ with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 with CZMQ.Certificates;
-with CZMQ.Pollers;
 with CZMQ.Sockets;
 with Podmander.Enrollment;
 with Podmander.Types;
@@ -35,26 +34,27 @@ package Podmander.Controller is
       Hash            => Ada.Strings.Hash,
       Equivalent_Keys => "=");
 
-   type Certificate_Access is access CZMQ.Certificates.Certificate;
-
-   type Socket_Access is access CZMQ.Sockets.Socket;
-
-   type Poller_Access is access CZMQ.Pollers.Poller;
-
+   --  The CURVE certificate and ZeroMQ socket live for the controller's
+   --  full lifetime; their Limited_Controlled finalizers release the
+   --  underlying CZMQ resources when the instance leaves scope. A
+   --  default-initialised Controller_Instance has empty (invalid) Cert
+   --  and Socket — handler tests rely on that to drive logic without a
+   --  live socket; production code obtains a fully-built instance from
+   --  Make_Listening_Controller.
    type Controller_Instance is tagged limited record
       Config      : Controller_Config;
-      Certificate : Certificate_Access := null;
-      Socket      : Socket_Access := null;
-      Poller      : Poller_Access := null;
+      Certificate : CZMQ.Certificates.Certificate;
+      Socket      : CZMQ.Sockets.Socket;
       Agents      : Agent_Maps.Map;
       Running     : Boolean := False;
    end record;
 
-   procedure Initialize
-     (Self   : in out Controller_Instance;
-      Config : Controller_Config);
-
-   procedure Run_Once (Self : in out Controller_Instance);
+   --  Build a fully-initialised, listening controller: generate the
+   --  CURVE certificate, open the ROUTER socket, enable CURVE server
+   --  mode, and bind to Config's Bind_Address. The returned instance
+   --  is in the Running state.
+   function Make_Listening_Controller
+     (Config : Controller_Config) return Controller_Instance;
 
    procedure Run (Self : in out Controller_Instance);
 
