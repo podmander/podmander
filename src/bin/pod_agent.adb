@@ -22,6 +22,17 @@ begin
    end;
 
    declare
+      Token : constant String := Podmander.CLI.Get ("token", "");
+   begin
+      if Token = "" then
+         Podmander.CLI.Print_Usage
+           ("pod_agent --token <TOKEN> [--connect <ADDR>] "
+            & "[--name <NAME>] [--interval <SEC>] [--log-level <LEVEL>]");
+         return;
+      end if;
+   end;
+
+   declare
       Config : constant Podmander.Agent.Agent_Config :=
          (Controller_Address =>
             To_Unbounded_String
