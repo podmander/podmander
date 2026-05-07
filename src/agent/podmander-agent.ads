@@ -2,8 +2,6 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Strings.Unbounded;
-with CZMQ.Certificates;
-with CZMQ.Sockets;
 with Podmander.Types;
 
 package Podmander.Agent is
@@ -17,14 +15,8 @@ package Podmander.Agent is
       Max_Backoff          : Duration := 60.0;
    end record;
 
-   type Certificate_Access is access CZMQ.Certificates.Certificate;
-
-   type Socket_Access is access CZMQ.Sockets.Socket;
-
    type Agent_Instance is tagged limited record
       Config            : Agent_Config;
-      Certificate       : Certificate_Access := null;
-      Socket            : Socket_Access := null;
       State             : Podmander.Types.Connection_State :=
         Podmander.Types.Disconnected;
       Node_Id           : Ada.Strings.Unbounded.Unbounded_String;
@@ -37,8 +29,6 @@ package Podmander.Agent is
    procedure Initialize
      (Self   : in out Agent_Instance;
       Config : Agent_Config);
-
-   procedure Run_Once (Self : in out Agent_Instance);
 
    procedure Run (Self : in out Agent_Instance);
 

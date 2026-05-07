@@ -55,17 +55,13 @@ package body Podmander.Agent.Message_Handlers is
 
    procedure Send_Deploy_Result
      (H      : in out Agent_Handler;
-      Result : Podmander.Messages.Deploy_Results.Deploy_Result) is
+      Result : Podmander.Messages.Deploy_Results.Deploy_Result)
+   is
+      use Podmander.Messages.Deploy_Results;
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      if H.Agt.Socket /= null then
-         declare
-            use Podmander.Messages.Deploy_Results;
-            Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-         begin
-            Result.Encode (Msg);
-            Msg.Send (H.Agt.Socket.all);
-         end;
-      end if;
+      Result.Encode (Msg);
+      Msg.Send (H.Sock.all);
    end Send_Deploy_Result;
 
    overriding procedure Handle_Status_Query
@@ -91,17 +87,13 @@ package body Podmander.Agent.Message_Handlers is
 
    procedure Send_Status_Response
      (H      : in out Agent_Handler;
-      Result : Podmander.Messages.Status_Responses.Status_Response) is
+      Result : Podmander.Messages.Status_Responses.Status_Response)
+   is
+      use Podmander.Messages.Status_Responses;
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      if H.Agt.Socket /= null then
-         declare
-            use Podmander.Messages.Status_Responses;
-            Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-         begin
-            Result.Encode (Msg);
-            Msg.Send (H.Agt.Socket.all);
-         end;
-      end if;
+      Result.Encode (Msg);
+      Msg.Send (H.Sock.all);
    end Send_Status_Response;
 
 end Podmander.Agent.Message_Handlers;

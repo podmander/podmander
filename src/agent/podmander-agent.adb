@@ -20,8 +20,8 @@ package body Podmander.Agent is
       --  Parse the join token once at startup so a malformed token surfaces
       --  before the run loop, and so Get_Server_Public_Key serves the
       --  cached value rather than re-parsing on every call. Agents started
-      --  without a token (default config) defer the failure to Create_Socket
-      --  to preserve the existing pre-cache behaviour.
+      --  without a token (default config) defer the failure to the first
+      --  connection cycle to preserve the existing pre-cache behaviour.
       if Config.Join_Token /= Null_Unbounded_String then
          declare
             Parsed : constant Podmander.Enrollment.Parsed_Token :=
@@ -39,17 +39,12 @@ package body Podmander.Agent is
          & To_String (Config.Controller_Address));
    end Initialize;
 
-   procedure Run_Once (Self : in out Agent_Instance) is
-   begin
-      Connection.Step (Self);
-   end Run_Once;
-
    procedure Run (Self : in out Agent_Instance) is
    begin
       while Self.Running
         and then not Podmander.Shutdown.Requested
       loop
-         Self.Run_Once;
+         Connection.Run_Cycle (Self);
       end loop;
    end Run;
 
