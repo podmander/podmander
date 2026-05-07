@@ -4,6 +4,7 @@
 --  Host-side Podman/Quadlet operations invoked by the agent.
 
 with Podmander.Messages.Deploy_Results;
+with Podmander.Messages.Status_Responses;
 
 package Podmander.Agent.Podman is
 
@@ -13,5 +14,10 @@ package Podmander.Agent.Podman is
      (Service_Name : String;
       Quadlet      : String)
       return Podmander.Messages.Deploy_Results.Deploy_Result;
+
+   --  Run `podman ps` and return a Status_Response carrying the
+   --  formatted listing of currently active containers.
+   function List_Containers
+     return Podmander.Messages.Status_Responses.Status_Response;
 
 end Podmander.Agent.Podman;

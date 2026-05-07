@@ -3,7 +3,6 @@
 
 with CZMQ.Messages;
 with Podmander.Agent.Podman;
-with Podmander.Agent.Status_Collector;
 with Podmander.Logging;
 with Podmander.Messages.Deploy_Commands;
 
@@ -75,7 +74,7 @@ package body Podmander.Agent.Message_Handlers is
    is
       pragma Unreferenced (M);
       Result : constant Podmander.Messages.Status_Responses.Status_Response :=
-        Podmander.Agent.Status_Collector.Collect_Status;
+        Podmander.Agent.Podman.List_Containers;
    begin
       Send_Status_Response (H, Result);
    end Handle_Status_Query;

@@ -9,6 +9,7 @@ with Podmander.Agent.Host_Command;
 with Podmander.Agent.Host_Command.Result_Mapping;
 with Podmander.Logging;
 with Podmander.Messages.Result_Codes;
+with Podmander.Messages.Status_Responses;
 
 package body Podmander.Agent.Podman is
 
@@ -113,5 +114,58 @@ package body Podmander.Agent.Podman is
                & ": "
                & Ada.Exceptions.Exception_Message (E)));
    end Install_Quadlet;
+
+   function List_Containers
+     return Podmander.Messages.Status_Responses.Status_Response
+   is
+      use Podmander.Messages.Status_Responses;
+      Ps_Args : constant HC.Argument_List :=
+        [HC."+"("ps"),
+         HC."+"("--format"),
+         HC."+"("{{.Names}} {{.Status}}")];
+      Result : constant HC.Command_Result :=
+        HC.Run_Command
+          (Program    => "/usr/bin/podman",
+           Args       => Ps_Args,
+           Err_To_Out => False);
+      Code : constant RC.Result_Code := RM.To_Result_Code (Result);
+   begin
+      if Code = RC.Ok then
+         Podmander.Logging.Info
+           ("agent", "Status query: sending container list");
+         return Status_Response'
+           (Code          => Code,
+            Containers    => Result.Output,
+            Error_Message => Null_Unbounded_String);
+      else
+         Podmander.Logging.Warning
+           ("agent", "Status query: podman ps failed");
+         declare
+            Error_Detail : constant Unbounded_String :=
+              (if Length (Result.Error_Output) > 0
+               then Result.Error_Output
+               else Result.Output);
+         begin
+            return Status_Response'
+              (Code          => Code,
+               Containers    => Null_Unbounded_String,
+               Error_Message => Error_Detail);
+         end;
+      end if;
+   exception
+      when E : others =>
+         Podmander.Logging.Error
+           ("agent",
+            "Status query exception ["
+            & Ada.Exceptions.Exception_Name (E) & "]: "
+            & Ada.Exceptions.Exception_Message (E));
+         return Status_Response'
+           (Code          => RC.Internal,
+            Containers    => Null_Unbounded_String,
+            Error_Message => To_Unbounded_String
+              (Ada.Exceptions.Exception_Name (E)
+               & ": "
+               & Ada.Exceptions.Exception_Message (E)));
+   end List_Containers;
 
 end Podmander.Agent.Podman;
