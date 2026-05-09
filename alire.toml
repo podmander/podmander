@@ -10,6 +10,7 @@ licenses = "Apache-2.0"
 czmq_ada = "~0.4.0"
 aunit = "~26.0.0"
 spoon = "~1.0.1"
+ada_sqlite3 = "~0.1.1"
 
 [build-switches]
 "*".style_checks = "yes"
