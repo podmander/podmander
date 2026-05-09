@@ -85,7 +85,6 @@ distrobox enter ada_dev -- alr build
 
 ### Documentation
 
-- Use `--` comments, not block comments.
 - Keep comments factual. Describe "why," not "what" when the code is self-explanatory.
 - At the beginning of each source code file, add the SPDX-style Apache 2.0 header. The full license text lives in the top-level `LICENSE` file. Template:
     ```ada
