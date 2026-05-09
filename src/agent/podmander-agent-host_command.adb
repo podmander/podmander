@@ -74,7 +74,7 @@ package body Podmander.Agent.Host_Command is
          Length : constant Natural := Natural (Owner.Items.Length);
       begin
          if Length = 0 then
-            return (1 .. 0 => null);
+            return [1 .. 0 => null];
          end if;
          return [for I in 1 .. Length =>
                     Owner.Items.Element (I)];
