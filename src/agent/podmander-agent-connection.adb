@@ -34,7 +34,7 @@ package body Podmander.Agent.Connection is
       Podmander.Logging.Debug ("agent", Log_Text);
    end Send_Message;
 
-   procedure Send_Register
+   procedure Send_Registration
      (Self : Agent_Instance;
       Sock : in out CZMQ.Sockets.Socket)
    is
@@ -46,7 +46,7 @@ package body Podmander.Agent.Connection is
            (Agent_Name        => Self.Config.Agent_Name,
             Enrollment_Secret => Self.Enrollment_Secret),
          "Sent registration request");
-   end Send_Register;
+   end Send_Registration;
 
    procedure Send_Heartbeat
      (Self : Agent_Instance;
@@ -88,7 +88,7 @@ package body Podmander.Agent.Connection is
       Sock.Set_Receive_Timeout
         (Integer (Self.Config.Registration_Timeout * 1000.0));
 
-      Send_Register (Self, Sock);
+      Send_Registration (Self, Sock);
       Self.State := Podmander.Types.Enrolling;
 
       --  Enrolling: wait for register response.
