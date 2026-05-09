@@ -16,11 +16,11 @@ pragma Unreferenced (Podmander.Messages.Deploy_Results);
 with Podmander.Messages.Heartbeats;
 pragma Unreferenced (Podmander.Messages.Heartbeats);
 
-with Podmander.Messages.Register_Requests;
-pragma Unreferenced (Podmander.Messages.Register_Requests);
+with Podmander.Messages.Registration_Requests;
+pragma Unreferenced (Podmander.Messages.Registration_Requests);
 
-with Podmander.Messages.Register_Responses;
-pragma Unreferenced (Podmander.Messages.Register_Responses);
+with Podmander.Messages.Registration_Responses;
+pragma Unreferenced (Podmander.Messages.Registration_Responses);
 
 with Podmander.Messages.Result_Codes;
 pragma Unreferenced (Podmander.Messages.Result_Codes);

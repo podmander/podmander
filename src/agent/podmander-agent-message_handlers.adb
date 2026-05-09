@@ -8,15 +8,15 @@ with Podmander.Messages.Deploy_Commands;
 
 package body Podmander.Agent.Message_Handlers is
 
-   overriding procedure Handle_Register_Request
-     (H : in out Agent_Handler;
-      M : Podmander.Messages.Register_Request_Type'Class)
-   is
-      pragma Unreferenced (H, M);
-   begin
-      Podmander.Logging.Warning
-        ("agent", "Register_Request is agent-to-controller only");
-   end Handle_Register_Request;
+    overriding procedure Handle_Registration_Request
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Registration_Request_Type'Class)
+    is
+       pragma Unreferenced (H, M);
+    begin
+       Podmander.Logging.Warning
+         ("agent", "Registration_Request is agent-to-controller only");
+    end Handle_Registration_Request;
 
    overriding procedure Handle_Heartbeat
      (H : in out Agent_Handler;

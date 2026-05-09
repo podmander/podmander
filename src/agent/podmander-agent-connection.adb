@@ -11,8 +11,8 @@ with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Heartbeats;
-with Podmander.Messages.Register_Requests;
-with Podmander.Messages.Register_Responses;
+with Podmander.Messages.Registration_Requests;
+with Podmander.Messages.Registration_Responses;
 with Podmander.Shutdown;
 
 package body Podmander.Agent.Connection is
@@ -38,11 +38,11 @@ package body Podmander.Agent.Connection is
      (Self : Agent_Instance;
       Sock : in out CZMQ.Sockets.Socket)
    is
-      use Podmander.Messages.Register_Requests;
+      use Podmander.Messages.Registration_Requests;
    begin
       Send_Message
         (Sock,
-         Register_Request'
+         Registration_Request'
            (Agent_Name        => Self.Config.Agent_Name,
             Enrollment_Secret => Self.Enrollment_Secret),
          "Sent registration request");
@@ -109,13 +109,13 @@ package body Podmander.Agent.Connection is
             return;
          end if;
 
-         declare
-            use Podmander.Messages;
-            use Podmander.Messages.Register_Responses;
-            Decoded : constant Protocol_Message'Class := Decode (Msg);
-         begin
-            if Decoded in Register_Response then
-               Self.Node_Id := Register_Response (Decoded).Node_Id;
+          declare
+             use Podmander.Messages;
+             use Podmander.Messages.Registration_Responses;
+             Decoded : constant Protocol_Message'Class := Decode (Msg);
+          begin
+             if Decoded in Registration_Response then
+                Self.Node_Id := Registration_Response (Decoded).Node_Id;
                Self.State := Podmander.Types.Connected;
                Self.Backoff := 1.0;
                Podmander.Logging.Info

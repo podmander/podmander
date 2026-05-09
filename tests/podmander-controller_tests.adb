@@ -16,8 +16,8 @@ with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Responses;
-with Podmander.Messages.Register_Requests;
-with Podmander.Messages.Register_Responses;
+with Podmander.Messages.Registration_Requests;
+with Podmander.Messages.Registration_Responses;
 with Podmander.Types;
 
 package body Podmander.Controller_Tests is
@@ -36,26 +36,26 @@ package body Podmander.Controller_Tests is
    --  A Message_Handler that records which primitive was invoked and
    --  a copy of the received message. Used to verify Dispatch_To routes
    --  polymorphically to the right typed handler method.
-   type Spy_Kind is (None, Register_Seen, Heartbeat_Seen,
-                     Deploy_Command_Seen, Deploy_Result_Seen,
-                     Status_Query_Seen, Status_Response_Seen);
+    type Spy_Kind is (None, Registration_Seen, Heartbeat_Seen,
+                      Deploy_Command_Seen, Deploy_Result_Seen,
+                      Status_Query_Seen, Status_Response_Seen);
 
-   package Reg_Reqs renames Podmander.Messages.Register_Requests;
+    package Reg_Reqs renames Podmander.Messages.Registration_Requests;
    package Heartbeats renames Podmander.Messages.Heartbeats;
 
    type Spy_Handler is limited new Podmander.Messages.Message_Handler
    with record
       Kind             : Spy_Kind := None;
-      Last_Register    : Reg_Reqs.Register_Request;
+       Last_Registration : Reg_Reqs.Registration_Request;
       Last_Heartbeat   : Heartbeats.Heartbeat_Message;
       Last_Deploy_Cmd  : Podmander.Messages.Deploy_Commands.Deploy_Command;
       Last_Deploy_Res  : Podmander.Messages.Deploy_Results.Deploy_Result;
       Last_Status_Resp : Podmander.Messages.Status_Responses.Status_Response;
    end record;
 
-   overriding procedure Handle_Register_Request
-     (H : in out Spy_Handler;
-      M : Podmander.Messages.Register_Request_Type'Class);
+    overriding procedure Handle_Registration_Request
+      (H : in out Spy_Handler;
+       M : Podmander.Messages.Registration_Request_Type'Class);
 
    overriding procedure Handle_Heartbeat
      (H : in out Spy_Handler;
@@ -77,14 +77,14 @@ package body Podmander.Controller_Tests is
      (H : in out Spy_Handler;
       M : Podmander.Messages.Status_Response_Type'Class);
 
-   overriding procedure Handle_Register_Request
-     (H : in out Spy_Handler;
-      M : Podmander.Messages.Register_Request_Type'Class) is
-   begin
-      H.Kind := Register_Seen;
-      H.Last_Register :=
-        Podmander.Messages.Register_Requests.Register_Request (M);
-   end Handle_Register_Request;
+    overriding procedure Handle_Registration_Request
+      (H : in out Spy_Handler;
+       M : Podmander.Messages.Registration_Request_Type'Class) is
+    begin
+       H.Kind := Registration_Seen;
+       H.Last_Registration :=
+         Podmander.Messages.Registration_Requests.Registration_Request (M);
+    end Handle_Registration_Request;
 
    overriding procedure Handle_Heartbeat
      (H : in out Spy_Handler;
@@ -130,23 +130,23 @@ package body Podmander.Controller_Tests is
         Podmander.Messages.Status_Responses.Status_Response (M);
    end Handle_Status_Response;
 
-   --  Test: Register_Request.Dispatch_To routes to Handle_Register_Request
-   procedure Test_Dispatch_Register_Request
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      use Podmander.Messages.Register_Requests;
-      Req : constant Register_Request :=
-        (Agent_Name        => To_Unbounded_String ("web-1"),
-         Enrollment_Secret => To_Unbounded_String ("secret"));
-      Spy : Spy_Handler;
-   begin
-      Req.Dispatch_To (Spy);
-      Assert (Spy.Kind = Register_Seen, "Expected Register_Seen");
-      Assert
-        (To_String (Spy.Last_Register.Agent_Name) = "web-1",
-         "Expected agent_name web-1");
-   end Test_Dispatch_Register_Request;
+    --  Test: Registration_Request.Dispatch_To routes to Handle_Registration_Request
+    procedure Test_Dispatch_Registration_Request
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       use Podmander.Messages.Registration_Requests;
+       Req : constant Registration_Request :=
+         (Agent_Name        => To_Unbounded_String ("web-1"),
+          Enrollment_Secret => To_Unbounded_String ("secret"));
+       Spy : Spy_Handler;
+    begin
+       Req.Dispatch_To (Spy);
+       Assert (Spy.Kind = Registration_Seen, "Expected Registration_Seen");
+       Assert
+         (To_String (Spy.Last_Registration.Agent_Name) = "web-1",
+          "Expected agent_name web-1");
+    end Test_Dispatch_Registration_Request;
 
    --  Test: Heartbeat_Message.Dispatch_To routes to Handle_Heartbeat
    procedure Test_Dispatch_Heartbeat
@@ -166,41 +166,41 @@ package body Podmander.Controller_Tests is
          "Expected agent_id node-1");
    end Test_Dispatch_Heartbeat;
 
-   --  Test: Polymorphic dispatch through Protocol_Message'Class routes
-   --  to the concrete type's handler.
-   procedure Test_Dispatch_Polymorphic
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      use Podmander.Messages.Register_Requests;
-      Req : constant Register_Request :=
-        (Agent_Name        => To_Unbounded_String ("poly"),
-         Enrollment_Secret => To_Unbounded_String ("secret"));
-      Msg : constant Podmander.Messages.Protocol_Message'Class := Req;
-      Spy : Spy_Handler;
-   begin
-      Msg.Dispatch_To (Spy);
-      Assert
-        (Spy.Kind = Register_Seen,
-         "Polymorphic dispatch did not reach Register handler");
-   end Test_Dispatch_Polymorphic;
+    --  Test: Polymorphic dispatch through Protocol_Message'Class routes
+    --  to the concrete type's handler.
+    procedure Test_Dispatch_Polymorphic
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       use Podmander.Messages.Registration_Requests;
+       Req : constant Registration_Request :=
+         (Agent_Name        => To_Unbounded_String ("poly"),
+          Enrollment_Secret => To_Unbounded_String ("secret"));
+       Msg : constant Podmander.Messages.Protocol_Message'Class := Req;
+       Spy : Spy_Handler;
+    begin
+       Msg.Dispatch_To (Spy);
+       Assert
+         (Spy.Kind = Registration_Seen,
+          "Polymorphic dispatch did not reach Registration handler");
+    end Test_Dispatch_Polymorphic;
 
-   --  Test: Register_Response.Dispatch_To raises Program_Error
-   procedure Test_Dispatch_Response_Raises
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      use Podmander.Messages.Register_Responses;
-      Resp : constant Register_Response :=
-        (Node_Id => To_Unbounded_String ("n-1"));
-      Spy : Spy_Handler;
-   begin
-      Resp.Dispatch_To (Spy);
-      Assert (False, "Expected Program_Error from Register_Response");
-   exception
-      when Program_Error =>
-         null;  --  Expected
-   end Test_Dispatch_Response_Raises;
+    --  Test: Registration_Response.Dispatch_To raises Program_Error
+    procedure Test_Dispatch_Response_Raises
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       use Podmander.Messages.Registration_Responses;
+       Resp : constant Registration_Response :=
+         (Node_Id => To_Unbounded_String ("n-1"));
+       Spy : Spy_Handler;
+    begin
+       Resp.Dispatch_To (Spy);
+       Assert (False, "Expected Program_Error from Registration_Response");
+    exception
+       when Program_Error =>
+          null;  --  Expected
+    end Test_Dispatch_Response_Raises;
 
    --  Helpers for Controller_Handler tests that work without a live socket.
    function Make_Ctrl
@@ -222,24 +222,24 @@ package body Podmander.Controller_Tests is
          Identity => To_Unbounded_String (Identity));
    end Make_Handler;
 
-   --  Test: Handle_Register_Request adds the agent to the controller's map
-   --  when Socket is not yet open (reply Send is guarded by Is_Valid).
-   procedure Test_Handle_Register_Request_Adds_Agent
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
-        Make_Handler (Ctrl'Access, "node-abc");
-      Req  : constant Podmander.Messages.Register_Requests.Register_Request :=
-        (Agent_Name        => To_Unbounded_String ("web-1"),
-         Enrollment_Secret => To_Unbounded_String ("secret"));
-   begin
-      H.Handle_Register_Request (Req);
-      Assert
-        (Ctrl.Agents.Contains ("node-abc"),
-         "Expected agent node-abc in Agents map");
-   end Test_Handle_Register_Request_Adds_Agent;
+    --  Test: Handle_Registration_Request adds the agent to the controller's map
+    --  when Socket is not yet open (reply Send is guarded by Is_Valid).
+    procedure Test_Handle_Registration_Request_Adds_Agent
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+       H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
+         Make_Handler (Ctrl'Access, "node-abc");
+       Req  : constant Podmander.Messages.Registration_Requests.Registration_Request :=
+         (Agent_Name        => To_Unbounded_String ("web-1"),
+          Enrollment_Secret => To_Unbounded_String ("secret"));
+    begin
+       H.Handle_Registration_Request (Req);
+       Assert
+         (Ctrl.Agents.Contains ("node-abc"),
+          "Expected agent node-abc in Agents map");
+    end Test_Handle_Registration_Request_Adds_Agent;
 
    --  Test: Handle_Heartbeat on a registered agent updates Last_Seen.
    procedure Test_Handle_Heartbeat_Updates_Last_Seen
@@ -315,21 +315,21 @@ package body Podmander.Controller_Tests is
    overriding procedure Register_Tests (T : in out Controller_Test) is
       use AUnit.Test_Cases.Registration;
    begin
-      Register_Routine
-        (T, Test_Dispatch_Register_Request'Access,
-         "Register_Request.Dispatch_To routes to Handle_Register_Request");
-      Register_Routine
-        (T, Test_Dispatch_Heartbeat'Access,
-         "Heartbeat_Message.Dispatch_To routes to Handle_Heartbeat");
-      Register_Routine
-        (T, Test_Dispatch_Polymorphic'Access,
-         "Polymorphic Dispatch_To routes to concrete handler");
-      Register_Routine
-        (T, Test_Dispatch_Response_Raises'Access,
-         "Register_Response.Dispatch_To raises Program_Error");
-      Register_Routine
-        (T, Test_Handle_Register_Request_Adds_Agent'Access,
-         "Handle_Register_Request adds agent (no socket)");
+       Register_Routine
+         (T, Test_Dispatch_Registration_Request'Access,
+          "Registration_Request.Dispatch_To routes to Handle_Registration_Request");
+       Register_Routine
+         (T, Test_Dispatch_Heartbeat'Access,
+          "Heartbeat_Message.Dispatch_To routes to Handle_Heartbeat");
+       Register_Routine
+         (T, Test_Dispatch_Polymorphic'Access,
+          "Polymorphic Dispatch_To routes to concrete handler");
+       Register_Routine
+         (T, Test_Dispatch_Response_Raises'Access,
+          "Registration_Response.Dispatch_To raises Program_Error");
+       Register_Routine
+         (T, Test_Handle_Registration_Request_Adds_Agent'Access,
+          "Handle_Registration_Request adds agent (no socket)");
       Register_Routine
         (T, Test_Handle_Heartbeat_Updates_Last_Seen'Access,
          "Handle_Heartbeat updates Last_Seen for known agent");

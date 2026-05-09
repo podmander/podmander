@@ -21,9 +21,9 @@ package Podmander.Agent.Message_Handlers is
       Sock : access CZMQ.Sockets.Socket;
    end record;
 
-   overriding procedure Handle_Register_Request
-     (H : in out Agent_Handler;
-      M : Podmander.Messages.Register_Request_Type'Class);
+    overriding procedure Handle_Registration_Request
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Registration_Request_Type'Class);
 
    overriding procedure Handle_Heartbeat
      (H : in out Agent_Handler;

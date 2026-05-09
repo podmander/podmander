@@ -4,22 +4,22 @@
 with Ada.Strings.Unbounded;
 with CZMQ.Messages;
 
-package Podmander.Messages.Register_Requests is
+package Podmander.Messages.Registration_Requests is
 
    use Ada.Strings.Unbounded;
 
    --  Agent -> Controller: request registration
-   type Register_Request is new Register_Request_Type with record
+   type Registration_Request is new Registration_Request_Type with record
       Agent_Name      : Unbounded_String;
       Enrollment_Secret : Unbounded_String;
    end record;
 
    overriding procedure Encode
-     (Self : Register_Request;
+     (Self : Registration_Request;
       Msg  : in out CZMQ.Messages.Message);
 
    overriding procedure Dispatch_To
-     (Self : Register_Request;
+     (Self : Registration_Request;
       H    : in out Message_Handler'Class);
 
-end Podmander.Messages.Register_Requests;
+end Podmander.Messages.Registration_Requests;

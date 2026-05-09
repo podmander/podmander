@@ -6,8 +6,8 @@ with CZMQ.Messages;
 with Podmander.Enrollment;
 with Podmander.Logging;
 with Podmander.Messages.Deploy_Results;
-with Podmander.Messages.Register_Requests;
-with Podmander.Messages.Register_Responses;
+with Podmander.Messages.Registration_Requests;
+with Podmander.Messages.Registration_Responses;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
@@ -31,54 +31,54 @@ package body Podmander.Controller.Message_Handlers is
          "Sent status query to " & Node_Id);
    end Send_Status_Query;
 
-   overriding procedure Handle_Register_Request
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Register_Request_Type'Class)
-   is
-      use Podmander.Messages.Register_Requests;
-      use Podmander.Messages.Register_Responses;
-      Req     : constant Register_Request := Register_Request (M);
-      Name    : constant String := To_String (Req.Agent_Name);
-      Node_Id : constant String := To_String (H.Identity);
-   begin
-      if not Podmander.Enrollment.Secret_Matches
-        (H.Ctrl.Config.Enrollment, To_String (Req.Enrollment_Secret))
-      then
-         Podmander.Logging.Warning
-           ("controller",
-            "Invalid enrollment secret from agent """
-            & Name & """");
-         return;
-      end if;
+    overriding procedure Handle_Registration_Request
+      (H : in out Controller_Handler;
+       M : Podmander.Messages.Registration_Request_Type'Class)
+    is
+       use Podmander.Messages.Registration_Requests;
+       use Podmander.Messages.Registration_Responses;
+       Req     : constant Registration_Request := Registration_Request (M);
+       Name    : constant String := To_String (Req.Agent_Name);
+       Node_Id : constant String := To_String (H.Identity);
+    begin
+       if not Podmander.Enrollment.Secret_Matches
+         (H.Ctrl.Config.Enrollment, To_String (Req.Enrollment_Secret))
+       then
+          Podmander.Logging.Warning
+            ("controller",
+             "Invalid enrollment secret from agent """
+             & Name & """");
+          return;
+       end if;
 
-      declare
-         Info : constant Podmander.Types.Agent_Info :=
-           (Name      => Req.Agent_Name,
-            Node_Id   => To_Unbounded_String (Node_Id),
-            State     => Podmander.Types.Registered,
-            Last_Seen => Ada.Calendar.Clock);
-      begin
-         H.Ctrl.Agents.Include (Node_Id, Info);
-         Podmander.Logging.Info
-           ("controller",
-            "Registered agent """ & Name & """ as " & Node_Id);
-      end;
+       declare
+          Info : constant Podmander.Types.Agent_Info :=
+            (Name      => Req.Agent_Name,
+             Node_Id   => To_Unbounded_String (Node_Id),
+             State     => Podmander.Types.Registered,
+             Last_Seen => Ada.Calendar.Clock);
+       begin
+          H.Ctrl.Agents.Include (Node_Id, Info);
+          Podmander.Logging.Info
+            ("controller",
+             "Registered agent """ & Name & """ as " & Node_Id);
+       end;
 
-      if H.Ctrl.Socket.Is_Valid then
-         declare
-            Reply     : constant Register_Response :=
-              (Node_Id => To_Unbounded_String (Node_Id));
-            Reply_Msg : CZMQ.Messages.Message :=
-              CZMQ.Messages.New_Message;
-         begin
-            Reply_Msg.Add_String (Node_Id);
-            Reply.Encode (Reply_Msg);
-            Reply_Msg.Send (H.Ctrl.Socket);
-         end;
+       if H.Ctrl.Socket.Is_Valid then
+          declare
+             Reply     : constant Registration_Response :=
+               (Node_Id => To_Unbounded_String (Node_Id));
+             Reply_Msg : CZMQ.Messages.Message :=
+               CZMQ.Messages.New_Message;
+          begin
+             Reply_Msg.Add_String (Node_Id);
+             Reply.Encode (Reply_Msg);
+             Reply_Msg.Send (H.Ctrl.Socket);
+          end;
 
-         Send_Status_Query (H, Node_Id);
-      end if;
-   end Handle_Register_Request;
+          Send_Status_Query (H, Node_Id);
+       end if;
+    end Handle_Registration_Request;
 
    overriding procedure Handle_Heartbeat
      (H : in out Controller_Handler;

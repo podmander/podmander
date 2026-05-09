@@ -16,9 +16,9 @@ package Podmander.Controller.Message_Handlers is
       Identity : Unbounded_String;
    end record;
 
-   overriding procedure Handle_Register_Request
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Register_Request_Type'Class);
+    overriding procedure Handle_Registration_Request
+      (H : in out Controller_Handler;
+       M : Podmander.Messages.Registration_Request_Type'Class);
 
    overriding procedure Handle_Heartbeat
      (H : in out Controller_Handler;

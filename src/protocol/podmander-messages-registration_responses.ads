@@ -4,23 +4,23 @@
 with Ada.Strings.Unbounded;
 with CZMQ.Messages;
 
-package Podmander.Messages.Register_Responses is
+package Podmander.Messages.Registration_Responses is
 
    use Ada.Strings.Unbounded;
 
    --  Controller -> Agent: confirm registration.
    --  Outbound only; Dispatch_To raises Program_Error because Decode never
-   --  produces a Register_Response from inbound traffic.
-   type Register_Response is new Register_Response_Type with record
+   --  produces a Registration_Response from inbound traffic.
+   type Registration_Response is new Registration_Response_Type with record
       Node_Id : Unbounded_String;
    end record;
 
    overriding procedure Encode
-     (Self : Register_Response;
+     (Self : Registration_Response;
       Msg  : in out CZMQ.Messages.Message);
 
    overriding procedure Dispatch_To
-     (Self : Register_Response;
+     (Self : Registration_Response;
       H    : in out Message_Handler'Class);
 
-end Podmander.Messages.Register_Responses;
+end Podmander.Messages.Registration_Responses;

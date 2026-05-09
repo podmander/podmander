@@ -12,8 +12,8 @@ pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Deploy_Commands;
 with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
-with Podmander.Messages.Register_Requests;
-with Podmander.Messages.Register_Responses;
+with Podmander.Messages.Registration_Requests;
+with Podmander.Messages.Registration_Responses;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
@@ -31,62 +31,62 @@ package body Podmander.Messages_Tests is
 
    overriding procedure Register_Tests (T : in out Message_Test);
 
-   --  Test: Register_Request round-trip encode/decode
-   procedure Test_Register_Request_Round_Trip
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      use Podmander.Messages.Register_Requests;
-      Original : constant Register_Request :=
-        (Agent_Name        => To_Unbounded_String ("web-1"),
-         Enrollment_Secret => To_Unbounded_String ("secret123"));
-      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-   begin
-      Original.Encode (Msg);
-      Assert (Msg.Size = 3, "Expected 3 frames, got" & Msg.Size'Image);
+    --  Test: Registration_Request round-trip encode/decode
+    procedure Test_Registration_Request_Round_Trip
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       use Podmander.Messages.Registration_Requests;
+       Original : constant Registration_Request :=
+         (Agent_Name        => To_Unbounded_String ("web-1"),
+          Enrollment_Secret => To_Unbounded_String ("secret123"));
+       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+    begin
+       Original.Encode (Msg);
+       Assert (Msg.Size = 3, "Expected 3 frames, got" & Msg.Size'Image);
 
-      declare
-         use Podmander.Messages;
-         Decoded : constant Protocol_Message'Class := Decode (Msg);
-      begin
-         Assert
-           (Decoded in Register_Request,
-            "Expected Register_Request");
-         Assert
-           (To_String (Register_Request (Decoded).Agent_Name) = "web-1",
-            "Agent name mismatch");
-         Assert
-           (To_String (Register_Request (Decoded).Enrollment_Secret) =
-              "secret123",
-            "Enrollment secret mismatch");
-      end;
-   end Test_Register_Request_Round_Trip;
+       declare
+          use Podmander.Messages;
+          Decoded : constant Protocol_Message'Class := Decode (Msg);
+       begin
+          Assert
+            (Decoded in Registration_Request,
+             "Expected Registration_Request");
+          Assert
+            (To_String (Registration_Request (Decoded).Agent_Name) = "web-1",
+             "Agent name mismatch");
+          Assert
+            (To_String (Registration_Request (Decoded).Enrollment_Secret) =
+               "secret123",
+             "Enrollment secret mismatch");
+       end;
+    end Test_Registration_Request_Round_Trip;
 
-   --  Test: Register_Response round-trip encode/decode
-   procedure Test_Register_Response_Round_Trip
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      use Podmander.Messages.Register_Responses;
-      Original : constant Register_Response :=
-        (Node_Id => To_Unbounded_String ("node-42"));
-      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-   begin
-      Original.Encode (Msg);
-      Assert (Msg.Size = 2, "Expected 2 frames, got" & Msg.Size'Image);
+    --  Test: Registration_Response round-trip encode/decode
+    procedure Test_Registration_Response_Round_Trip
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       use Podmander.Messages.Registration_Responses;
+       Original : constant Registration_Response :=
+         (Node_Id => To_Unbounded_String ("node-42"));
+       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+    begin
+       Original.Encode (Msg);
+       Assert (Msg.Size = 2, "Expected 2 frames, got" & Msg.Size'Image);
 
-      declare
-         use Podmander.Messages;
-         Decoded : constant Protocol_Message'Class := Decode (Msg);
-      begin
-         Assert
-           (Decoded in Register_Response,
-            "Expected Register_Response");
-         Assert
-           (To_String (Register_Response (Decoded).Node_Id) = "node-42",
-            "Node ID mismatch");
-      end;
-   end Test_Register_Response_Round_Trip;
+       declare
+          use Podmander.Messages;
+          Decoded : constant Protocol_Message'Class := Decode (Msg);
+       begin
+          Assert
+            (Decoded in Registration_Response,
+             "Expected Registration_Response");
+          Assert
+            (To_String (Registration_Response (Decoded).Node_Id) = "node-42",
+             "Node ID mismatch");
+       end;
+    end Test_Registration_Response_Round_Trip;
 
    --  Test: Heartbeat_Message round-trip encode/decode
    procedure Test_Heartbeat_Round_Trip
@@ -366,35 +366,35 @@ package body Podmander.Messages_Tests is
          null;  --  Expected
    end Test_Decode_Code_Unknown;
 
-   --  Stub decoder for Register test (library-level so 'Access is valid).
-   function Stub_Decoder
-     (Msg : in out CZMQ.Messages.Message)
-      return Podmander.Messages.Protocol_Message'Class;
+    --  Stub decoder for Registration test (library-level so 'Access is valid).
+    function Stub_Decoder
+      (Msg : in out CZMQ.Messages.Message)
+       return Podmander.Messages.Protocol_Message'Class;
 
-   function Stub_Decoder
-     (Msg : in out CZMQ.Messages.Message)
-      return Podmander.Messages.Protocol_Message'Class
-   is
-      pragma Unreferenced (Msg);
-   begin
-      return Podmander.Messages.Register_Requests.Register_Request'
-        (Agent_Name        => To_Unbounded_String (""),
-         Enrollment_Secret => To_Unbounded_String (""));
-   end Stub_Decoder;
+    function Stub_Decoder
+      (Msg : in out CZMQ.Messages.Message)
+       return Podmander.Messages.Protocol_Message'Class
+    is
+       pragma Unreferenced (Msg);
+    begin
+       return Podmander.Messages.Registration_Requests.Registration_Request'
+         (Agent_Name        => To_Unbounded_String (""),
+          Enrollment_Secret => To_Unbounded_String (""));
+    end Stub_Decoder;
 
-   --  Test: Registering an already-registered kind raises Already_Registered
-   procedure Test_Register_Duplicate_Kind
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-   begin
-      Podmander.Messages.Register
-        (Podmander.Messages.Register_Kind, Stub_Decoder'Access);
-      Assert (False, "Expected Already_Registered for duplicate kind");
-   exception
-      when Podmander.Messages.Already_Registered =>
-         null;  --  Expected
-   end Test_Register_Duplicate_Kind;
+    --  Test: Registering an already-registered kind raises Already_Registered
+    procedure Test_Register_Duplicate_Kind
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+    begin
+       Podmander.Messages.Register
+         (Podmander.Messages.Registration_Request_Kind, Stub_Decoder'Access);
+       Assert (False, "Expected Already_Registered for duplicate kind");
+    exception
+       when Podmander.Messages.Already_Registered =>
+          null;  --  Expected
+    end Test_Register_Duplicate_Kind;
 
    --  Test: Decode of unknown message type raises Decode_Error
    procedure Test_Decode_Unknown_Kind
@@ -419,12 +419,12 @@ package body Podmander.Messages_Tests is
    overriding procedure Register_Tests (T : in out Message_Test) is
       use AUnit.Test_Cases.Registration;
    begin
-      Register_Routine
-        (T, Test_Register_Request_Round_Trip'Access,
-         "Register_Request round-trip encode/decode");
-      Register_Routine
-        (T, Test_Register_Response_Round_Trip'Access,
-         "Register_Response round-trip encode/decode");
+       Register_Routine
+         (T, Test_Registration_Request_Round_Trip'Access,
+          "Registration_Request round-trip encode/decode");
+       Register_Routine
+         (T, Test_Registration_Response_Round_Trip'Access,
+          "Registration_Response round-trip encode/decode");
       Register_Routine
         (T, Test_Heartbeat_Round_Trip'Access,
          "Heartbeat_Message round-trip encode/decode");
