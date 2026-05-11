@@ -35,14 +35,16 @@
    - Code 19 → `Constraint_Violation`
    - Code 13 → `Device_Full`
    - Code 17 → `Schema_Error`
+   - Code 1 → `Unknown` (generic `SQLITE_ERROR`)
    - Default → `Unknown`
    - `Not_Found` is NOT derived from SQLite codes — it's detected by `Changes = 0` at the call site (ADR-0035 §4)
+   - **Known format:** `ada_sqlite3.Raise_Error` produces `"<message> (Error code: <n>)"` — extract the numeric code from the parenthesized suffix
 
 3. Implement `Format_Error` to produce a structured string: `"[Constraint_Violation|19] some message"`
 
 4. Implement `Parse_Error` to reverse `Format_Error` — parse the bracketed kind and code from the exception message.
 
-5. Implement `Finalize` — just calls `Ada_Sqlite3.Database.Finalize` on the embedded `DB` field (parent controlled type handles the actual close).
+5. Implement `Finalize` — **empty override**. Ada automatically finalizes controlled components (`Ada_Sqlite3.Database`) after the record's own Finalize runs. Do NOT call `DB.Finalize` explicitly — that would cause double-finalization.
 
 **Patterns:**
 - Follow the project's package naming: `Podmander.Controller.Database` → file `podmander-controller-database.ads`
@@ -59,7 +61,7 @@
 **Verification:** `distrobox enter ada_dev -- alr build` compiles without errors. Unit tests pass.
 
 **Planning-time unknowns:**
-- How `ada_sqlite3` formats its `SQLite_Error` exception messages (need to check at implementation time to write `Classify_Error` correctly). Deferred to implementation.
+- ~~How `ada_sqlite3` formats its `SQLite_Error` exception messages~~ **Resolved:** `ada_sqlite3.Raise_Error` produces `"<message> (Error code: <n>)"`. Extract the numeric code from the parenthesized suffix.
 
 ---
 
@@ -94,13 +96,14 @@
 
 3. `Run_Pending` implementation:
    - Read current version: `SELECT version FROM schema_version` (single-row table)
+   - If the query returns no rows (empty table), treat as version 0 (all migrations pending)
    - If `Migration_History'Last <= Current_Version`, nothing to do
    - Begin transaction: `EXECUTE "BEGIN"`
    - For each migration with `Version > Current_Version`:
      - `EXECUTE Migration.SQL`
      - `EXECUTE "UPDATE schema_version SET version = " & Version'Image`
    - Commit: `EXECUTE "COMMIT"`
-   - On any `SQLite_Error`: `EXECUTE "ROLLBACK"` (best-effort), then re-raise as `Database_Error` with `Schema_Error` kind
+   - On any `SQLite_Error`: attempt `EXECUTE "ROLLBACK"` (catch and discard any rollback error to preserve the original), then re-raise as `Database_Error` with `Schema_Error` kind
 
 4. `Run_Pending` is called by `Open` (Unit 3), not directly by the controller.
 
@@ -114,6 +117,8 @@
 - [ ] Idempotent: `Run_Pending` on a database already at version 1 is a no-op
 - [ ] WAL mode: after `Run_Pending`, `PRAGMA journal_mode` returns "wal"
 - [ ] Error path: a migration with invalid SQL rolls back the transaction and raises `Database_Error` with `Schema_Error` kind
+- [ ] Rollback failure: when both migration and rollback fail, the original error is preserved (not masked)
+- [ ] Empty schema_version: if the table exists but has no rows, `Run_Pending` treats it as version 0 and applies all migrations
 - [ ] Version tracking: after adding a second migration to `Migration_History`, `Run_Pending` applies it and updates version
 
 **Verification:** `distrobox enter ada_dev -- alr build` compiles. Unit tests pass with a temp file database.
@@ -150,7 +155,7 @@
    - `Ada.Directories.Use_Error` / `Name_Error` → catch and re-raise as `Database_Error` with `Unknown` kind and descriptive message
 
 3. `Finalize` for `DB_Handle`:
-   - Just calls `Ada.Finalization.Limited_Controlled.Finalize (Limited_Controlled (Handle))` — the parent's Finalize closes the `Ada_Sqlite3.Database` which auto-finalizes all registered statements.
+   - **Empty override.** Ada automatically finalizes the `Ada_Sqlite3.Database` component after the record's own Finalize. Do NOT call `DB.Finalize` explicitly.
 
 **Patterns:**
 - `Ada_Sqlite3.Open` returns a `Database` object (function, not procedure) — assign directly to `Handle.DB`
@@ -161,6 +166,8 @@
 - [ ] Parent dirs: `Open` creates intermediate directories that don't exist
 - [ ] Re-open: `Open` on an existing database is a no-op (migrations already applied)
 - [ ] Error path: `Open` with an invalid path raises `Database_Error`
+- [ ] Foreign keys: after `Open`, `PRAGMA foreign_keys` returns "1" (enabled)
+- [ ] Directory error: `Open` with a path whose parent dir cannot be created raises `Database_Error`
 - [ ] Finalization: `DB_Handle` going out of scope closes the connection (verified by attempting to delete the file after scope exit — should succeed on Linux)
 
 **Verification:** `distrobox enter ada_dev -- alr build` compiles. Unit tests pass.
@@ -191,8 +198,10 @@
      To_Unbounded_String ("");
    --  Path to the SQLite state database.
    --  Empty string means use default: ~/.local/share/podmander/state.db
+   --  Uses Unbounded_String (not fixed String like Bind_Address) because
+   --  filesystem paths vary widely in length; Bind_Address uses fixed
+   --  String because it comes from CLI parsing with known max length.
    ```
-   Use `Unbounded_String` for the path (like `Enrollment.Secret`), not a fixed-length `String` like `Bind_Address`. The bind address uses fixed `String` because it comes from CLI parsing with known max length; the DB path is a filesystem path that can vary widely.
 
 2. Add `Set_DB_Path` and `Get_DB_Path` procedures (following the `Set_Bind_Address`/`Get_Bind_Address` pattern).
 
@@ -202,13 +211,14 @@
    ```
 
 4. Update `Make_Listening_Controller`:
-   - After socket setup, call `Self.DB := Database.Open (Effective_Path)` where `Effective_Path` is `Get_DB_Path (Config)` if non-empty, else the default path.
+   - **Open DB before socket bind** — if DB open fails, no socket resources are orphaned
+   - Call `Self.DB := Database.Open (Effective_Path)` where `Effective_Path` is `Get_DB_Path (Config)` if non-empty, else the default path
    - Default path construction: `Ada.Environment_Variables.Value ("HOME") & "/.local/share/podmander/state.db"` — but only when `DB_Path` is empty. This keeps the default out of the config record and makes it computed at runtime.
+   - After DB open, proceed with certificate generation, socket open, and bind
 
 5. Update `Make_Ctrl` test helper: the `DB_Path` default is empty, and `Make_Listening_Controller` will try to open a real DB. For tests that don't need a DB, we need a strategy:
-   - Option A: Use `:memory:` as the DB path in tests (SQLite in-memory database)
-   - Option B: Create a temp file for each test
-   - **Chosen: Option A** — `:memory:` is the simplest, no file cleanup needed, and `ada_sqlite3` supports it via the `OPEN_MEMORY` flag or the `:memory:` filename convention.
+   - Use `:memory:` as the DB path in tests (SQLite in-memory database)
+   - **Confirmed:** `ada_sqlite3` supports `:memory:` — the upstream test suite (`database_tests.adb`) uses it. `ada_sqlite3.Open (":memory:")` works with the default flags (`OPEN_READWRITE or OPEN_CREATE`).
 
 **Patterns:**
 - Follow `Set_Bind_Address`/`Get_Bind_Address` pattern for `DB_Path`
@@ -220,11 +230,12 @@
 - [ ] Default path: `Make_Listening_Controller` with empty `DB_Path` uses the default path
 - [ ] Existing tests: all existing controller tests still pass (using `:memory:` or no DB interaction)
 - [ ] `Set_DB_Path` / `Get_DB_Path` round-trip correctly
+- [ ] DB open failure: `Make_Listening_Controller` with an invalid `DB_Path` raises `Database_Error` without orphaning socket resources
 
 **Verification:** `distrobox enter ada_dev -- alr build` compiles. All existing + new tests pass.
 
 **Planning-time unknowns:**
-- Whether `ada_sqlite3.Open (":memory:")` works (SQLite supports it natively; the Ada binding should pass it through). Deferred to implementation.
+- ~~Whether `ada_sqlite3.Open (":memory:")` works~~ **Resolved:** Confirmed by upstream test suite. Works with default flags.
 - Whether existing tests that construct `Controller_Instance` directly (like `Make_Ctrl`) will break when `DB` field is added. The `DB` field is default-initialized (controlled type), so it should be fine — but the `DB` handle will be in a "not open" state. Tests that call `Make_Listening_Controller` will get a real DB. Deferred to implementation.
 
 ---
@@ -255,21 +266,28 @@
    - For controller integration tests: use `:memory:` databases
 
 3. Test routines (covering all scenarios from Units 1–4):
-   - `Test_Classify_Error_Known_Codes` — Unit 1
+   - `Test_Classify_Error_Known_Codes` — Unit 1 (codes 19, 13, 17)
+   - `Test_Classify_Error_Code_1_Unknown` — Unit 1 (SQLITE_ERROR → Unknown)
    - `Test_Classify_Error_Unknown_Code` — Unit 1
    - `Test_Format_Parse_Error_Roundtrip` — Unit 1
+   - `Test_Format_Error_Empty_Message` — Unit 1 (edge case)
    - `Test_Parse_Error_Non_Database_Error` — Unit 1
    - `Test_Open_Creates_Database` — Unit 3
    - `Test_Open_Creates_Parent_Dirs` — Unit 3
    - `Test_Open_Reopen_Existing` — Unit 3
+   - `Test_Open_Foreign_Keys_Enabled` — Unit 3
+   - `Test_Open_Directory_Error` — Unit 3
    - `Test_Migration_Fresh_DB` — Unit 2
    - `Test_Migration_Idempotent` — Unit 2
    - `Test_Migration_WAL_Mode` — Unit 2
    - `Test_Migration_Rollback_On_Error` — Unit 2
+   - `Test_Migration_Rollback_Failure` — Unit 2 (rollback itself fails, original error preserved)
+   - `Test_Migration_Empty_Schema_Table` — Unit 2 (treats as version 0)
    - `Test_Migration_Sequential_Version` — Unit 2
    - `Test_Handle_Finalization` — Unit 3
    - `Test_Controller_DB_Path_Accessors` — Unit 4
    - `Test_Controller_Make_With_DB` — Unit 4
+   - `Test_Controller_Make_DB_Open_Fails` — Unit 4 (invalid path, no orphaned resources)
 
 4. Register in `test_runner.adb`:
    ```ada
@@ -289,7 +307,7 @@
 
 **Planning-time unknowns:**
 - How to generate a unique temp file path in Ada without external dependencies. `Ada.Directories.Compose` + PID or timestamp. Deferred to implementation.
-- Whether `:memory:` databases work with `ada_sqlite3.Open`. Deferred to implementation.
+- ~~Whether `:memory:` databases work with `ada_sqlite3.Open`~~ **Resolved:** Confirmed by upstream test suite.
 
 ---
 
@@ -302,3 +320,27 @@
 - [x] No more than 2 new abstractions introduced per unit (Unit 1: DB_Handle + Error_Info; Unit 2: Migration + Run_Pending; Unit 3: Open implementation; Unit 4: DB_Path field + integration)
 - [x] Every planning-time unknown is classified as deferred
 - [x] Handoff completeness test: an engineer would need to check `ada_sqlite3` exception message format and `:memory:` support, but no behavioral invention is needed
+
+---
+
+## Review Findings (Phase 5 — Engineering Review)
+
+Resolved P1 findings (applied to plan above):
+
+| ID | Finding | Resolution |
+|----|---------|------------|
+| F1 | `Classify_Error` format was deferred but is now knowable | Documented: `ada_sqlite3.Raise_Error` produces `"<msg> (Error code: <n>)"` |
+| F2 | `DB_Handle.Finalize` contradictory between Unit 1 and Unit 3 | Fixed: empty override only. Ada auto-finalizes components. |
+| F3 | `Open` called after socket bind — orphaned resources on failure | Fixed: DB open moved before socket bind in `Make_Listening_Controller` |
+| F4 | Two string-field patterns in `Controller_Config` | Added decision rule comment in code |
+| F5 | `Run_Pending` doesn't handle empty/corrupt `schema_version` | Added: empty table → version 0; rollback error preserved |
+| F6-F8 | Missing test coverage for error paths | Added 7 new test routines to Unit 5 |
+
+Accepted P2 findings (noted for future hardening, not blocking):
+
+| ID | Finding | Action |
+|----|---------|--------|
+| F10 | No file permissions specified for DB file | Note as future hardening when secrets are stored |
+| F11 | Path traversal risk if `DB_Path` from untrusted input | Acceptable for MVP (operator is trusted) |
+| F12 | `Format_Error`/`Parse_Error` is a fragile serialization contract | Document format as stable contract |
+| F13 | Relative path handling in `Open` unspecified | `Open` expects absolute path; document this |
