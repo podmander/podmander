@@ -62,3 +62,97 @@ Never edit or build in the main worktree while another agent is active.
 4. If the session pauses, leave a handoff comment on the issue.
 5. Push the branch and submit a pull request via Forgejo MCP.
 6. After merge, remove the worktree: `wt remove <issue-number>-<short-stub>`.
+
+## Ada Patterns for Subagents
+
+These patterns recur frequently. Internalize them instead of rediscovering them.
+
+### Limited types
+
+Ada limited types cannot be assigned with `:=`. They can only be initialized
+by function return. This affects both production code and tests:
+
+```ada
+--  WRONG: assignment to limited type
+Handle : DB_Handle;
+Handle := DB.Open (Path);
+
+--  RIGHT: initialization by function return
+Handle : DB_Handle := DB.Open (Path);
+
+--  RIGHT in declare blocks (common in tests)
+declare
+   H : DB_Handle := DB.Open (Path);
+begin
+   null;  --  H auto-finalizes when block exits
+end;
+```
+
+### Controlled finalization
+
+Types extending `Limited_Controlled` auto-finalize their controlled component
+fields. Do NOT call `.Finalize` on components explicitly — that causes
+double-finalization. Override `Finalize` only when you need cleanup beyond
+what the component's own finalization provides. An empty override is valid.
+
+### Private fields
+
+Never add accessors to private fields just for testing. Test observable
+behavior through the public API. For database tests, open a second
+`Ada_Sqlite3.Database` connection to the same file to verify schema state.
+
+### Package hierarchy and circular dependencies
+
+Ada prohibits a parent package from `with`ing its own child. If
+`Podmander.Controller` needs to use `Podmander.Controller.Database`, the
+child must be moved out of the parent hierarchy (e.g., to
+`Podmander.Database`). Consider this constraint when designing new packages.
+
+### `use type` for enumeration comparisons
+
+Comparing enumeration values from another package requires visibility:
+
+```ada
+use type Ada_Sqlite3.Result_Code;  --  enables Step = ROW comparison
+```
+
+### Exception message format
+
+The `ada_sqlite3` library formats `SQLite_Error` messages as:
+`"<description> (Error code: <n>)"`. Parse the parenthesized suffix to
+extract the numeric code. `Constraint_Error` (not `Value_Error`) is the
+exception raised by failed `'Value` attribute conversions.
+
+## Subagent Delegation Strategy
+
+### When to delegate
+
+- **@fixer** for bounded implementation work: writing production code and
+  tests when the spec is clear. Give precise, scoped instructions with file
+  paths and expected patterns. Keep prompts under ~2000 words — if longer,
+  split into multiple @fixer calls.
+- **@oracle** for architectural review of plans and code. High-value for
+  catching design issues before implementation.
+- **@librarian** (not @explorer) for external library API research. @explorer
+  searches the local codebase; @librarian searches documentation and examples.
+- **@explorer** for local codebase discovery: finding files, patterns, and
+  existing code locations.
+
+### When NOT to delegate
+
+- Single-file changes under ~20 lines.
+- Work tightly coupled to your current train of thought.
+- Decisions that need user approval first (e.g., package renames).
+
+### Common pitfalls
+
+- **Distrobox**: All `alr build`/`alr test` commands MUST run via
+  `distrobox enter ada_dev --`. Subagents need this in every prompt.
+- **Prompt length**: If a @fixer prompt exceeds the tool limit, split the
+  work into smaller scoped tasks (e.g., one @fixer for tests, another for
+  production code).
+- **Architectural decisions**: If a @fixer encounters a design constraint
+  (like Ada's circular dependency rule), it should surface the issue rather
+  than silently restructuring. Flag these in the prompt: "If you encounter
+  a design constraint that requires an architectural change, stop and report
+  it instead of making the change."
