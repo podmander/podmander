@@ -15,7 +15,7 @@ Key forces:
 - Schema will evolve as features are added (services, secrets, infrastructure configs). Migrations must be safe and repeatable.
 - The in-memory `Agent_Maps.Map` provides fast lookup for the supervisor loop. The database provides durability. These must stay consistent.
 - Startup must be fast: load agents from DB, then reconcile with live heartbeats.
-- The `ada_sqlite3` library provides `Database` (tagged, limited, controlled) with `Open`/`Close`, `Execute` for DDL/DML, `Prepare`/`Step`/`Bind_*`/`Column_*` for parameterized queries, and `SQLite_Error` exception for error handling. No built-in migration support.
+- The `ada_sqlite3` library (v0.1.1) provides `Database` (tagged, limited, inherits `Limited_Controlled`) with `Open` (function returning `Database`), `Execute` for DDL/DML, `Prepare`/`Step`/`Bind_*`/`Column_*` for parameterized queries, and `SQLite_Error` exception. `Close` is private — cleanup happens automatically via `Finalize` (controlled finalization). `Statement` is also controlled (automatic finalization). `Bind_Blob`/`Column_Blob` live in the child package `Ada_Sqlite3.Blobs`. No built-in migration support.
 
 ## Decision
 
@@ -24,7 +24,7 @@ Key forces:
 Each entity's persistence lives in a `Repository` child package alongside its domain logic, not centralized under a `Database` package. This follows the Repository pattern common in Go and Rust projects that avoid ORMs: per-entity data access modules sit next to the entity they serve, while cross-cutting concerns (connection lifecycle, migrations) stay centralized.
 
 ```
-Podmander.Controller.Database              -- DB_Handle, Open, Close, Migrations
+Podmander.Controller.Database              -- DB_Handle, Open, Finalize, Migrations
 Podmander.Controller.Agent.Repository      -- Register, Touch, Set_State, Load_All, Remove
 Podmander.Controller.Service.Repository    -- (future) Deploy, Archive, Load_All
 Podmander.Controller.Secret.Repository     -- (future) Store, Rotate_Key, Retrieve
@@ -84,29 +84,59 @@ Each entity's `Repository` child package provides operations named after the dom
 
 ```ada
 --  Podmander.Controller.Database — connection lifecycle only
+with Ada.Exceptions;
+
 package Podmander.Controller.Database is
 
    Database_Error : exception;
    --  Raised on any unrecoverable database operation failure.
+   --  The exception message carries a structured error description
+   --  (see Error_Kind and Format_Error below).
+
+   type Error_Kind is
+     (Constraint_Violation,
+      Not_Found,
+      Device_Full,
+      Schema_Error,
+      Unknown);
+   --  Classification of SQLite error conditions. Used by callers that
+   --  need to distinguish failure modes (e.g., UNIQUE violation vs I/O).
+
+   type Error_Info is record
+      Kind    : Error_Kind;
+      Message : Ada.Strings.Unbounded.Unbounded_String;
+      Code    : Integer;
+   end record;
+   --  Structured error context preserved from the original SQLite_Error.
+   --  Code is the raw SQLite result code (e.g., 19 = SQLITE_CONSTRAINT).
+   --  Message is the original SQLite error string.
+
+   function Format_Error (Info : Error_Info) return String;
+   --  Format Error_Info into a human-readable string for the
+   --  Database_Error exception message.
+
+   function Parse_Error (E : Ada.Exceptions.Exception_Occurrence) return Error_Info;
+   --  Extract Error_Info from a Database_Error exception occurrence.
+   --  Returns Kind => Unknown if the message cannot be parsed.
 
    type DB_Handle is limited private;
    --  Opaque handle wrapping the SQLite connection.
-   --  Controlled: closing the database finalizes all prepared statements
-   --  and closes the connection automatically.
+   --  Controlled: finalization closes the connection and releases
+   --  all prepared statements automatically. No explicit Close needed.
 
-   procedure Open
-     (Handle : out DB_Handle;
-      Path   : String);
+   function Open (Path : String) return DB_Handle;
    --  Open (or create) the database at Path, run pending migrations,
-   --  and prepare cached statements. Raises Database_Error on failure.
-
-   procedure Close (Handle : in out DB_Handle);
-   --  Close the database connection. Safe to call multiple times.
+   --  and prepare cached statements. Returns a ready-to-use handle.
+   --  Raises Database_Error on failure.
 
 private
-   type DB_Handle is limited record
+   type DB_Handle is new Ada.Finalization.Limited_Controlled with record
       DB : Ada_Sqlite3.Database;
    end record;
+
+   overriding procedure Finalize (Handle : in out DB_Handle);
+   --  Closes the SQLite connection and finalizes all prepared statements.
+   --  Called automatically when the handle goes out of scope.
 end Podmander.Controller.Database;
 
 --  Podmander.Controller.Agent.Repository — agent persistence
@@ -116,32 +146,32 @@ with Podmander.Types;
 package Podmander.Controller.Agent.Repository is
 
    procedure Register
-     (DB    : DB_Handle;
+     (DB    : in out DB_Handle;
       Agent : Podmander.Types.Agent_Info);
    --  Persist a newly enrolled agent. Raises Database_Error if an agent
    --  with the same name already exists (UNIQUE constraint violation).
 
    procedure Touch
-     (DB      : DB_Handle;
+     (DB      : in out DB_Handle;
       Name    : String;
       Seen_At : Ada.Calendar.Time);
    --  Update an agent's last_seen timestamp. Called on each heartbeat.
    --  Raises Database_Error if the agent does not exist.
 
    procedure Set_State
-     (DB    : DB_Handle;
+     (DB    : in out DB_Handle;
       Name  : String;
       State : Podmander.Types.Agent_State);
    --  Update an agent's connection state. Called when the supervisor loop
    --  detects a timeout or when an agent reconnects.
    --  Raises Database_Error if the agent does not exist.
 
-   function Load_All (DB : DB_Handle) return Agent_Maps.Map;
+   function Load_All (DB : in out DB_Handle) return Agent_Maps.Map;
    --  Return all persisted agents as an in-memory map. Used at startup
    --  to populate the controller's Agent_Maps.Map.
 
    procedure Remove
-     (DB   : DB_Handle;
+     (DB   : in out DB_Handle;
       Name : String);
    --  Remove an agent from the database. No-op if the agent does not exist.
 
@@ -153,12 +183,70 @@ Why domain-driven operations instead of CRUD:
 - The controller never says "insert an agent" — it says "an agent enrolled." `Register` captures that intent.
 - The controller never says "update an agent" — it says "the agent sent a heartbeat" (`Touch`) or "the agent timed out" (`Set_State`). These are different operations with different SQL and different error semantics.
 - When we add `Service` or `Secret`, each gets its own `Repository` child package with its own domain vocabulary (`Deploy`, `Rotate_Key`, `Archive`) rather than a mechanical `Insert`/`Update`/`Delete` set.
-- The `Database` package stays small — just `Open`, `Close`, and the `DB_Handle` type.
+- The `Database` package stays small — just `Open`, `Finalize`, and the `DB_Handle` type.
 
 Error handling strategy:
 
-- All database errors are caught and re-raised as `Database_Error` with the original SQLite error message. This keeps the controller's error handling uniform and avoids leaking `ada_sqlite3` exceptions outside the `Database` and `Repository` packages.
-- Expected "not found" conditions (e.g., `Touch` with a nonexistent agent name) raise `Database_Error` — the caller should ensure the agent exists before calling, or handle the exception. This is consistent with Ada's convention that operations raise exceptions on failure.
+All low-level `ada_sqlite3` exceptions (`SQLite_Error`) are caught at the `Database` and `Repository` boundary and re-raised as `Database_Error` with structured context. This keeps the controller's error handling uniform and avoids leaking `ada_sqlite3` exceptions outside the persistence layer.
+
+Each `Database_Error` carries an `Error_Info` record (via the exception message mechanism) containing:
+
+- `Kind` — a classification (`Constraint_Violation`, `Not_Found`, `Device_Full`, `Schema_Error`, `Unknown`) derived from the SQLite result code. Callers that need to distinguish failure modes can parse this.
+- `Code` — the raw SQLite result code (e.g., 19 for `SQLITE_CONSTRAINT`, 13 for `SQLITE_FULL`).
+- `Message` — the original SQLite error string for logging and diagnostics.
+
+Implementation pattern in `Repository` packages:
+
+```ada
+with Ada.Exceptions;
+
+procedure Register
+  (DB    : in out DB_Handle;
+   Agent : Podmander.Types.Agent_Info) is
+begin
+   --  ... execute INSERT ...
+exception
+   when E : Ada_Sqlite3.SQLite_Error =>
+      raise Database_Error with Format_Error
+        (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+end Register;
+```
+
+`Classify_Error` maps SQLite result codes to `Error_Kind` values:
+
+| SQLite code | Constant | `Error_Kind` |
+|---|---|---|
+| 19 | `SQLITE_CONSTRAINT` | `Constraint_Violation` |
+| 13 | `SQLITE_FULL` | `Device_Full` |
+| 1 | `SQLITE_ERROR` (generic) | `Unknown` |
+| — | (no matching row on UPDATE/DELETE) | `Not_Found` |
+
+`Not_Found` is detected by checking `Changes (DB) = 0` after an UPDATE or DELETE that should have matched a row, not by a SQLite error code. This avoids coupling to implementation details of how SQLite reports "no rows affected."
+
+Caller-side error handling:
+
+```ada
+--  In the controller supervisor loop:
+declare
+   Info : Error_Info;
+begin
+   Agent.Repository.Touch (Self.DB, Name, Now);
+exception
+   when E : Database_Error =>
+      --  Log the structured error. Not_Found after a restart is expected
+      --  (agent was in memory but not yet in DB). Other errors are fatal.
+      Info := Parse_Error (E);
+      if Info.Kind = Not_Found then
+         Log_Warning ("Agent " & Name & " not in DB, re-registering");
+         Agent.Repository.Register (Self.DB, Self.Agents.Element (Name));
+      else
+         Log_Error ("Database failure: " & Ada.Exceptions.Exception_Message (E));
+         raise;
+      end if;
+end;
+```
+
+This pattern — classify, log, handle expected cases, re-raise unexpected — is the standard for all `Database_Error` handling in the controller.
 
 ### 5. State sync strategy: write-through cache
 
@@ -205,7 +293,7 @@ end record;
 
 `Make_Listening_Controller` gains a database initialization step:
 
-1. Call `Database.Open (DB, Path)` where `Path` comes from the controller config (default: `~/.local/share/podmander/state.db`).
+1. Call `Self.DB := Database.Open (Path)` where `Path` comes from the controller config (default: `~/.local/share/podmander/state.db`).
 2. `Database.Open` runs pending migrations (creating tables if fresh).
 3. Call `Agent.Repository.Load_All` to load all persisted agents into `Self.Agents`.
 4. The supervisor loop begins. Agents that were `Registered` or `Unresponsive` in the database start as `Unresponsive` — they must send a heartbeat to prove they're still alive. Agents that were `Lost` stay `Lost`.
@@ -217,7 +305,7 @@ This means:
 
 ### 7. Shutdown behavior
 
-`Close` is called on the `DB_Handle` during controller shutdown. Because `DB_Handle` wraps a controlled `Ada_Sqlite3.Database`, the connection is also closed automatically if the controller crashes without a clean shutdown. SQLite's WAL mode (enabled via `PRAGMA journal_mode=WAL` in the initial migration) ensures crash recovery.
+`DB_Handle` is a controlled type (`Limited_Controlled`), so the connection is closed automatically via `Finalize` when the handle goes out of scope — both on clean shutdown and on crash. No explicit `Close` call is needed. SQLite's WAL mode (enabled via `PRAGMA journal_mode=WAL` in the initial migration) ensures crash recovery.
 
 ## Consequences
 
@@ -238,7 +326,7 @@ This means:
 
 ### Neutral
 
-- The `DB_Handle` is a limited type, so `Controller_Instance` remains limited (no copy semantics). This is already the case.
+- The `DB_Handle` is a limited controlled type, so `Controller_Instance` remains limited (no copy semantics) and the connection is finalized automatically on scope exit. This is already the case.
 - WAL mode requires that the database file and its `-wal` / `-shm` companions be backed up together (ADR-0028 already notes the operator is responsible for backups).
 
 ## Alternatives Considered
