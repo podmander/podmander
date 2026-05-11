@@ -123,6 +123,18 @@ The `ada_sqlite3` library formats `SQLite_Error` messages as:
 extract the numeric code. `Constraint_Error` (not `Value_Error`) is the
 exception raised by failed `'Value` attribute conversions.
 
+## SQLite Gotchas
+
+These recur whenever we touch the database layer.
+
+- `PRAGMA journal_mode=WAL` cannot run inside a SQLite transaction. Execute
+  it before `BEGIN`.
+- `PRAGMA foreign_keys` is per-connection. You cannot observe it through a
+  second connection to the same file.
+- `ada_sqlite3.Open(":memory:")` works for tests (confirmed by upstream test
+  suite). In-memory databases are isolated per connection — a second
+  connection won't see the first connection's schema.
+
 ## Subagent Delegation Strategy
 
 ### When to delegate
@@ -131,8 +143,9 @@ exception raised by failed `'Value` attribute conversions.
   tests when the spec is clear. Give precise, scoped instructions with file
   paths and expected patterns. Keep prompts under ~2000 words — if longer,
   split into multiple @fixer calls.
-- **@oracle** for architectural review of plans and code. High-value for
-  catching design issues before implementation.
+- **@oracle** for architectural review of plans and code, *between planning
+  and implementation*. High-value for catching design issues before code is
+  written.
 - **@librarian** (not @explorer) for external library API research. @explorer
   searches the local codebase; @librarian searches documentation and examples.
 - **@explorer** for local codebase discovery: finding files, patterns, and
@@ -143,6 +156,18 @@ exception raised by failed `'Value` attribute conversions.
 - Single-file changes under ~20 lines.
 - Work tightly coupled to your current train of thought.
 - Decisions that need user approval first (e.g., package renames).
+
+### Anti-patterns to avoid
+
+- **Orchestrator doing implementation work**: If the spec is clear and the
+  work is more than ~20 lines, delegate to @fixer. The orchestrator lacks
+  the execution speed and makes more compilation errors than @fixer.
+- **Tests as a separate phase**: @fixer must follow TDD Red-Green — write
+  the failing test first, then make it pass. Never batch all tests at the
+  end.
+- **Rewriting on compilation errors**: When Ada compilation fails, read the
+  error message, fix the specific issue, and rebuild. Don't rewrite the
+  whole unit from scratch.
 
 ### Common pitfalls
 
