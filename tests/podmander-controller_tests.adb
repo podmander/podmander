@@ -202,6 +202,39 @@ package body Podmander.Controller_Tests is
           null;  --  Expected
     end Test_Dispatch_Response_Raises;
 
+   --  Test: Set_DB_Path / Get_DB_Path round-trip correctly
+   procedure Test_Controller_DB_Path_Accessors
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : Podmander.Controller.Controller_Config;
+   begin
+      Podmander.Controller.Set_DB_Path (Config, "/tmp/test.db");
+      Assert
+        (Podmander.Controller.Get_DB_Path (Config) = "/tmp/test.db",
+         "Set_DB_Path / Get_DB_Path round-trip failed");
+   end Test_Controller_DB_Path_Accessors;
+
+   --  Test: Make_Listening_Controller with :memory: DB path returns instance
+   procedure Test_Controller_Make_With_DB
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : Podmander.Controller.Controller_Config;
+   begin
+      Podmander.Controller.Set_DB_Path (Config, ":memory:");
+      Podmander.Controller.Set_Bind_Address (Config, "tcp://127.0.0.1:9999");
+      declare
+         Ctrl : constant Podmander.Controller.Controller_Instance :=
+           Podmander.Controller.Make_Listening_Controller (Config);
+      begin
+         Assert (True, "Make_Listening_Controller with :memory: DB not raise");
+      end;
+   exception
+      when others =>
+         Assert (False, "Make_Listening_Controller with :memory: raised");
+   end Test_Controller_Make_With_DB;
+
    --  Helpers for Controller_Handler tests that work without a live socket.
    function Make_Ctrl
      return Podmander.Controller.Controller_Instance is
@@ -336,10 +369,16 @@ package body Podmander.Controller_Tests is
       Register_Routine
         (T, Test_Handle_Heartbeat_Unknown_Agent'Access,
          "Handle_Heartbeat ignores unknown agent");
-      Register_Routine
-        (T, Test_Handle_Heartbeat_Reconnect'Access,
-         "Handle_Heartbeat transitions Lost agent to Registered");
-   end Register_Tests;
+       Register_Routine
+         (T, Test_Handle_Heartbeat_Reconnect'Access,
+          "Handle_Heartbeat transitions Lost agent to Registered");
+       Register_Routine
+         (T, Test_Controller_DB_Path_Accessors'Access,
+          "Set_DB_Path / Get_DB_Path round-trip");
+       Register_Routine
+         (T, Test_Controller_Make_With_DB'Access,
+          "Make_Listening_Controller with memory DB");
+    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Controller_Test;

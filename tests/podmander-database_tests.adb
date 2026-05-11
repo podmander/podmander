@@ -8,14 +8,14 @@ with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada_Sqlite3;
-with Podmander.Controller.Database;
+with Podmander.Database;
 
 package body Podmander.Database_Tests is
 
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
 
-   package DB renames Podmander.Controller.Database;
+   package DB renames Podmander.Database;
    use type DB.Error_Kind;
    use type Ada_Sqlite3.Result_Code;
 

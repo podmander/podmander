@@ -2,6 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
+with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
 with Podmander.Controller.Message_Handlers;
@@ -31,11 +32,31 @@ package body Podmander.Controller is
       return Config.Bind_Address (1 .. Config.Bind_Address_Last);
    end Get_Bind_Address;
 
+   procedure Set_DB_Path
+     (Config : in out Controller_Config;
+      Path   : String) is
+   begin
+      Config.DB_Path := To_Unbounded_String (Path);
+   end Set_DB_Path;
+
+   function Get_DB_Path (Config : Controller_Config) return String is
+   begin
+      return To_String (Config.DB_Path);
+   end Get_DB_Path;
+
    function Make_Listening_Controller
-     (Config : Controller_Config) return Controller_Instance is
+     (Config : Controller_Config) return Controller_Instance
+   is
+      DB_Path : constant String :=
+        (if Get_DB_Path (Config) = "" then
+           Ada.Environment_Variables.Value ("HOME")
+           & "/.local/share/podmander/state.db"
+         else
+           Get_DB_Path (Config));
    begin
       return C : Controller_Instance :=
         (Config      => Config,
+         DB          => Database.Open (DB_Path),
          Certificate => <>,
          Socket      => <>,
          Agents      => <>,

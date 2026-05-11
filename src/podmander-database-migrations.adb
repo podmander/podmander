@@ -4,10 +4,9 @@
 with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 with Ada_Sqlite3;
-with Podmander.Controller.Database;
 with Podmander.Logging;
 
-package body Podmander.Controller.Database.Migrations is
+package body Podmander.Database.Migrations is
 
    use Ada.Strings.Unbounded;
    use type Ada_Sqlite3.Result_Code;
@@ -105,4 +104,4 @@ package body Podmander.Controller.Database.Migrations is
       end;
    end Run_Pending;
 
-end Podmander.Controller.Database.Migrations;
+end Podmander.Database.Migrations;

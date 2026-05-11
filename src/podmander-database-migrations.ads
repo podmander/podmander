@@ -7,9 +7,9 @@
 
 with Ada.Strings.Unbounded;
 
-private with Podmander.Controller.Database;
+private with Podmander.Database;
 
-package Podmander.Controller.Database.Migrations is
+package Podmander.Database.Migrations is
 
    type Migration is record
       Version : Positive;
@@ -56,4 +56,4 @@ private
             SQL     => Ada.Strings.Unbounded.To_Unbounded_String
                         (Migration_001_SQL)));
 
-end Podmander.Controller.Database.Migrations;
+end Podmander.Database.Migrations;

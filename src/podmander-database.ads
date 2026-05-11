@@ -14,7 +14,7 @@ with Ada.Finalization;
 with Ada.Strings.Unbounded;
 with Ada_Sqlite3;
 
-package Podmander.Controller.Database is
+package Podmander.Database is
 
    Database_Error : exception;
    --  Raised on any unrecoverable database operation failure.
@@ -77,4 +77,4 @@ private
    --  Do NOT call Handle.DB.Finalize explicitly — that would cause
    --  double-finalization.
 
-end Podmander.Controller.Database;
+end Podmander.Database;

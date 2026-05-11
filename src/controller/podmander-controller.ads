@@ -6,6 +6,7 @@ with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 with CZMQ.Certificates;
 with CZMQ.Sockets;
+with Podmander.Database;
 with Podmander.Enrollment;
 with Podmander.Types;
 
@@ -20,6 +21,13 @@ package Podmander.Controller is
       Bind_Address_Last  : Natural := 0;
       Agent_Timeout      : Duration := Default_Agent_Timeout;
       Enrollment         : Podmander.Enrollment.Enrollment_Config;
+      DB_Path            : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.To_Unbounded_String ("");
+      --  Path to the SQLite state database.
+      --  Empty string means use default: ~/.local/share/podmander/state.db
+      --  Uses Unbounded_String (not fixed String like Bind_Address) because
+      --  filesystem paths vary widely in length; Bind_Address uses fixed
+      --  String because it comes from CLI parsing with known max length.
    end record;
 
    procedure Set_Bind_Address
@@ -27,6 +35,12 @@ package Podmander.Controller is
       Address : String);
 
    function Get_Bind_Address (Config : Controller_Config) return String;
+
+   procedure Set_DB_Path
+     (Config : in out Controller_Config;
+      Path   : String);
+
+   function Get_DB_Path (Config : Controller_Config) return String;
 
    package Agent_Maps is new Ada.Containers.Indefinite_Hashed_Maps
      (Key_Type        => String,
@@ -42,6 +56,7 @@ package Podmander.Controller is
    --  Make_Listening_Controller.
    type Controller_Instance is tagged limited record
       Config      : Controller_Config;
+      DB          : Database.DB_Handle;
       Certificate : CZMQ.Certificates.Certificate;
       Socket      : CZMQ.Sockets.Socket;
       Agents      : Agent_Maps.Map;

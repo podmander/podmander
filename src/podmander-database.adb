@@ -2,14 +2,11 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Directories;
-with Ada.Exceptions;
 with Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;
-with Ada_Sqlite3;
-with Podmander.Controller.Database.Migrations;
+with Podmander.Database.Migrations;
 with Podmander.Logging;
 
-package body Podmander.Controller.Database is
+package body Podmander.Database is
 
    use Ada.Strings.Unbounded;
 
@@ -177,4 +174,4 @@ package body Podmander.Controller.Database is
       null;
    end Finalize;
 
-end Podmander.Controller.Database;
+end Podmander.Database;
