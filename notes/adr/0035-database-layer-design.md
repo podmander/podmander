@@ -1,6 +1,5 @@
 # ADR-0035: Database Layer Design
 
-**Status**: Proposed
 **Date**: 2026-05-11
 
 ## Context
@@ -24,13 +23,15 @@ Key forces:
 Each entity's persistence lives in a `Repository` child package alongside its domain logic, not centralized under a `Database` package. This follows the Repository pattern common in Go and Rust projects that avoid ORMs: per-entity data access modules sit next to the entity they serve, while cross-cutting concerns (connection lifecycle, migrations) stay centralized.
 
 ```
-Podmander.Controller.Database              -- DB_Handle, Open, Finalize, Migrations
+Podmander.Database                         -- DB_Handle, Open, Finalize, Migrations
 Podmander.Controller.Agent.Repository      -- Register, Touch, Set_State, Load_All, Remove
 Podmander.Controller.Service.Repository    -- (future) Deploy, Archive, Load_All
 Podmander.Controller.Secret.Repository     -- (future) Store, Rotate_Key, Retrieve
 ```
 
 The `Database` package owns the `DB_Handle` (wrapping `Ada_Sqlite3.Database`) and exposes it to the `Repository` packages. Each `Repository` package provides domain-driven operations — not generic CRUD — named after the business events that trigger them (e.g., `Register`, `Touch`, `Set_State`).
+
+**Note:** The original design placed the Database package at `Podmander.Controller.Database`. During implementation, this was changed to `Podmander.Database` because Ada prohibits a parent package from `with`ing its own child — `Podmander.Controller` cannot `with Podmander.Controller.Database`. Moving the package to the project root avoids this circular dependency while preserving the Repository pattern for entity packages.
 
 Why this over a centralized `Database.Agents` / `Database.Services` structure:
 
@@ -44,7 +45,7 @@ Why this over a centralized `Database.Agents` / `Database.Services` structure:
 We use a `schema_version` table to track the current migration level. On startup, `Initialize` reads the current version and applies any pending migrations in order. Each migration is a named constant SQL string in the `Migrations` package, identified by number (1, 2, 3, ...).
 
 ```ada
---  In Podmander.Controller.Database.Migrations
+--  In Podmander.Database.Migrations
 type Migration is record
    Version : Positive;
    SQL     : Ada.Strings.Unbounded.Unbounded_String;
@@ -83,10 +84,10 @@ Rationale:
 Each entity's `Repository` child package provides operations named after the domain events that trigger them, not generic CRUD verbs. This avoids an explosion of `Insert_*`/`Update_*`/`Delete_*` procedures and keeps the API vocabulary close to the controller's domain language.
 
 ```ada
---  Podmander.Controller.Database — connection lifecycle only
+--  Podmander.Database — connection lifecycle only
 with Ada.Exceptions;
 
-package Podmander.Controller.Database is
+package Podmander.Database is
 
    Database_Error : exception;
    --  Raised on any unrecoverable database operation failure.
@@ -137,10 +138,10 @@ private
    overriding procedure Finalize (Handle : in out DB_Handle);
    --  Closes the SQLite connection and finalizes all prepared statements.
    --  Called automatically when the handle goes out of scope.
-end Podmander.Controller.Database;
+end Podmander.Database;
 
 --  Podmander.Controller.Agent.Repository — agent persistence
-with Podmander.Controller.Database;
+with Podmander.Database;
 with Podmander.Types;
 
 package Podmander.Controller.Agent.Repository is
