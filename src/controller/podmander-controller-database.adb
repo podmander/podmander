@@ -1,10 +1,13 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with Ada.Directories;
 with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada_Sqlite3;
+with Podmander.Controller.Database.Migrations;
+with Podmander.Logging;
 
 package body Podmander.Controller.Database is
 
@@ -124,16 +127,47 @@ package body Podmander.Controller.Database is
       end;
    end Classify_Error;
 
-   --  Stub: full implementation in Unit 3
+   --  Open (or create) the database at Path, create parent directories
+   --  if needed, enable WAL mode and foreign keys, and run pending
+   --  migrations. Returns a ready-to-use handle.
    function Open (Path : String) return DB_Handle is
-      pragma Unreferenced (Path);
    begin
-      raise Database_Error with
-        Format_Error ((Kind => Unknown,
-                       Message => To_Unbounded_String ("Open not yet implemented"),
-                       Code    => 0));
-      --  Unreachable, but required to satisfy the compiler
-      return (Ada.Finalization.Limited_Controlled with DB => <>);
+      --  Create parent directories if they don't exist
+      declare
+         Parent : constant String :=
+           Ada.Directories.Containing_Directory (Path);
+      begin
+         if Parent'Length > 0 then
+            Ada.Directories.Create_Path (Parent);
+         end if;
+      exception
+         when Ada.Directories.Use_Error |
+              Ada.Directories.Name_Error =>
+            raise Database_Error with Format_Error
+              ((Kind    => Unknown,
+                Message => To_Unbounded_String
+                  ("Cannot create directory for: " & Path),
+                Code    => 0));
+      end;
+
+      --  Open the SQLite connection, configure, and return handle
+      return Handle : DB_Handle :=
+        (Ada.Finalization.Limited_Controlled with
+           DB => Ada_Sqlite3.Open (Path))
+      do
+         --  Enable foreign keys
+         Handle.DB.Execute ("PRAGMA foreign_keys = ON");
+
+         --  Run pending migrations
+         Migrations.Run_Pending (Handle);
+
+         Podmander.Logging.Info
+           ("database", "Opened database at " & Path);
+      end return;
+   exception
+      when E : Ada_Sqlite3.SQLite_Error =>
+         raise Database_Error with Format_Error
+           (Classify_Error (Ada.Exceptions.Exception_Message (E)));
    end Open;
 
    --  Empty override: Ada auto-finalizes the Ada_Sqlite3.Database component
