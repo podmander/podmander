@@ -42,3 +42,4 @@ ADRs capture architecturally significant decisions — the *why* behind the syst
 | [0032](0032-ssh-based-node-bootstrap.md) | SSH-based node bootstrap with role-based installation | Accepted | 2026-04-12 |
 | [0033](0033-git-based-stack-collections.md) | Git-based stack collections with Jinja parameters | Accepted | 2026-04-12 |
 | 0034 | CLI-to-controller communication protocol | Proposed | — |
+| [0035](0035-database-layer-design.md) | Database layer design | Proposed | 2026-05-11 |
