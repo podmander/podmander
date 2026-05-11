@@ -1,5 +1,12 @@
 # Podmander worktree configuration
 # Worktrees live at .worktrees/<branch> (configured in user config)
 
+[[pre-start]]
+mise = "mise trust"
+
 [[pre-merge]]
 test = "distrobox enter ada_dev -- alr test"
+
+[forge]
+platform = "forgejo"
+hostname = "code.monospacementor.com"
