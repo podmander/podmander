@@ -1,12 +1,11 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
---  Connection state machine for the agent. Owns one CURVE certificate
---  and ZeroMQ socket per connection cycle as scope-bound locals; the
---  Limited_Controlled CZMQ types finalize automatically when the
---  cycle ends, releasing the underlying resources without explicit
---  deallocation. The parent package's Run loop calls Run_Cycle for
---  each (re)connection attempt and applies backoff between cycles.
+--  Connection state machine for the agent. Uses the CZMQ Open/Close
+--  API to manage the CURVE certificate and ZeroMQ socket as fields
+--  on Agent_Instance. Each reconnect cycle calls Close (idempotent)
+--  then Open_Dealer/Generate to re-establish the connection. The
+--  Limited_Controlled finalizers release resources on shutdown.
 
 package Podmander.Agent.Connection is
 

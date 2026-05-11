@@ -35,10 +35,9 @@ package Podmander.Controller is
       Equivalent_Keys => "=");
 
    --  The CURVE certificate and ZeroMQ socket live for the controller's
-   --  full lifetime; their Limited_Controlled finalizers release the
-   --  underlying CZMQ resources when the instance leaves scope. A
-   --  default-initialised Controller_Instance has empty (invalid) Cert
-   --  and Socket — handler tests rely on that to drive logic without a
+   --  full lifetime, managed via the CZMQ Open/Close API. Default-initialized
+   --  fields are invalid until Make_Listening_Controller calls Generate and
+   --  Open_Router. Handler tests rely on that to drive logic without a
    --  live socket; production code obtains a fully-built instance from
    --  Make_Listening_Controller.
    type Controller_Instance is tagged limited record

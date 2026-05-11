@@ -62,33 +62,25 @@ package body Podmander.Agent.Connection is
          "Sent heartbeat");
    end Send_Heartbeat;
 
-   --  Cert and Sock are locals rather than long-lived fields because
-   --  CZMQ.Certificates.Certificate and CZMQ.Sockets.Socket are
-   --  Limited_Controlled: Ada forbids := reassignment, so a field
-   --  cannot be replaced on reconnect. The remaining alternatives are
-   --  raw heap pointers (which is the leak this code replaces) or a
-   --  controlled holder around a heap pointer with
-   --  Unchecked_Deallocation in its Finalize. The holder pattern
-   --  trades a structural guarantee for a behavioural one: every
-   --  Reset/Replace path must remember to free, which is the same
-   --  shape of bug just fixed. Scope-binding makes "is the resource
-   --  freed?" a property the compiler enforces on every exit path,
-   --  not a property of every call site.
    procedure Run_Cycle (Self : in out Agent_Instance) is
-      Cert : constant CZMQ.Certificates.Certificate :=
-        CZMQ.Certificates.New_Certificate;
-      Sock : aliased CZMQ.Sockets.Socket := CZMQ.Sockets.New_Dealer;
    begin
+      --  Close previous cycle's resources (idempotent — no-op if
+      --  already closed or never opened).
+      CZMQ.Sockets.Close (Self.Sock);
+      CZMQ.Certificates.Close (Self.Certificate);
+
       --  Disconnected → Enrolling: open the socket and send register.
       Podmander.Logging.Info ("agent", "Connecting to controller...");
-      Cert.Apply (Sock);
-      Sock.Set_Curve_Serverkey (To_String (Self.Server_Public_Key));
-      Sock.Set_Identity (To_String (Self.Config.Agent_Name));
-      Sock.Connect (To_String (Self.Config.Controller_Address));
-      Sock.Set_Receive_Timeout
+      CZMQ.Certificates.Generate (Self.Certificate);
+      CZMQ.Sockets.Open_Dealer (Self.Sock);
+      Self.Certificate.Apply (Self.Sock);
+      Self.Sock.Set_Curve_Serverkey (To_String (Self.Server_Public_Key));
+      Self.Sock.Set_Identity (To_String (Self.Config.Agent_Name));
+      Self.Sock.Connect (To_String (Self.Config.Controller_Address));
+      Self.Sock.Set_Receive_Timeout
         (Integer (Self.Config.Registration_Timeout * 1000.0));
 
-      Send_Registration (Self, Sock);
+      Send_Registration (Self, Self.Sock);
       Self.State := Podmander.Types.Enrolling;
 
       --  Enrolling: wait for register response.
@@ -96,7 +88,7 @@ package body Podmander.Agent.Connection is
          Msg    : CZMQ.Messages.Message;
          Status : CZMQ.Messages.Receive_Status;
       begin
-         CZMQ.Messages.Receive (Sock, Msg, Status);
+         CZMQ.Messages.Receive (Self.Sock, Msg, Status);
 
          if Status = CZMQ.Messages.Timeout then
             Podmander.Logging.Warning
@@ -109,13 +101,13 @@ package body Podmander.Agent.Connection is
             return;
          end if;
 
-          declare
-             use Podmander.Messages;
-             use Podmander.Messages.Registration_Responses;
-             Decoded : constant Protocol_Message'Class := Decode (Msg);
-          begin
-             if Decoded in Registration_Response then
-                Self.Node_Id := Registration_Response (Decoded).Node_Id;
+         declare
+            use Podmander.Messages;
+            use Podmander.Messages.Registration_Responses;
+            Decoded : constant Protocol_Message'Class := Decode (Msg);
+         begin
+            if Decoded in Registration_Response then
+               Self.Node_Id := Registration_Response (Decoded).Node_Id;
                Self.State := Podmander.Types.Connected;
                Self.Backoff := 1.0;
                Podmander.Logging.Info
@@ -137,14 +129,10 @@ package body Podmander.Agent.Connection is
 
       --  Connected: heartbeat-bounded receive loop until shutdown,
       --  Stop, or connection error.
-      Sock.Set_Receive_Timeout (Poll_Interval_Ms);
+      Self.Sock.Set_Receive_Timeout (Poll_Interval_Ms);
       declare
-         --  Handler is stack-local to this connected-phase block and
-         --  cannot outlive Sock; Unchecked_Access is safe and matches
-         --  the existing Self'Unchecked_Access pattern.
          Handler : Message_Handlers.Agent_Handler :=
-           (Agt  => Self'Unchecked_Access,
-            Sock => Sock'Unchecked_Access);
+           (Agt => Self'Unchecked_Access);
       begin
          while Self.Running
            and then not CZMQ.Signals.Is_Interrupted
@@ -153,7 +141,7 @@ package body Podmander.Agent.Connection is
                use type Ada.Calendar.Time;
                Next_Heartbeat : Ada.Calendar.Time;
             begin
-               Send_Heartbeat (Self, Sock);
+               Send_Heartbeat (Self, Self.Sock);
                Next_Heartbeat :=
                  Ada.Calendar.Clock + Self.Config.Heartbeat_Interval;
                while not CZMQ.Signals.Is_Interrupted loop
@@ -161,7 +149,7 @@ package body Podmander.Agent.Connection is
                      Msg    : CZMQ.Messages.Message;
                      Status : CZMQ.Messages.Receive_Status;
                   begin
-                     CZMQ.Messages.Receive (Sock, Msg, Status);
+                     CZMQ.Messages.Receive (Self.Sock, Msg, Status);
                      if Status /= CZMQ.Messages.Timeout then
                         declare
                            Decoded : constant

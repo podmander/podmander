@@ -61,7 +61,7 @@ package body Podmander.Agent.Message_Handlers is
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Result.Encode (Msg);
-      Msg.Send (H.Sock.all);
+      Msg.Send (H.Agt.Sock);
    end Send_Deploy_Result;
 
    overriding procedure Handle_Status_Query
@@ -93,7 +93,7 @@ package body Podmander.Agent.Message_Handlers is
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Result.Encode (Msg);
-      Msg.Send (H.Sock.all);
+      Msg.Send (H.Agt.Sock);
    end Send_Status_Response;
 
 end Podmander.Agent.Message_Handlers;

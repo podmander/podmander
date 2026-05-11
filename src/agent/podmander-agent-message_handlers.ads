@@ -1,7 +1,6 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
-with CZMQ.Sockets;
 with Podmander.Messages;
 with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Status_Responses;
@@ -13,12 +12,11 @@ package Podmander.Agent.Message_Handlers is
    --  Concrete Message_Handler for the agent.
    --  Receives commands from the controller and dispatches to the
    --  agent's host-side capability packages (currently: Podman).
-   --  Sock points to the live socket owned by the connection cycle;
-   --  the handler is constructed only while that socket exists.
+   --  Accesses the socket through the agent instance, which owns
+   --  the socket as a field managed by the CZMQ Open/Close API.
    type Agent_Handler is limited new Podmander.Messages.Message_Handler
    with record
-      Agt  : access Podmander.Agent.Agent_Instance;
-      Sock : access CZMQ.Sockets.Socket;
+      Agt : access Podmander.Agent.Agent_Instance;
    end record;
 
     overriding procedure Handle_Registration_Request

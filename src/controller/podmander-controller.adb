@@ -36,11 +36,13 @@ package body Podmander.Controller is
    begin
       return C : Controller_Instance :=
         (Config      => Config,
-         Certificate => CZMQ.Certificates.New_Certificate,
-         Socket      => CZMQ.Sockets.New_Router,
+         Certificate => <>,
+         Socket      => <>,
          Agents      => <>,
          Running     => True)
       do
+         CZMQ.Certificates.Generate (C.Certificate);
+         CZMQ.Sockets.Open_Router (C.Socket);
          C.Certificate.Apply (C.Socket);
          C.Socket.Set_Curve_Server (True);
          C.Socket.Bind (Get_Bind_Address (Config));
@@ -114,8 +116,9 @@ package body Podmander.Controller is
    end Check_Timeouts;
 
    procedure Run (Self : in out Controller_Instance) is
-      Poller : CZMQ.Pollers.Poller := CZMQ.Pollers.New_Poller (Self.Socket);
+      Poller : CZMQ.Pollers.Poller;
    begin
+      CZMQ.Pollers.Open (Poller, Self.Socket);
       while Self.Running
         and then not CZMQ.Signals.Is_Interrupted
       loop
@@ -124,6 +127,7 @@ package body Podmander.Controller is
          end if;
          Check_Timeouts (Self);
       end loop;
+      CZMQ.Pollers.Close (Poller);
    end Run;
 
    procedure Stop (Self : in out Controller_Instance) is
