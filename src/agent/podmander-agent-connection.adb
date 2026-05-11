@@ -13,7 +13,7 @@ pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Registration_Requests;
 with Podmander.Messages.Registration_Responses;
-with Podmander.Shutdown;
+with CZMQ.Signals;
 
 package body Podmander.Agent.Connection is
 
@@ -147,7 +147,7 @@ package body Podmander.Agent.Connection is
             Sock => Sock'Unchecked_Access);
       begin
          while Self.Running
-           and then not Podmander.Shutdown.Requested
+           and then not CZMQ.Signals.Is_Interrupted
          loop
             declare
                use type Ada.Calendar.Time;
@@ -156,7 +156,7 @@ package body Podmander.Agent.Connection is
                Send_Heartbeat (Self, Sock);
                Next_Heartbeat :=
                  Ada.Calendar.Clock + Self.Config.Heartbeat_Interval;
-               while not Podmander.Shutdown.Requested loop
+               while not CZMQ.Signals.Is_Interrupted loop
                   declare
                      Msg    : CZMQ.Messages.Message;
                      Status : CZMQ.Messages.Receive_Status;

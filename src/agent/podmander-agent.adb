@@ -4,7 +4,7 @@
 with Podmander.Agent.Connection;
 with Podmander.Enrollment;
 with Podmander.Logging;
-with Podmander.Shutdown;
+with CZMQ.Signals;
 
 package body Podmander.Agent is
 
@@ -42,7 +42,7 @@ package body Podmander.Agent is
    procedure Run (Self : in out Agent_Instance) is
    begin
       while Self.Running
-        and then not Podmander.Shutdown.Requested
+        and then not CZMQ.Signals.Is_Interrupted
       loop
          Connection.Run_Cycle (Self);
       end loop;

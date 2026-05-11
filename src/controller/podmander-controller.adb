@@ -9,7 +9,7 @@ with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
-with Podmander.Shutdown;
+with CZMQ.Signals;
 
 package body Podmander.Controller is
 
@@ -117,7 +117,7 @@ package body Podmander.Controller is
       Poller : CZMQ.Pollers.Poller := CZMQ.Pollers.New_Poller (Self.Socket);
    begin
       while Self.Running
-        and then not Podmander.Shutdown.Requested
+        and then not CZMQ.Signals.Is_Interrupted
       loop
          if Poller.Wait (Poll_Interval_Ms) then
             Handle_Message (Self);

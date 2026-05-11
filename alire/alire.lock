@@ -113,7 +113,7 @@ crate = "czmq_ada"
 fulfilment = "solved"
 pinned = false
 transitivity = "direct"
-versions = "~0.4.0"
+versions = "~0.5.0"
 [solution.state.release]
 authors = [
 "Jochen Lillich <contact@geewiz.dev>",
@@ -134,10 +134,10 @@ tags = [
 "networking",
 "bindings",
 ]
-version = "0.4.0"
+version = "0.5.0"
 website = "https://github.com/geewiz/czmq_ada"
 [solution.state.release.origin]
-commit = "573cf56cc18c65ab29c6a6364fa6178d86a0c812"
+commit = "83b0ba41f60d82617e759478333914ac3d0a82af"
 url = "git+https://github.com/geewiz/czmq_ada.git"
 [[solution.state]]
 crate = "spoon"
