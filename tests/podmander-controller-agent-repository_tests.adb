@@ -126,7 +126,10 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Loaded : Agent_Info;
    begin
       Repo.Register (D, Info);
-      Repo.Touch (D, "touch-agent", Later);
+      Repo.Touch (D, (Name      => To_Unbounded_String ("touch-agent"),
+                       Node_Id   => To_Unbounded_String ("node-001"),
+                       State     => Registered,
+                       Last_Seen => Later));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("touch-agent");
       Assert (Agent_Maps.Has_Element (Cur), "Agent should be in map after touch");
@@ -148,7 +151,10 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Got_Error : Boolean := False;
    begin
       begin
-         Repo.Touch (D, "nonexistent", Now);
+         Repo.Touch (D, (Name      => To_Unbounded_String ("nonexistent"),
+                          Node_Id   => To_Unbounded_String (""),
+                          State     => Registered,
+                          Last_Seen => Now));
       exception
          when E : DB.Database_Error =>
             declare
@@ -183,7 +189,10 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Loaded : Agent_Info;
    begin
       Repo.Register (D, Info);
-      Repo.Set_State (D, "state-agent", Unresponsive);
+      Repo.Set_State (D, (Name      => To_Unbounded_String ("state-agent"),
+                           Node_Id   => To_Unbounded_String ("node-001"),
+                           State     => Unresponsive,
+                           Last_Seen => Now));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("state-agent");
       Assert (Agent_Maps.Has_Element (Cur),
@@ -202,10 +211,14 @@ package body Podmander.Controller.Agent.Repository_Tests is
    is
       pragma Unreferenced (T);
       D         : DB.DB_Handle := DB.Open (":memory:");
+      Now       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Got_Error : Boolean := False;
    begin
       begin
-         Repo.Set_State (D, "nonexistent", Lost);
+         Repo.Set_State (D, (Name      => To_Unbounded_String ("nonexistent"),
+                              Node_Id   => To_Unbounded_String (""),
+                              State     => Lost,
+                              Last_Seen => Now));
       exception
          when E : DB.Database_Error =>
             declare
@@ -238,7 +251,10 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Map  : Agent_Maps.Map;
    begin
       Repo.Register (D, Info);
-      Repo.Remove (D, "remove-agent");
+      Repo.Remove (D, (Name      => To_Unbounded_String ("remove-agent"),
+                        Node_Id   => To_Unbounded_String ("node-001"),
+                        State     => Registered,
+                        Last_Seen => Now));
       Map := Repo.Load_All (D);
       Assert (Natural (Map.Length) = 0,
               "All agents should be removed");
@@ -263,7 +279,10 @@ package body Podmander.Controller.Agent.Repository_Tests is
    begin
       Repo.Register (D, Info);
       --  Remove a different (non-existent) agent
-      Repo.Remove (D, "nonexistent");
+      Repo.Remove (D, (Name      => To_Unbounded_String ("nonexistent"),
+                        Node_Id   => To_Unbounded_String (""),
+                        State     => Registered,
+                        Last_Seen => Now));
       Map := Repo.Load_All (D);
       Assert (Natural (Map.Length) = 1,
                "Original agent should still exist after " &
