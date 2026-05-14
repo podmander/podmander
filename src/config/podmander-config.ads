@@ -1,0 +1,43 @@
+--  Copyright (C) 2026 Jochen Lillich
+--  SPDX-License-Identifier: Apache-2.0
+
+with Ada.Strings.Unbounded;
+
+package Podmander.Config is
+
+   use Ada.Strings.Unbounded;
+
+   type String_Array is array (Positive range <>) of Unbounded_String;
+
+   type Port_Mapping is record
+      Host      : Positive;
+      Container : Positive;
+   end record;
+
+   type Port_Array is array (Positive range <>) of Port_Mapping;
+
+   type Env_Entry is record
+      Key   : Unbounded_String;
+      Value : Unbounded_String;
+   end record;
+
+   type Env_Array is array (Positive range <>) of Env_Entry;
+
+   type Volume_Mapping is record
+      Host      : Unbounded_String;
+      Container : Unbounded_String;
+   end record;
+
+   type Volume_Array is array (Positive range <>) of Volume_Mapping;
+
+   type Service_Definition is record
+      Image         : Unbounded_String;
+      Env           : Env_Array (1 .. 100);
+      Env_Count     : Natural          := 0;
+      Ports         : Port_Array (1 .. 100);
+      Ports_Count   : Natural          := 0;
+      Volumes       : Volume_Array (1 .. 100);
+      Volumes_Count : Natural          := 0;
+   end record;
+
+end Podmander.Config;

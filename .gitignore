@@ -1,7 +1,7 @@
 .worktrees/
 obj/
 /bin/
-config/
+/config/
 alire/build_hash_inputs
 alire/flags/
 alire/settings.toml
