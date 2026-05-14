@@ -1,11 +1,14 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with Ada.Calendar;
+with Ada.Directories;
+with Ada.Strings.Unbounded;
 with AUnit.Assertions;
 with AUnit.Test_Cases;
-with Ada.Calendar;
-with Ada.Strings.Unbounded;
 with Podmander.Controller;
+with Podmander.Controller.Agent.Repository;
+with Podmander.Database;
 with Podmander.Enrollment;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Messages;
@@ -217,7 +220,7 @@ package body Podmander.Controller_Tests is
 
    --  Test: Make_Listening_Controller with :memory: DB path returns instance
    procedure Test_Controller_Make_With_DB
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       Config : Podmander.Controller.Controller_Config;
@@ -235,11 +238,99 @@ package body Podmander.Controller_Tests is
          Assert (False, "Make_Listening_Controller with :memory: raised");
    end Test_Controller_Make_With_DB;
 
+   --  Test: Agents persist across database connections (simulating restart)
+   procedure Test_Startup_Loading
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use type Podmander.Types.Agent_State;
+      DB_Path : constant String := "/tmp/podmander_test_startup.db";
+      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Info    : constant Podmander.Types.Agent_Info :=
+        (Name      => To_Unbounded_String ("persisted-agent"),
+         Node_Id   => To_Unbounded_String ("node-001"),
+         State     => Podmander.Types.Registered,
+         Last_Seen => Now);
+      Loaded  : Podmander.Controller.Agent_Maps.Map;
+      Cur     : Podmander.Controller.Agent_Maps.Cursor;
+      Element : Podmander.Types.Agent_Info;
+   begin
+      --  Phase 1: Open DB, register an agent, close (handle auto-finalized)
+      declare
+         D : Podmander.Database.DB_Handle :=
+           Podmander.Database.Open (DB_Path);
+      begin
+         Podmander.Controller.Agent.Repository.Register (D, Info);
+      end;
+
+      --  Phase 2: Open same DB (simulating controller restart), load agents
+      declare
+         D : Podmander.Database.DB_Handle :=
+           Podmander.Database.Open (DB_Path);
+      begin
+         Loaded := Podmander.Controller.Agent.Repository.Load_All (D);
+      end;
+
+      --  Verify the persisted agent was loaded
+      Assert
+        (Natural (Loaded.Length) = 1,
+         "Should have 1 agent after reload");
+
+      Cur := Loaded.Find ("persisted-agent");
+      Assert
+        (Podmander.Controller.Agent_Maps.Has_Element (Cur),
+         "Persisted agent should be in loaded map");
+
+      Element := Podmander.Controller.Agent_Maps.Element (Cur);
+      Assert
+        (To_String (Element.Name) = "persisted-agent",
+         "Agent name should match after reload");
+      Assert
+        (Element.State = Podmander.Types.Registered,
+         "Agent state should be as persisted before restart");
+
+      --  Cleanup
+      begin
+         Ada.Directories.Delete_File (DB_Path);
+      exception
+         when Ada.Directories.Name_Error =>
+            null;
+      end;
+      begin
+         Ada.Directories.Delete_File (DB_Path & "-wal");
+      exception
+         when Ada.Directories.Name_Error =>
+            null;
+      end;
+   exception
+      when others =>
+         begin
+            Ada.Directories.Delete_File (DB_Path);
+         exception
+            when Ada.Directories.Name_Error =>
+               null;
+         end;
+         begin
+            Ada.Directories.Delete_File (DB_Path & "-wal");
+         exception
+            when Ada.Directories.Name_Error =>
+               null;
+         end;
+         raise;
+   end Test_Startup_Loading;
+
    --  Helpers for Controller_Handler tests that work without a live socket.
    function Make_Ctrl
      return Podmander.Controller.Controller_Instance is
    begin
-      return C : Podmander.Controller.Controller_Instance do
+      return C : Podmander.Controller.Controller_Instance :=
+        (Config      => <>,
+         DB          => Podmander.Database.Open (":memory:"),
+         Certificate => <>,
+         Socket      => <>,
+         Agents      => <>,
+         Running     => False)
+      do
          Podmander.Enrollment.Set_Secret
            (C.Config.Enrollment, "secret");
       end return;
@@ -292,13 +383,15 @@ package body Podmander.Controller_Tests is
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
         (Agent_Id  => To_Unbounded_String ("node-xyz"),
          Timestamp => Ada.Calendar.Clock);
-   begin
-      Ctrl.Agents.Insert ("node-xyz", Info);
-      H.Handle_Heartbeat (HB);
-      Assert
-        (Ctrl.Agents ("node-xyz").Last_Seen > Past,
-         "Last_Seen was not updated");
-   end Test_Handle_Heartbeat_Updates_Last_Seen;
+    begin
+       Ctrl.Agents.Insert ("node-xyz", Info);
+       --  Also register in DB for persistence (write-through pattern)
+       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
+       H.Handle_Heartbeat (HB);
+       Assert
+         (Ctrl.Agents ("node-xyz").Last_Seen > Past,
+          "Last_Seen was not updated");
+    end Test_Handle_Heartbeat_Updates_Last_Seen;
 
    --  Test: Handle_Heartbeat for unknown agent does not mutate Agents.
    procedure Test_Handle_Heartbeat_Unknown_Agent
@@ -337,13 +430,15 @@ package body Podmander.Controller_Tests is
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
         (Agent_Id  => To_Unbounded_String ("lost-node"),
          Timestamp => Ada.Calendar.Clock);
-   begin
-      Ctrl.Agents.Insert ("lost-node", Info);
-      H.Handle_Heartbeat (HB);
-      Assert
-        (Ctrl.Agents ("lost-node").State = Podmander.Types.Registered,
-         "Expected state to transition to Registered");
-   end Test_Handle_Heartbeat_Reconnect;
+    begin
+       Ctrl.Agents.Insert ("lost-node", Info);
+       --  Also register in DB for persistence (write-through pattern)
+       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
+       H.Handle_Heartbeat (HB);
+       Assert
+         (Ctrl.Agents ("lost-node").State = Podmander.Types.Registered,
+          "Expected state to transition to Registered");
+    end Test_Handle_Heartbeat_Reconnect;
 
    overriding procedure Register_Tests (T : in out Controller_Test) is
       use AUnit.Test_Cases.Registration;
@@ -375,10 +470,13 @@ package body Podmander.Controller_Tests is
        Register_Routine
          (T, Test_Controller_DB_Path_Accessors'Access,
           "Set_DB_Path / Get_DB_Path round-trip");
-       Register_Routine
-         (T, Test_Controller_Make_With_DB'Access,
-          "Make_Listening_Controller with memory DB");
-    end Register_Tests;
+        Register_Routine
+          (T, Test_Controller_Make_With_DB'Access,
+           "Make_Listening_Controller with memory DB");
+        Register_Routine
+          (T, Test_Startup_Loading'Access,
+           "Agents persist across database connections (restart)");
+     end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Controller_Test;

@@ -5,6 +5,7 @@ with Ada.Calendar;
 with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
+with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Logging;
 with Podmander.Messages;
@@ -62,6 +63,29 @@ package body Podmander.Controller is
          Agents      => <>,
          Running     => True)
       do
+         --  Load persisted agents from DB
+         C.Agents := Agent.Repository.Load_All (C.DB);
+
+         --  Per ADR-0035: agents that were Registered or Unresponsive
+         --  start as Unresponsive — they must send a heartbeat to prove
+         --  they're still alive after the controller restart.
+         declare
+            use type Podmander.Types.Agent_State;
+         begin
+            for Cursor in C.Agents.Iterate loop
+               declare
+                  Key  : constant String := Agent_Maps.Key (Cursor);
+                  Info : Podmander.Types.Agent_Info :=
+                    Agent_Maps.Element (Cursor);
+               begin
+                  if Info.State /= Podmander.Types.Lost then
+                     Info.State := Podmander.Types.Unresponsive;
+                     C.Agents.Replace (Key, Info);
+                  end if;
+               end;
+            end loop;
+         end;
+
          CZMQ.Certificates.Generate (C.Certificate);
          CZMQ.Sockets.Open_Router (C.Socket);
          C.Certificate.Apply (C.Socket);
@@ -121,6 +145,7 @@ package body Podmander.Controller is
               and then Info.State /= Podmander.Types.Lost
             then
                Info.State := Podmander.Types.Lost;
+               Agent.Repository.Set_State (Self.DB, Info);
                Self.Agents.Replace (Key, Info);
                Podmander.Logging.Warning
                  ("controller", "Agent " & Key & " disconnected");
@@ -128,6 +153,7 @@ package body Podmander.Controller is
               and then Info.State = Podmander.Types.Registered
             then
                Info.State := Podmander.Types.Unresponsive;
+               Agent.Repository.Set_State (Self.DB, Info);
                Self.Agents.Replace (Key, Info);
                Podmander.Logging.Warning
                  ("controller", "Agent " & Key & " unresponsive");

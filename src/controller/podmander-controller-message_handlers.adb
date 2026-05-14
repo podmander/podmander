@@ -3,6 +3,8 @@
 
 with Ada.Calendar;
 with CZMQ.Messages;
+with Podmander.Controller.Agent.Repository;
+with Podmander.Database;
 with Podmander.Enrollment;
 with Podmander.Logging;
 with Podmander.Messages.Deploy_Results;
@@ -14,6 +16,8 @@ with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
 
 package body Podmander.Controller.Message_Handlers is
+
+   use type Podmander.Database.Error_Kind;
 
    procedure Send_Status_Query
      (H       : in out Controller_Handler;
@@ -51,18 +55,34 @@ package body Podmander.Controller.Message_Handlers is
           return;
        end if;
 
-       declare
-          Info : constant Podmander.Types.Agent_Info :=
-            (Name      => Req.Agent_Name,
-             Node_Id   => To_Unbounded_String (Node_Id),
-             State     => Podmander.Types.Registered,
-             Last_Seen => Ada.Calendar.Clock);
-       begin
-          H.Ctrl.Agents.Include (Node_Id, Info);
-          Podmander.Logging.Info
-            ("controller",
-             "Registered agent """ & Name & """ as " & Node_Id);
-       end;
+        declare
+           Info : constant Podmander.Types.Agent_Info :=
+             (Name      => Req.Agent_Name,
+              Node_Id   => To_Unbounded_String (Node_Id),
+              State     => Podmander.Types.Registered,
+              Last_Seen => Ada.Calendar.Clock);
+        begin
+           --  Persist to DB (write-through)
+           begin
+              Agent.Repository.Register (H.Ctrl.DB, Info);
+           exception
+              when E : Podmander.Database.Database_Error =>
+                 if Podmander.Database.Parse_Error (E).Kind =
+                   Podmander.Database.Constraint_Violation
+                 then
+                    --  Agent already in DB (re-registration after restart).
+                    --  Update instead of insert.
+                    Agent.Repository.Touch (H.Ctrl.DB, Info);
+                    Agent.Repository.Set_State (H.Ctrl.DB, Info);
+                 else
+                    raise;
+                 end if;
+           end;
+           H.Ctrl.Agents.Include (Node_Id, Info);
+           Podmander.Logging.Info
+             ("controller",
+              "Registered agent """ & Name & """ as " & Node_Id);
+        end;
 
        if H.Ctrl.Socket.Is_Valid then
           declare
@@ -89,20 +109,22 @@ package body Podmander.Controller.Message_Handlers is
       Agent_Id : constant String := To_String (HB.Agent_Id);
    begin
       if H.Ctrl.Agents.Contains (Agent_Id) then
-         declare
-            Info : Podmander.Types.Agent_Info := H.Ctrl.Agents (Agent_Id);
-         begin
-            Info.Last_Seen := Ada.Calendar.Clock;
-            if Info.State /= Podmander.Types.Registered then
-               Podmander.Logging.Info
-                 ("controller",
-                  "Agent " & Agent_Id & " reconnected");
-               Info.State := Podmander.Types.Registered;
-            end if;
-            H.Ctrl.Agents.Replace (Agent_Id, Info);
-            Podmander.Logging.Debug
-              ("controller", "Heartbeat from " & Agent_Id);
-         end;
+          declare
+             Info : Podmander.Types.Agent_Info := H.Ctrl.Agents (Agent_Id);
+          begin
+             Info.Last_Seen := Ada.Calendar.Clock;
+             if Info.State /= Podmander.Types.Registered then
+                Info.State := Podmander.Types.Registered;
+                Agent.Repository.Set_State (H.Ctrl.DB, Info);
+                Podmander.Logging.Info
+                  ("controller",
+                   "Agent " & Agent_Id & " reconnected");
+             end if;
+             Agent.Repository.Touch (H.Ctrl.DB, Info);
+             H.Ctrl.Agents.Replace (Agent_Id, Info);
+             Podmander.Logging.Debug
+               ("controller", "Heartbeat from " & Agent_Id);
+          end;
       else
          Podmander.Logging.Warning
            ("controller",
