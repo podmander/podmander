@@ -7,6 +7,13 @@ package Podmander.Config is
 
    use Ada.Strings.Unbounded;
 
+   MAX_ENV_ENTRIES     : constant := 100;
+   MAX_PORTS_ENTRIES   : constant := 100;
+   MAX_VOLUMES_ENTRIES : constant := 100;
+
+   MIN_PORT : constant := 1;
+   MAX_PORT : constant := 65535;
+
    type String_Array is array (Positive range <>) of Unbounded_String;
 
    type Port_Mapping is record
@@ -32,11 +39,11 @@ package Podmander.Config is
 
    type Service_Definition is record
       Image         : Unbounded_String;
-      Env           : Env_Array (1 .. 100);
+      Env           : Env_Array (1 .. MAX_ENV_ENTRIES);
       Env_Count     : Natural          := 0;
-      Ports         : Port_Array (1 .. 100);
+      Ports         : Port_Array (1 .. MAX_PORTS_ENTRIES);
       Ports_Count   : Natural          := 0;
-      Volumes       : Volume_Array (1 .. 100);
+      Volumes       : Volume_Array (1 .. MAX_VOLUMES_ENTRIES);
       Volumes_Count : Natural          := 0;
    end record;
 
