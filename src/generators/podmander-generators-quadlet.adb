@@ -14,6 +14,12 @@ package body Podmander.Generators.Quadlet is
    function Render (Service : Service_Definition) return String is
       Buffer : Unbounded_String := Null_Unbounded_String;
    begin
+      --  [Unit] section (only if Description is non-empty)
+      if Length (Service.Description) > 0 then
+         Append (Buffer, "[Unit]" & ASCII.LF);
+         Append (Buffer, "Description=" & Service.Description & ASCII.LF);
+      end if;
+
       --  [Container] section header
       Append (Buffer, "[Container]" & ASCII.LF);
 
@@ -54,6 +60,14 @@ package body Podmander.Generators.Quadlet is
          Append (Buffer, Service.Volumes (I).Container);
          Append (Buffer, ASCII.LF);
       end loop;
+
+      --  [Install] section
+      Append (Buffer, "[Install]" & ASCII.LF);
+      if Length (Service.WantedBy) > 0 then
+         Append (Buffer, "WantedBy=" & Service.WantedBy & ASCII.LF);
+      else
+         Append (Buffer, "WantedBy=multi-user.target" & ASCII.LF);
+      end if;
 
       return To_String (Buffer);
    end Render;

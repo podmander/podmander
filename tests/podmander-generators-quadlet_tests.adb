@@ -256,6 +256,163 @@ package body Podmander.Generators.Quadlet_Tests is
               "Output should contain Volume=/data:/data");
    end Test_Render_Full_Container;
 
+   --  Test rendering a service with a Description (should emit [Unit] section)
+   procedure Test_Render_Description_Present
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("myapp:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => To_Unbounded_String ("My web app"),
+         WantedBy      => Null_Unbounded_String);
+      Output : constant String := Render (Config);
+   begin
+      Assert (Ada.Strings.Fixed.Index (Output, "[Unit]") > 0,
+              "Output should contain [Unit] section");
+      Assert (Ada.Strings.Fixed.Index
+                (Output, "Description=My web app") > 0,
+              "Output should contain Description=My web app");
+   end Test_Render_Description_Present;
+
+   --  Test rendering a service with empty Description (no [Unit] section)
+   procedure Test_Render_Description_Empty
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("myapp:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Output : constant String := Render (Config);
+   begin
+      Assert (Ada.Strings.Fixed.Index (Output, "[Unit]") = 0,
+              "Output should NOT contain [Unit] section");
+   end Test_Render_Description_Empty;
+
+   --  Test rendering a service with explicit WantedBy
+   procedure Test_Render_WantedBy_Specified
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("myapp:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => To_Unbounded_String ("multi-user.target"));
+      Output : constant String := Render (Config);
+   begin
+      Assert (Ada.Strings.Fixed.Index (Output, "[Install]") > 0,
+              "Output should contain [Install] section");
+      Assert (Ada.Strings.Fixed.Index
+                (Output, "WantedBy=multi-user.target") > 0,
+              "Output should contain WantedBy=multi-user.target");
+   end Test_Render_WantedBy_Specified;
+
+   --  Test rendering a service with default WantedBy
+   procedure Test_Render_WantedBy_Default
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("myapp:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Output : constant String := Render (Config);
+   begin
+      Assert (Ada.Strings.Fixed.Index (Output, "[Install]") > 0,
+              "Output should contain [Install] section");
+      Assert (Ada.Strings.Fixed.Index
+                (Output, "WantedBy=multi-user.target") > 0,
+              "Output should contain default WantedBy=multi-user.target");
+   end Test_Render_WantedBy_Default;
+
+   --  Test sections appear in correct order: [Unit] < [Container] < [Install]
+   procedure Test_Render_Full_Sections
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("myapp:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => To_Unbounded_String ("My web app"),
+         WantedBy      => To_Unbounded_String ("multi-user.target"));
+      Output    : constant String := Render (Config);
+      Unit_Pos      : constant Natural :=
+        Ada.Strings.Fixed.Index (Output, "[Unit]");
+      Container_Pos : constant Natural :=
+        Ada.Strings.Fixed.Index (Output, "[Container]");
+      Install_Pos   : constant Natural :=
+        Ada.Strings.Fixed.Index (Output, "[Install]");
+   begin
+      Assert (Unit_Pos > 0, "Output should contain [Unit] section");
+      Assert (Container_Pos > 0,
+              "Output should contain [Container] section");
+      Assert (Install_Pos > 0,
+              "Output should contain [Install] section");
+      Assert (Unit_Pos < Container_Pos,
+              "[Unit] section should appear before [Container]");
+      Assert (Container_Pos < Install_Pos,
+              "[Container] section should appear before [Install]");
+   end Test_Render_Full_Sections;
+
    --  Register all test routines (Test_Render_Volume_With_Options skipped)
    overriding procedure Register_Tests (T : in out Quadlet_Test) is
       use AUnit.Test_Cases.Registration;
@@ -281,7 +438,22 @@ package body Podmander.Generators.Quadlet_Tests is
       Register_Routine
         (T, Test_Render_Full_Container'Access,
          "Render full container with all field types");
-   end Register_Tests;
+      Register_Routine
+        (T, Test_Render_Description_Present'Access,
+         "Render service with Description present");
+      Register_Routine
+        (T, Test_Render_Description_Empty'Access,
+         "Render service with empty Description");
+      Register_Routine
+        (T, Test_Render_WantedBy_Specified'Access,
+         "Render service with explicit WantedBy");
+      Register_Routine
+        (T, Test_Render_WantedBy_Default'Access,
+         "Render service with default WantedBy");
+      Register_Routine
+        (T, Test_Render_Full_Sections'Access,
+         "Render service with all sections in correct order");
+    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Quadlet_Test;
