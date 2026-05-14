@@ -11,6 +11,7 @@ with Podmander.Controller_Tests;
 with Podmander.Enrollment_Tests;
 with Podmander.Config_Tests;
 with Podmander.Database_Tests;
+with Podmander.Generators.Quadlet_Tests;
 with Podmander.Logging_Tests;
 with Podmander.Messages_Tests;
 
@@ -31,6 +32,8 @@ procedure Test_Runner is
       AUnit.Test_Suites.Add_Test (Result, Podmander.Enrollment_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Logging_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Config_Tests.Suite);
+      AUnit.Test_Suites.Add_Test
+        (Result, Podmander.Generators.Quadlet_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Database_Tests.Suite);
       return Result;
    end All_Suites;
