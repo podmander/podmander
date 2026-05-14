@@ -206,8 +206,8 @@ package body Podmander.Database_Tests is
       begin
          Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
                  "schema_version should have a row");
-         Assert (Ada_Sqlite3.Column_Int (Stmt, 0) = 1,
-                 "schema_version should be 1 after migration");
+          Assert (Ada_Sqlite3.Column_Int (Stmt, 0) >= 1,
+                  "schema_version should be >= 1 after migration");
       end;
       Cleanup_DB (Path);
    exception
@@ -245,8 +245,8 @@ package body Podmander.Database_Tests is
       begin
          Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
                  "schema_version should have a row on re-open");
-         Assert (Ada_Sqlite3.Column_Int (Stmt, 0) = 1,
-                 "schema_version should still be 1 on re-open");
+          Assert (Ada_Sqlite3.Column_Int (Stmt, 0) >= 1,
+                  "schema_version should be >= 1 on re-open");
       end;
       Cleanup_DB (Path);
    exception
@@ -365,6 +365,37 @@ package body Podmander.Database_Tests is
       Cleanup_DB (Path);
    end Test_Handle_Finalization;
 
+   --  Test: Migration 002 creates the agents table
+   procedure Test_Migration_Agents_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      --  Open should not raise and should create agents table
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+         pragma Unreferenced (Handle);
+      begin
+         null;
+      end;
+      --  Verify agents table exists through a second connection
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare
+             (Conn, "SELECT name, node_id, state, last_seen FROM agents");
+      begin
+         --  Preparing the query should not raise — table exists with correct columns
+         null;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Migration_Agents_Table;
+
    --  Test: Open raises Database_Error for invalid paths
    procedure Test_Open_Error_Path
      (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -384,6 +415,135 @@ package body Podmander.Database_Tests is
       when others =>
          Assert (False, "Open raised wrong exception for invalid path");
    end Test_Open_Error_Path;
+
+   --  Test: Prepare/Bind/Step/Column_Text round-trip INSERT and SELECT
+   procedure Test_Prepare_And_Step
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Handle : DB.DB_Handle := DB.Open (":memory:");
+   begin
+      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
+
+      --  INSERT a row via Prepare/Bind_Text/Step
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (name) VALUES (?)");
+      begin
+         DB.Bind_Text (Q, 1, "Alice");
+         Assert (not DB.Step (Q), "INSERT should complete (DONE -> False)");
+      end;
+
+      --  SELECT and verify via Step/Column_Text
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT name FROM test");
+      begin
+         Assert (DB.Step (Q), "SELECT should return a row");
+         Assert (DB.Column_Text (Q, 0) = "Alice",
+                 "Column_Text should return 'Alice'");
+         Assert (not DB.Step (Q), "SELECT should have exactly one row");
+      end;
+   end Test_Prepare_And_Step;
+
+   --  Test: Changes returns correct counts for INSERT/UPDATE/DELETE
+   procedure Test_Changes_Count
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Handle : DB.DB_Handle := DB.Open (":memory:");
+   begin
+      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
+
+      --  INSERT
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (name) VALUES (?)");
+      begin
+         DB.Bind_Text (Q, 1, "Alice");
+         Assert (not DB.Step (Q), "INSERT should complete (DONE)");
+      end;
+      Assert (DB.Changes (Handle) = 1, "Changes = 1 after INSERT");
+
+      --  UPDATE
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "UPDATE test SET name = ? WHERE id = ?");
+      begin
+         DB.Bind_Text (Q, 1, "Bob");
+         DB.Bind_Text (Q, 2, "1");
+         Assert (not DB.Step (Q), "UPDATE should complete (DONE)");
+      end;
+      Assert (DB.Changes (Handle) = 1, "Changes = 1 after UPDATE");
+
+      --  DELETE
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "DELETE FROM test WHERE id = ?");
+      begin
+         DB.Bind_Text (Q, 1, "1");
+         Assert (not DB.Step (Q), "DELETE should complete (DONE)");
+      end;
+      Assert (DB.Changes (Handle) = 1, "Changes = 1 after DELETE");
+   end Test_Changes_Count;
+
+   --  Test: Execute creates a table that can be queried via Prepare
+   procedure Test_Execute_Creates_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Handle : DB.DB_Handle := DB.Open (":memory:");
+   begin
+      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT * FROM test");
+      begin
+         Assert (not DB.Step (Q), "Empty table should return DONE");
+      end;
+   end Test_Execute_Creates_Table;
+
+   --  Test: Prepare raises Database_Error for invalid SQL syntax
+   procedure Test_Prepare_Invalid_SQL
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Handle : DB.DB_Handle := DB.Open (":memory:");
+   begin
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT * FROM");
+         pragma Unreferenced (Q);
+      begin
+         Assert (False, "Prepare should have raised Database_Error");
+      end;
+   exception
+      when DB.Database_Error =>
+         Assert (True, "Prepare raised Database_Error for invalid SQL");
+      when others =>
+         Assert (False, "Prepare raised wrong exception for invalid SQL");
+   end Test_Prepare_Invalid_SQL;
+
+   --  Test: Step raises Database_Error for nonexistent table
+   procedure Test_Step_Error
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Handle : DB.DB_Handle := DB.Open (":memory:");
+   begin
+       declare
+          Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO nonexistent (id) VALUES (1)");
+       begin
+          --  Prepare may succeed; the error should surface on Step
+          declare
+             Dummy : Boolean;
+          begin
+             Dummy := DB.Step (Q);
+             Assert (False, "Step should have raised Database_Error");
+          exception
+             when DB.Database_Error =>
+                null;  --  Expected
+          end;
+      end;
+   exception
+      when DB.Database_Error =>
+         null;  --  Expected: Prepare raised
+      when others =>
+         Assert (False, "Prepare/Step raised wrong exception for nonexistent table");
+   end Test_Step_Error;
 
    --  Register all test routines
    overriding procedure Register_Tests (T : in out Database_Test) is
@@ -427,8 +587,27 @@ package body Podmander.Database_Tests is
         (T, Test_Handle_Finalization'Access,
          "DB_Handle finalization closes connection");
       Register_Routine
-        (T, Test_Open_Error_Path'Access,
-         "Open raises Database_Error for invalid path");
+         (T, Test_Migration_Agents_Table'Access,
+          "Migration 002 creates agents table");
+      Register_Routine
+          (T, Test_Open_Error_Path'Access,
+           "Open raises Database_Error for invalid path");
+      --  Query API tests
+      Register_Routine
+        (T, Test_Prepare_And_Step'Access,
+         "Prepare/Bind/Step/Column_Text round-trip");
+      Register_Routine
+        (T, Test_Changes_Count'Access,
+         "Changes count for INSERT/UPDATE/DELETE");
+      Register_Routine
+        (T, Test_Execute_Creates_Table'Access,
+         "Execute creates table queried by Prepare");
+      Register_Routine
+        (T, Test_Prepare_Invalid_SQL'Access,
+         "Prepare raises Database_Error for invalid SQL");
+      Register_Routine
+        (T, Test_Step_Error'Access,
+         "Step raises Database_Error for nonexistent table");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

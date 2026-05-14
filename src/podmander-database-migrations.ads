@@ -51,9 +51,19 @@ private
    Migration_001_SQL : constant String :=
      Migration_001_WAL_SQL & Migration_001_Table_SQL;
 
+   Migration_002_SQL : constant String :=
+     "CREATE TABLE IF NOT EXISTS agents (" &
+     "name       TEXT PRIMARY KEY," &
+     "node_id    TEXT NOT NULL," &
+     "state      TEXT NOT NULL CHECK (state IN ('registered', 'unresponsive', 'lost'))," &
+     "last_seen  TEXT NOT NULL);";
+
    Migration_History : constant Migration_Array :=
      (1 => (Version => 1,
             SQL     => Ada.Strings.Unbounded.To_Unbounded_String
-                        (Migration_001_SQL)));
+                        (Migration_001_SQL)),
+      2 => (Version => 2,
+            SQL     => Ada.Strings.Unbounded.To_Unbounded_String
+                        (Migration_002_SQL)));
 
 end Podmander.Database.Migrations;

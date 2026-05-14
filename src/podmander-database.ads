@@ -64,6 +64,39 @@ package Podmander.Database is
    --  migrations. Returns a ready-to-use handle.
    --  Raises Database_Error on failure.
 
+   type Query_Handle is limited private;
+   --  Wraps a prepared SQLite statement. Auto-finalizes on scope exit.
+   --  Repository packages use this instead of Ada_Sqlite3.Statement directly.
+
+   function Prepare
+     (DB  : in out DB_Handle;
+      SQL : String) return Query_Handle;
+   --  Prepare a parameterized query. The returned handle holds a reference
+   --  to the connection. Auto-finalized when it goes out of scope.
+   --  Raises Database_Error on failure.
+
+   procedure Bind_Text
+     (QH    : in out Query_Handle;
+      Index : Positive;
+      Value : String);
+   --  Bind a text value to a parameter by position.
+
+   function Step (QH : in out Query_Handle) return Boolean;
+   --  Execute next step. True if a row is available (ROW), False if done.
+   --  Raises Database_Error on SQLite errors.
+
+   function Column_Text
+     (QH    : Query_Handle;
+      Index : Natural) return String;
+   --  Read a text column from the current row.
+
+   function Changes (DB : in out DB_Handle) return Integer;
+   --  Rows modified by most recent INSERT/UPDATE/DELETE.
+
+   procedure Execute (DB : in out DB_Handle; SQL : String);
+   --  Execute a one-shot SQL statement (DDL, PRAGMA, etc.).
+   --  Raises Database_Error on failure.
+
 private
 
    type DB_Handle is new Ada.Finalization.Limited_Controlled with record
@@ -76,5 +109,11 @@ private
    --  Empty override. Ada auto-finalizes the DB component after this.
    --  Do NOT call Handle.DB.Finalize explicitly — that would cause
    --  double-finalization.
+
+   type Query_Handle is limited record
+      Stmt : Ada_Sqlite3.Statement;
+   end record;
+   --  Limited but not tagged. The Statement component is controlled
+   --  and auto-finalizes when Query_Handle goes out of scope.
 
 end Podmander.Database;

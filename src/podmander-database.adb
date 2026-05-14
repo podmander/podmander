@@ -17,7 +17,8 @@ package body Podmander.Database is
       Append (Result, "[");
       Append (Result, Info.Kind'Image);
       Append (Result, "|");
-      Append (Result, Ada.Strings.Fixed.Trim (Info.Code'Image, Ada.Strings.Both));
+      Append
+        (Result, Ada.Strings.Fixed.Trim (Info.Code'Image, Ada.Strings.Both));
       Append (Result, "] ");
       Append (Result, Info.Message);
       return To_String (Result);
@@ -38,7 +39,9 @@ package body Podmander.Database is
         or else Pipe_Pos <= Bracket_Start + 1
         or else Bracket_End <= Pipe_Pos + 1
       then
-         return (Kind => Unknown, Message => To_Unbounded_String (Msg), Code => 0);
+         return (Kind    => Unknown,
+                 Message => To_Unbounded_String (Msg),
+                 Code    => 0);
       end if;
 
       declare
@@ -95,7 +98,8 @@ package body Podmander.Database is
               Message (Num_Start .. Num_End - 1);
             Code     : constant Integer := Integer'Value (Code_Str);
             Desc     : constant String :=
-              Message (Message'First .. Code_Start - 2);  --  skip trailing space
+               --  skip trailing space
+               Message (Message'First .. Code_Start - 2);
          begin
             case Code is
                when 19 =>
@@ -173,5 +177,67 @@ package body Podmander.Database is
    begin
       null;
    end Finalize;
+
+   ---------------
+   --  Query API
+   ---------------
+
+   function Prepare
+     (DB  : in out DB_Handle;
+      SQL : String) return Query_Handle is
+   begin
+      return QH : constant Query_Handle :=
+        (Stmt => Ada_Sqlite3.Prepare (DB.DB, SQL));
+   exception
+      when E : Ada_Sqlite3.SQLite_Error =>
+         raise Database_Error with Format_Error
+           (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+   end Prepare;
+
+   procedure Bind_Text
+     (QH    : in out Query_Handle;
+      Index : Positive;
+      Value : String) is
+   begin
+      Ada_Sqlite3.Bind_Text (QH.Stmt, Index, Value);
+   end Bind_Text;
+
+   function Step (QH : in out Query_Handle) return Boolean is
+      use type Ada_Sqlite3.Result_Code;
+      Result : constant Ada_Sqlite3.Result_Code := Ada_Sqlite3.Step (QH.Stmt);
+   begin
+      if Result = Ada_Sqlite3.ROW then
+         return True;
+      elsif Result = Ada_Sqlite3.DONE then
+         return False;
+      else
+         --  Build a message in the format Classify_Error expects
+         --  so that SQLite error codes map to the correct Error_Kind.
+         raise Database_Error with Format_Error
+           (Classify_Error
+              ("SQLite step error (Error code: " & Result'Image & ")"));
+      end if;
+   end Step;
+
+   function Column_Text
+     (QH    : Query_Handle;
+      Index : Natural) return String is
+   begin
+      return Ada_Sqlite3.Column_Text (QH.Stmt, Index);
+   end Column_Text;
+
+   function Changes (DB : in out DB_Handle) return Integer is
+   begin
+      return Ada_Sqlite3.Changes (DB.DB);
+   end Changes;
+
+   procedure Execute (DB : in out DB_Handle; SQL : String) is
+   begin
+      DB.DB.Execute (SQL);
+   exception
+      when E : Ada_Sqlite3.SQLite_Error =>
+         raise Database_Error with Format_Error
+           (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+   end Execute;
 
 end Podmander.Database;
