@@ -240,4 +240,46 @@ package body Podmander.Database is
            (Classify_Error (Ada.Exceptions.Exception_Message (E)));
    end Execute;
 
+   ---------------
+   --  Settings API
+   ---------------
+
+   function Get_Setting
+     (DB  : in out DB_Handle;
+      Key : String) return String
+   is
+      Q : Query_Handle :=
+        Prepare (DB, "SELECT value FROM controller_settings WHERE key = ?");
+   begin
+      Bind_Text (Q, 1, Key);
+      if Step (Q) then
+         return Column_Text (Q, 0);
+      else
+         raise Database_Error with Format_Error
+           ((Kind    => Not_Found,
+             Message => To_Unbounded_String
+               ("Setting not found: " & Key),
+             Code    => 0));
+      end if;
+   end Get_Setting;
+
+   procedure Set_Setting
+     (DB    : in out DB_Handle;
+      Key   : String;
+      Value : String)
+   is
+      Q : Query_Handle :=
+        Prepare
+          (DB,
+           "INSERT OR REPLACE INTO controller_settings (key, value) VALUES (?, ?)");
+   begin
+      Bind_Text (Q, 1, Key);
+      Bind_Text (Q, 2, Value);
+      if Step (Q) then
+         --  INSERT OR REPLACE returns ROW on replace, DONE on insert.
+         --  Both are valid outcomes; discard result.
+         null;
+      end if;
+   end Set_Setting;
+
 end Podmander.Database;

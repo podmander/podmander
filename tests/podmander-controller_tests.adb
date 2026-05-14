@@ -3,6 +3,7 @@
 
 with Ada.Calendar;
 with Ada.Directories;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with AUnit.Assertions;
 with AUnit.Test_Cases;
@@ -319,8 +320,41 @@ package body Podmander.Controller_Tests is
          raise;
    end Test_Startup_Loading;
 
-   --  Helpers for Controller_Handler tests that work without a live socket.
-   function Make_Ctrl
+    --  Test infrastructure for temp databases
+    Test_Counter : Natural := 0;
+
+    function Unique_Temp_Path return String is
+    begin
+       Test_Counter := Test_Counter + 1;
+       return "/tmp/podmander_ctrl_test_" &
+         Ada.Strings.Fixed.Trim (Test_Counter'Image, Ada.Strings.Both) &
+         ".db";
+    end Unique_Temp_Path;
+
+    procedure Cleanup_DB (Path : String) is
+    begin
+       begin
+          Ada.Directories.Delete_File (Path);
+       exception
+          when Ada.Directories.Name_Error =>
+             null;
+       end;
+       begin
+          Ada.Directories.Delete_File (Path & "-wal");
+       exception
+          when Ada.Directories.Name_Error =>
+             null;
+       end;
+       begin
+          Ada.Directories.Delete_File (Path & "-shm");
+       exception
+          when Ada.Directories.Name_Error =>
+             null;
+       end;
+    end Cleanup_DB;
+
+    --  Helpers for Controller_Handler tests that work without a live socket.
+    function Make_Ctrl
      return Podmander.Controller.Controller_Instance is
    begin
       return C : Podmander.Controller.Controller_Instance :=
@@ -440,7 +474,83 @@ package body Podmander.Controller_Tests is
           "Expected state to transition to Registered");
     end Test_Handle_Heartbeat_Reconnect;
 
-   overriding procedure Register_Tests (T : in out Controller_Test) is
+    --  Test: Make_Listening_Controller loads an existing secret from DB
+    procedure Test_Controller_Startup_Loads_Secret
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       use Podmander.Database;
+       DB_Path : constant String := Unique_Temp_Path;
+       Config  : Podmander.Controller.Controller_Config;
+    begin
+       --  Pre-seed a registration secret in the DB via a separate connection
+       declare
+          Pre_Handle : DB_Handle := Open (DB_Path);
+       begin
+          Set_Setting (Pre_Handle, "registration_secret",
+                       "pre_seeded_secret_1234567890123456");
+       end;
+
+       Podmander.Controller.Set_DB_Path (Config, DB_Path);
+       Podmander.Controller.Set_Bind_Address (Config, "tcp://127.0.0.1:9998");
+
+       declare
+          Ctrl : constant Podmander.Controller.Controller_Instance :=
+            Podmander.Controller.Make_Listening_Controller (Config);
+       begin
+          Assert
+            (Podmander.Enrollment.Get_Secret (Ctrl.Config.Enrollment)
+             = "pre_seeded_secret_1234567890123456",
+             "Controller should load pre-seeded registration secret from DB");
+       end;
+       Cleanup_DB (DB_Path);
+    exception
+       when others =>
+          Cleanup_DB (DB_Path);
+          raise;
+    end Test_Controller_Startup_Loads_Secret;
+
+    --  Test: Make_Listening_Controller generates a new secret when none exists
+    procedure Test_Controller_Startup_Generates_Secret
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       use Podmander.Database;
+       DB_Path : constant String := Unique_Temp_Path;
+       Config  : Podmander.Controller.Controller_Config;
+    begin
+       Podmander.Controller.Set_DB_Path (Config, DB_Path);
+       Podmander.Controller.Set_Bind_Address (Config, "tcp://127.0.0.1:9997");
+
+       declare
+          Ctrl : constant Podmander.Controller.Controller_Instance :=
+            Podmander.Controller.Make_Listening_Controller (Config);
+          Loaded_Secret : constant String :=
+            Podmander.Enrollment.Get_Secret (Ctrl.Config.Enrollment);
+       begin
+          Assert
+            (Loaded_Secret'Length > 0,
+             "Controller should have generated a non-empty secret");
+       end;
+
+       --  Verify the secret was persisted via a separate connection
+       declare
+          Post_Handle : DB_Handle := Open (DB_Path);
+          Persisted_Secret : constant String :=
+            Get_Setting (Post_Handle, "registration_secret");
+       begin
+          Assert
+            (Persisted_Secret'Length > 0,
+             "A registration secret should have been persisted to DB");
+       end;
+       Cleanup_DB (DB_Path);
+    exception
+       when others =>
+          Cleanup_DB (DB_Path);
+          raise;
+    end Test_Controller_Startup_Generates_Secret;
+
+    overriding procedure Register_Tests (T : in out Controller_Test) is
       use AUnit.Test_Cases.Registration;
    begin
        Register_Routine
@@ -473,10 +583,16 @@ package body Podmander.Controller_Tests is
         Register_Routine
           (T, Test_Controller_Make_With_DB'Access,
            "Make_Listening_Controller with memory DB");
-        Register_Routine
-          (T, Test_Startup_Loading'Access,
-           "Agents persist across database connections (restart)");
-     end Register_Tests;
+         Register_Routine
+           (T, Test_Startup_Loading'Access,
+            "Agents persist across database connections (restart)");
+         Register_Routine
+           (T, Test_Controller_Startup_Loads_Secret'Access,
+            "Controller loads pre-seeded registration secret from DB");
+         Register_Routine
+           (T, Test_Controller_Startup_Generates_Secret'Access,
+            "Controller generates new secret when none exists");
+      end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Controller_Test;

@@ -52,11 +52,13 @@ package body Podmander.Enrollment is
       Config     : in out Enrollment_Config;
       Token      : out Unbounded_String)
    is
-      Secret : constant String := Random_Hex (Secret_Length);
    begin
-      Config.Secret := To_Unbounded_String (Secret);
+      --  Generate a new secret only if one isn't already set
+      if Config.Secret = Null_Unbounded_String then
+         Config.Secret := To_Unbounded_String (Random_Hex (Secret_Length));
+      end if;
       Token := To_Unbounded_String
-        (Token_Prefix & Public_Key & Separator & Secret);
+        (Token_Prefix & Public_Key & Separator & To_String (Config.Secret));
    end Generate_Join_Token;
 
    function Parse_Join_Token (Token : String) return Parsed_Token is

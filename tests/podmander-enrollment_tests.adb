@@ -111,7 +111,31 @@ package body Podmander.Enrollment_Tests is
          null;
    end Test_Empty_Raises;
 
-   overriding procedure Register_Tests (T : in out Enrollment_Test) is
+    --  Test: calling Generate_Join_Token twice reuses the same secret
+    --  when one is already set in the config.
+    procedure Test_Generate_Join_Token_Reuses_Secret
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       Config : Podmander.Enrollment.Enrollment_Config;
+       Token1 : Unbounded_String;
+       Token2 : Unbounded_String;
+    begin
+       Podmander.Enrollment.Generate_Join_Token
+         (Public_Key => Sample_Public_Key,
+          Config     => Config,
+          Token      => Token1);
+       Podmander.Enrollment.Generate_Join_Token
+         (Public_Key => Sample_Public_Key,
+          Config     => Config,
+          Token      => Token2);
+       Assert
+         (To_String (Token1) = To_String (Token2),
+          "Second Generate_Join_Token should produce the same token " &
+          "when secret is already set");
+    end Test_Generate_Join_Token_Reuses_Secret;
+
+    overriding procedure Register_Tests (T : in out Enrollment_Test) is
       use AUnit.Test_Cases.Registration;
    begin
       Register_Routine
@@ -123,10 +147,13 @@ package body Podmander.Enrollment_Tests is
       Register_Routine
         (T, Test_Too_Short_Raises'Access,
          "Parse_Join_Token rejects token shorter than expected");
-      Register_Routine
-        (T, Test_Empty_Raises'Access,
-         "Parse_Join_Token rejects empty token");
-   end Register_Tests;
+       Register_Routine
+         (T, Test_Empty_Raises'Access,
+          "Parse_Join_Token rejects empty token");
+       Register_Routine
+         (T, Test_Generate_Join_Token_Reuses_Secret'Access,
+          "Generate_Join_Token reuses existing secret");
+    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Enrollment_Test;

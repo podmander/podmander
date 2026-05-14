@@ -517,8 +517,51 @@ package body Podmander.Database_Tests is
          Assert (False, "Prepare raised wrong exception for invalid SQL");
    end Test_Prepare_Invalid_SQL;
 
-   --  Test: Step raises Database_Error for nonexistent table
-   procedure Test_Step_Error
+    --  Test: Set a value and get it back
+    procedure Test_Set_Setting_And_Get_Setting
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       Handle : DB.DB_Handle := DB.Open (":memory:");
+    begin
+       DB.Set_Setting (Handle, "test_key", "test_value");
+       Assert (DB.Get_Setting (Handle, "test_key") = "test_value",
+               "Get_Setting should return the value that was set");
+    end Test_Set_Setting_And_Get_Setting;
+
+    --  Test: Get_Setting on missing key raises Not_Found
+    procedure Test_Get_Setting_Not_Found
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       Handle : DB.DB_Handle := DB.Open (":memory:");
+    begin
+       declare
+          Ignored : constant String := DB.Get_Setting (Handle, "nonexistent");
+       begin
+          Assert (False, "Get_Setting should have raised Database_Error");
+          pragma Unreferenced (Ignored);
+       end;
+    exception
+       when DB.Database_Error =>
+          null;  --  Expected
+    end Test_Get_Setting_Not_Found;
+
+    --  Test: Setting same key twice overwrites (upsert)
+    procedure Test_Set_Setting_Upsert
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       Handle : DB.DB_Handle := DB.Open (":memory:");
+    begin
+       DB.Set_Setting (Handle, "upsert_key", "first");
+       DB.Set_Setting (Handle, "upsert_key", "second");
+       Assert (DB.Get_Setting (Handle, "upsert_key") = "second",
+               "After upsert, Get_Setting should return the latest value");
+    end Test_Set_Setting_Upsert;
+
+    --  Test: Step raises Database_Error for nonexistent table
+    procedure Test_Step_Error
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
@@ -605,10 +648,20 @@ package body Podmander.Database_Tests is
       Register_Routine
         (T, Test_Prepare_Invalid_SQL'Access,
          "Prepare raises Database_Error for invalid SQL");
-      Register_Routine
-        (T, Test_Step_Error'Access,
-         "Step raises Database_Error for nonexistent table");
-   end Register_Tests;
+       Register_Routine
+         (T, Test_Step_Error'Access,
+          "Step raises Database_Error for nonexistent table");
+       --  Settings API tests
+       Register_Routine
+         (T, Test_Set_Setting_And_Get_Setting'Access,
+          "Set_Setting then Get_Setting round-trip");
+       Register_Routine
+         (T, Test_Get_Setting_Not_Found'Access,
+          "Get_Setting raises Not_Found for missing key");
+       Register_Routine
+         (T, Test_Set_Setting_Upsert'Access,
+          "Set_Setting upsert overwrites existing value");
+    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Database_Test;

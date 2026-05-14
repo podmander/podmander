@@ -97,6 +97,18 @@ package Podmander.Database is
    --  Execute a one-shot SQL statement (DDL, PRAGMA, etc.).
    --  Raises Database_Error on failure.
 
+   function Get_Setting
+     (DB  : in out DB_Handle;
+      Key : String) return String;
+   --  Return the value for Key from controller_settings.
+   --  Raises Database_Error with Not_Found if the key does not exist.
+
+   procedure Set_Setting
+     (DB    : in out DB_Handle;
+      Key   : String;
+      Value : String);
+   --  Insert or update a setting in controller_settings (upsert).
+
 private
 
    type DB_Handle is new Ada.Finalization.Limited_Controlled with record

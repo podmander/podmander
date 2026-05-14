@@ -17,6 +17,7 @@ package body Podmander.Controller is
 
    use Ada.Strings.Unbounded;
    use type CZMQ.Messages.Receive_Status;
+   use type Podmander.Database.Error_Kind;
 
    Poll_Interval_Ms : constant := 1000;
 
@@ -86,8 +87,40 @@ package body Podmander.Controller is
             end loop;
          end;
 
-         CZMQ.Certificates.Generate (C.Certificate);
-         CZMQ.Sockets.Open_Router (C.Socket);
+          CZMQ.Certificates.Generate (C.Certificate);
+
+          --  Load or generate registration secret
+          declare
+             use Podmander.Database;
+          begin
+             C.Config.Enrollment.Secret :=
+               Ada.Strings.Unbounded.To_Unbounded_String
+                 (Get_Setting (C.DB, "registration_secret"));
+             Podmander.Logging.Info
+               ("controller", "Loaded registration secret from DB");
+          exception
+             when E : Database_Error =>
+                if Parse_Error (E).Kind = Not_Found then
+                   --  First start: generate and persist a new secret
+                   declare
+                      Token : Ada.Strings.Unbounded.Unbounded_String;
+                   begin
+                      Podmander.Enrollment.Generate_Join_Token
+                        (Public_Key => C.Get_Public_Key,
+                         Config     => C.Config.Enrollment,
+                         Token      => Token);
+                      Set_Setting (C.DB, "registration_secret",
+                                   Ada.Strings.Unbounded.To_String
+                                     (C.Config.Enrollment.Secret));
+                      Podmander.Logging.Info
+                        ("controller", "Generated and persisted registration secret");
+                   end;
+                else
+                   raise;
+                end if;
+          end;
+
+          CZMQ.Sockets.Open_Router (C.Socket);
          C.Certificate.Apply (C.Socket);
          C.Socket.Set_Curve_Server (True);
          C.Socket.Bind (Get_Bind_Address (Config));

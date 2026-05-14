@@ -58,12 +58,20 @@ private
      "state      TEXT NOT NULL CHECK (state IN ('registered', 'unresponsive', 'lost'))," &
      "last_seen  TEXT NOT NULL);";
 
+   Migration_003_SQL : constant String :=
+     "CREATE TABLE IF NOT EXISTS controller_settings (" &
+     "key   TEXT PRIMARY KEY," &
+     "value TEXT NOT NULL);";
+
    Migration_History : constant Migration_Array :=
      (1 => (Version => 1,
             SQL     => Ada.Strings.Unbounded.To_Unbounded_String
                         (Migration_001_SQL)),
-      2 => (Version => 2,
+       2 => (Version => 2,
             SQL     => Ada.Strings.Unbounded.To_Unbounded_String
-                        (Migration_002_SQL)));
+                        (Migration_002_SQL)),
+       3 => (Version => 3,
+            SQL     => Ada.Strings.Unbounded.To_Unbounded_String
+                        (Migration_003_SQL)));
 
 end Podmander.Database.Migrations;
