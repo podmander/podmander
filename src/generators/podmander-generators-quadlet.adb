@@ -1,7 +1,9 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with Ada.Directories;
 with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 package body Podmander.Generators.Quadlet is
 
@@ -71,5 +73,25 @@ package body Podmander.Generators.Quadlet is
 
       return To_String (Buffer);
    end Render;
+
+   -----------------
+   --  Write_File  --
+   -----------------
+
+   procedure Write_File
+     (Service      : Service_Definition;
+      Output_Dir   : String;
+      Service_Name : String)
+   is
+      File_Path : constant String :=
+        Output_Dir & "/" & Service_Name & ".container";
+      Content   : constant String := Render (Service);
+      File      : Ada.Text_IO.File_Type;
+   begin
+      Ada.Directories.Create_Path (Output_Dir);
+      Ada.Text_IO.Create (File, Ada.Text_IO.Out_File, File_Path);
+      Ada.Text_IO.Put (File, Content);
+      Ada.Text_IO.Close (File);
+   end Write_File;
 
 end Podmander.Generators.Quadlet;

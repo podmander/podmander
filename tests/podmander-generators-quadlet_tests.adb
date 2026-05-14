@@ -3,8 +3,10 @@
 
 with AUnit.Assertions;
 with AUnit.Test_Cases;
+with Ada.Directories;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
+with Ada.Text_IO;
 with Podmander.Config;
 with Podmander.Generators.Quadlet;
 
@@ -413,6 +415,169 @@ package body Podmander.Generators.Quadlet_Tests is
               "[Container] section should appear before [Install]");
    end Test_Render_Full_Sections;
 
+   --  Test Write_File creates a .container file on disk
+   procedure Test_Write_File_Creates_File
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Dir   : constant String := "/tmp/podmander-test-write";
+      FName : constant String := "test-svc";
+      FPath : constant String := Dir & "/" & FName & ".container";
+   begin
+      --  Clean up from previous runs
+      begin
+         Ada.Directories.Delete_Tree (Dir);
+      exception
+         when others => null;
+      end;
+
+      Write_File (Config, Dir, FName);
+
+      Assert (Ada.Directories.Exists (FPath),
+              "File " & FPath & " should exist");
+
+      --  Clean up
+      Ada.Directories.Delete_Tree (Dir);
+   exception
+      when others =>
+         begin
+            Ada.Directories.Delete_Tree (Dir);
+         exception
+            when others => null;
+         end;
+         raise;
+   end Test_Write_File_Creates_File;
+
+   --  Test Write_File creates the output directory if it does not exist
+   procedure Test_Write_File_Creates_Directory
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Dir   : constant String := "/tmp/podmander-test-mkdir/sub";
+      FName : constant String := "test-svc";
+      FPath : constant String := Dir & "/" & FName & ".container";
+   begin
+      --  Clean up from previous runs
+      begin
+         Ada.Directories.Delete_Tree (Dir);
+      exception
+         when others => null;
+      end;
+
+      Write_File (Config, Dir, FName);
+
+      Assert (Ada.Directories.Exists (Dir),
+              "Directory " & Dir & " should exist");
+      Assert (Ada.Directories.Exists (FPath),
+              "File " & FPath & " should exist");
+
+      --  Clean up
+      Ada.Directories.Delete_Tree (Dir);
+   exception
+      when others =>
+         begin
+            Ada.Directories.Delete_Tree (Dir);
+         exception
+            when others => null;
+         end;
+         raise;
+   end Test_Write_File_Creates_Directory;
+
+   --  Test Write_File content matches Render output
+   procedure Test_Write_File_Content_Matches_Render
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Dir      : constant String := "/tmp/podmander-test-content";
+      FName    : constant String := "test-svc";
+      FPath    : constant String := Dir & "/" & FName & ".container";
+      Expected : constant String := Render (Config);
+      File     : Ada.Text_IO.File_Type;
+      Line     : String (1 .. 1000);
+      Last     : Natural;
+      Actual   : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.Null_Unbounded_String;
+   begin
+      --  Clean up from previous runs
+      begin
+         Ada.Directories.Delete_Tree (Dir);
+      exception
+         when others => null;
+      end;
+
+      Write_File (Config, Dir, FName);
+
+      Ada.Text_IO.Open (File, Ada.Text_IO.In_File, FPath);
+      while not Ada.Text_IO.End_Of_File (File) loop
+         Ada.Text_IO.Get_Line (File, Line, Last);
+         Ada.Strings.Unbounded.Append (Actual, Line (1 .. Last));
+         Ada.Strings.Unbounded.Append (Actual, ASCII.LF);
+      end loop;
+      Ada.Text_IO.Close (File);
+
+      Assert (Ada.Strings.Unbounded.To_String (Actual) = Expected,
+              "File content should match Render output");
+
+      --  Clean up
+      Ada.Directories.Delete_Tree (Dir);
+   exception
+      when others =>
+         begin
+            Ada.Directories.Delete_Tree (Dir);
+         exception
+            when others => null;
+         end;
+         raise;
+   end Test_Write_File_Content_Matches_Render;
+
    --  Register all test routines (Test_Render_Volume_With_Options skipped)
    overriding procedure Register_Tests (T : in out Quadlet_Test) is
       use AUnit.Test_Cases.Registration;
@@ -453,7 +618,16 @@ package body Podmander.Generators.Quadlet_Tests is
       Register_Routine
         (T, Test_Render_Full_Sections'Access,
          "Render service with all sections in correct order");
-    end Register_Tests;
+      Register_Routine
+        (T, Test_Write_File_Creates_File'Access,
+         "Write_File creates a .container file on disk");
+      Register_Routine
+        (T, Test_Write_File_Creates_Directory'Access,
+         "Write_File creates output directory if it does not exist");
+      Register_Routine
+        (T, Test_Write_File_Content_Matches_Render'Access,
+         "Write_File content matches Render output");
+   end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Quadlet_Test;

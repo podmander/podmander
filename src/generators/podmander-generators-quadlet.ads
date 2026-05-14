@@ -11,4 +11,11 @@ package Podmander.Generators.Quadlet is
    --  Generates [Unit], [Container], and [Install] sections.
    function Render (Service : Service_Definition) return String;
 
+   --  Write a rendered Quadlet .container file to disk.
+   --  Creates Output_Dir if it does not exist.
+   procedure Write_File
+     (Service      : Service_Definition;
+      Output_Dir   : String;
+      Service_Name : String);
+
 end Podmander.Generators.Quadlet;
