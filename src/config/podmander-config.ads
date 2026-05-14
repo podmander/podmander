@@ -45,6 +45,8 @@ package Podmander.Config is
       Ports_Count   : Natural          := 0;
       Volumes       : Volume_Array (1 .. MAX_VOLUMES_ENTRIES);
       Volumes_Count : Natural          := 0;
+      Description   : Unbounded_String;
+      WantedBy      : Unbounded_String;
    end record;
 
 end Podmander.Config;

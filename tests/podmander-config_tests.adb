@@ -41,14 +41,16 @@ package body Podmander.Config_Tests is
                              (Host      => 1,
                               Container => 1)],
          Ports_Count   => 0,
-         Volumes       => [others =>
+          Volumes       => [others =>
                              (Host      => Null_Unbounded_String,
                               Container => Null_Unbounded_String)],
-         Volumes_Count => 0);
-   begin
-      Assert (To_String (Config.Image) = "nginx:latest",
-              "Image should be 'nginx:latest'");
-   end Test_Service_Definition_Construction;
+          Volumes_Count => 0,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
+    begin
+       Assert (To_String (Config.Image) = "nginx:latest",
+               "Image should be 'nginx:latest'");
+    end Test_Service_Definition_Construction;
 
    --  Test constructing a Port_Mapping with valid fields
    procedure Test_Port_Mapping_Construction
@@ -149,16 +151,18 @@ package body Podmander.Config_Tests is
                              (Host      => 1,
                               Container => 1)],
          Ports_Count   => 0,
-         Volumes       => [others =>
+          Volumes       => [others =>
                              (Host      => Null_Unbounded_String,
                               Container => Null_Unbounded_String)],
-         Volumes_Count => 0);
-      Result : constant Podmander.Config.Parser.Parse_Result :=
-        Podmander.Config.Parser.Validate (Config);
-   begin
-      Assert (Result.Success,
-              "Valid config should pass validation");
-   end Test_Valid_Config_Passes_Validation;
+          Volumes_Count => 0,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
+       Result : constant Podmander.Config.Parser.Parse_Result :=
+         Podmander.Config.Parser.Validate (Config);
+    begin
+       Assert (Result.Success,
+               "Valid config should pass validation");
+    end Test_Valid_Config_Passes_Validation;
 
    --  Test empty image fails validation
    procedure Test_Empty_Image_Fails_Validation
@@ -175,16 +179,18 @@ package body Podmander.Config_Tests is
                              (Host      => 1,
                               Container => 1)],
          Ports_Count   => 0,
-         Volumes       => [others =>
+          Volumes       => [others =>
                              (Host      => Null_Unbounded_String,
                               Container => Null_Unbounded_String)],
-         Volumes_Count => 0);
-      Result : constant Podmander.Config.Parser.Parse_Result :=
-        Podmander.Config.Parser.Validate (Config);
-   begin
-      Assert (not Result.Success,
-              "Empty image should fail validation");
-   end Test_Empty_Image_Fails_Validation;
+          Volumes_Count => 0,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
+       Result : constant Podmander.Config.Parser.Parse_Result :=
+         Podmander.Config.Parser.Validate (Config);
+    begin
+       Assert (not Result.Success,
+               "Empty image should fail validation");
+    end Test_Empty_Image_Fails_Validation;
 
    --  Test port out of range fails validation (65536)
    procedure Test_Port_Out_Of_Range_Fails_Validation
@@ -203,16 +209,18 @@ package body Podmander.Config_Tests is
                              (Host      => 1,
                               Container => 1)],
          Ports_Count   => 1,
-         Volumes       => [others =>
+          Volumes       => [others =>
                              (Host      => Null_Unbounded_String,
                               Container => Null_Unbounded_String)],
-         Volumes_Count => 0);
-      Result : constant Podmander.Config.Parser.Parse_Result :=
-        Podmander.Config.Parser.Validate (Config);
-   begin
-      Assert (not Result.Success,
-              "Port host 65536 should fail validation");
-   end Test_Port_Out_Of_Range_Fails_Validation;
+          Volumes_Count => 0,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
+       Result : constant Podmander.Config.Parser.Parse_Result :=
+         Podmander.Config.Parser.Validate (Config);
+    begin
+       Assert (not Result.Success,
+               "Port host 65536 should fail validation");
+    end Test_Port_Out_Of_Range_Fails_Validation;
 
    --  Test empty volume path fails validation
    procedure Test_Empty_Volume_Path_Fails_Validation
@@ -234,13 +242,67 @@ package body Podmander.Config_Tests is
                            others =>
                              (Host      => Null_Unbounded_String,
                               Container => Null_Unbounded_String)],
-         Volumes_Count => 1);
-      Result : constant Podmander.Config.Parser.Parse_Result :=
-        Podmander.Config.Parser.Validate (Config);
+          Volumes_Count => 1,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
+       Result : constant Podmander.Config.Parser.Parse_Result :=
+         Podmander.Config.Parser.Validate (Config);
+    begin
+       Assert (not Result.Success,
+               "Empty volume host path should fail validation");
+    end Test_Empty_Volume_Path_Fails_Validation;
+
+   --  Test constructing a Service_Definition with Description field
+   procedure Test_Service_Definition_Description_Field
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Podmander.Config.Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => To_Unbounded_String ("My web app"),
+         WantedBy      => Null_Unbounded_String);
    begin
-      Assert (not Result.Success,
-              "Empty volume host path should fail validation");
-   end Test_Empty_Volume_Path_Fails_Validation;
+      Assert (To_String (Config.Description) = "My web app",
+              "Description should be 'My web app'");
+   end Test_Service_Definition_Description_Field;
+
+   --  Test constructing a Service_Definition with WantedBy field
+   procedure Test_Service_Definition_WantedBy_Field
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Podmander.Config.Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => To_Unbounded_String ("multi-user.target"));
+   begin
+      Assert (To_String (Config.WantedBy) = "multi-user.target",
+              "WantedBy should be 'multi-user.target'");
+   end Test_Service_Definition_WantedBy_Field;
 
    --  Register all test routines
    overriding procedure Register_Tests (T : in out Config_Test) is
@@ -274,8 +336,14 @@ package body Podmander.Config_Tests is
         (T, Test_Port_Out_Of_Range_Fails_Validation'Access,
          "Port out of range (65536) fails validation");
       Register_Routine
-        (T, Test_Empty_Volume_Path_Fails_Validation'Access,
-         "Empty volume path fails validation");
+         (T, Test_Empty_Volume_Path_Fails_Validation'Access,
+          "Empty volume path fails validation");
+      Register_Routine
+         (T, Test_Service_Definition_Description_Field'Access,
+          "Constructing a Service_Definition with Description field");
+      Register_Routine
+         (T, Test_Service_Definition_WantedBy_Field'Access,
+          "Constructing a Service_Definition with WantedBy field");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
