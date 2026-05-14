@@ -1,0 +1,9 @@
+[Unit]
+Description=Env test
+[Container]
+ContainerImage=app:latest
+Environment=FOO=bar
+Environment=BAZ=qux
+Environment=APP_ENV=production
+[Install]
+WantedBy=multi-user.target

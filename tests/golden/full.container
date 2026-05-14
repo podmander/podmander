@@ -1,0 +1,11 @@
+[Unit]
+Description=My web app
+[Container]
+ContainerImage=nginx:latest
+Environment=FOO=bar
+Environment=BAZ=qux
+PublishPort=80:80
+PublishPort=443:443
+Volume=/data:/data
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,9 @@
+[Unit]
+Description=Port test
+[Container]
+ContainerImage=nginx:latest
+PublishPort=80:8080
+PublishPort=443:8443
+PublishPort=53:53
+[Install]
+WantedBy=multi-user.target

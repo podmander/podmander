@@ -1,0 +1,4 @@
+[Container]
+ContainerImage=nginx:latest
+[Install]
+WantedBy=multi-user.target

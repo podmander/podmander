@@ -578,7 +578,172 @@ package body Podmander.Generators.Quadlet_Tests is
          raise;
    end Test_Write_File_Content_Matches_Render;
 
-   --  Register all test routines (Test_Render_Volume_With_Options skipped)
+   ---------------
+   --  Read_File  --
+   ---------------
+
+   function Read_File (Path : String) return String is
+      File    : Ada.Text_IO.File_Type;
+      Content : Ada.Strings.Unbounded.Unbounded_String :=
+        Ada.Strings.Unbounded.Null_Unbounded_String;
+   begin
+      Ada.Text_IO.Open (File, Ada.Text_IO.In_File, Path);
+      while not Ada.Text_IO.End_Of_File (File) loop
+         Ada.Strings.Unbounded.Append
+           (Content, Ada.Text_IO.Get_Line (File));
+         if not Ada.Text_IO.End_Of_File (File) then
+            Ada.Strings.Unbounded.Append (Content, ASCII.LF);
+         end if;
+      end loop;
+      Ada.Text_IO.Close (File);
+      return Ada.Strings.Unbounded.To_String (Content);
+   exception
+      when others =>
+         if Ada.Text_IO.Is_Open (File) then
+            Ada.Text_IO.Close (File);
+         end if;
+         raise;
+   end Read_File;
+
+   --  Test golden minimal.container: Image only, no Description
+   procedure Test_Golden_Minimal
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Golden : constant String :=
+        Read_File ("tests/golden/minimal.container") & ASCII.LF;
+      Output : constant String := Render (Config);
+   begin
+      Assert (Output = Golden,
+              "Render output for minimal config should match golden file");
+   end Test_Golden_Minimal;
+
+   --  Test golden full.container: Description, Image, 2 env, 2 ports, 1 volume
+   procedure Test_Golden_Full
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [1 => (Key   => To_Unbounded_String ("FOO"),
+                                 Value => To_Unbounded_String ("bar")),
+                           2 => (Key   => To_Unbounded_String ("BAZ"),
+                                 Value => To_Unbounded_String ("qux")),
+                           others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 2,
+         Ports         => [1 => (Host      => 80,
+                                 Container => 80),
+                           2 => (Host      => 443,
+                                 Container => 443),
+                           others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 2,
+         Volumes       => [1 => (Host      => To_Unbounded_String ("/data"),
+                                 Container => To_Unbounded_String ("/data")),
+                           others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 1,
+         Description   => To_Unbounded_String ("My web app"),
+         WantedBy      => To_Unbounded_String ("multi-user.target"));
+      Golden : constant String :=
+        Read_File ("tests/golden/full.container") & ASCII.LF;
+      Output : constant String := Render (Config);
+   begin
+      Assert (Output = Golden,
+              "Render output for full config should match golden file");
+   end Test_Golden_Full;
+
+   --  Test golden multi-env.container: 3 environment variables
+   procedure Test_Golden_Multi_Env
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("app:latest"),
+         Env           => [1 => (Key   => To_Unbounded_String ("FOO"),
+                                 Value => To_Unbounded_String ("bar")),
+                           2 => (Key   => To_Unbounded_String ("BAZ"),
+                                 Value => To_Unbounded_String ("qux")),
+                           3 => (Key   => To_Unbounded_String ("APP_ENV"),
+                                 Value => To_Unbounded_String ("production")),
+                           others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 3,
+         Ports         => [others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 0,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => To_Unbounded_String ("Env test"),
+         WantedBy      => Null_Unbounded_String);
+      Golden : constant String :=
+        Read_File ("tests/golden/multi-env.container") & ASCII.LF;
+      Output : constant String := Render (Config);
+   begin
+      Assert (Output = Golden,
+              "Render output for multi-env config should match golden file");
+   end Test_Golden_Multi_Env;
+
+   --  Test golden multi-port.container: 3 port mappings
+   procedure Test_Golden_Multi_Port
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : constant Service_Definition :=
+        (Image         => To_Unbounded_String ("nginx:latest"),
+         Env           => [others =>
+                             (Key   => Null_Unbounded_String,
+                              Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [1 => (Host      => 80,
+                                 Container => 8080),
+                           2 => (Host      => 443,
+                                 Container => 8443),
+                           3 => (Host      => 53,
+                                 Container => 53),
+                           others =>
+                             (Host      => 1,
+                              Container => 1)],
+         Ports_Count   => 3,
+         Volumes       => [others =>
+                             (Host      => Null_Unbounded_String,
+                              Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => To_Unbounded_String ("Port test"),
+         WantedBy      => Null_Unbounded_String);
+      Golden : constant String :=
+        Read_File ("tests/golden/multi-port.container") & ASCII.LF;
+      Output : constant String := Render (Config);
+   begin
+      Assert (Output = Golden,
+              "Render output for multi-port config should match golden file");
+   end Test_Golden_Multi_Port;
+
+   --  Register all test routines
    overriding procedure Register_Tests (T : in out Quadlet_Test) is
       use AUnit.Test_Cases.Registration;
    begin
@@ -625,8 +790,20 @@ package body Podmander.Generators.Quadlet_Tests is
         (T, Test_Write_File_Creates_Directory'Access,
          "Write_File creates output directory if it does not exist");
       Register_Routine
-        (T, Test_Write_File_Content_Matches_Render'Access,
-         "Write_File content matches Render output");
+         (T, Test_Write_File_Content_Matches_Render'Access,
+          "Write_File content matches Render output");
+      Register_Routine
+         (T, Test_Golden_Minimal'Access,
+          "Golden minimal: Image only, no Description");
+      Register_Routine
+         (T, Test_Golden_Full'Access,
+          "Golden full: Description, Image, 2 env, 2 ports, 1 volume");
+      Register_Routine
+         (T, Test_Golden_Multi_Env'Access,
+          "Golden multi-env: 3 environment variables");
+      Register_Routine
+         (T, Test_Golden_Multi_Port'Access,
+          "Golden multi-port: 3 port mappings");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
