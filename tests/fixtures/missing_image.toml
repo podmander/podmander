@@ -1,0 +1,4 @@
+[service.web]
+env = { FOO = "bar" }
+ports = ["80:80"]
+volumes = ["/data:/data"]

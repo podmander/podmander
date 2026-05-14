@@ -1,0 +1,5 @@
+[service.web]
+image = "nginx:latest"
+env = { FOO = "bar", BAZ = "qux" }
+ports = ["80:80", "443:443"]
+volumes = ["/data:/data", "/config:/etc/nginx"]
