@@ -2,6 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
+with Ada.Directories;
 with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
@@ -87,7 +88,25 @@ package body Podmander.Controller is
             end loop;
          end;
 
-          CZMQ.Certificates.Generate (C.Certificate);
+          --  Load or generate CURVE certificate
+          declare
+             Cert_Path : constant String :=
+               Ada.Directories.Containing_Directory (DB_Path)
+               & "/controller.crt";
+          begin
+             if Ada.Directories.Exists (Cert_Path) then
+                C.Certificate.Load (Cert_Path);
+                Podmander.Logging.Info
+                  ("controller",
+                   "Loaded CURVE certificate from " & Cert_Path);
+             else
+                C.Certificate.Generate;
+                C.Certificate.Save (Cert_Path);
+                Podmander.Logging.Info
+                  ("controller",
+                   "Generated and saved CURVE certificate to " & Cert_Path);
+             end if;
+          end;
 
           --  Load or generate registration secret
           declare
@@ -113,7 +132,8 @@ package body Podmander.Controller is
                                    Ada.Strings.Unbounded.To_String
                                      (C.Config.Enrollment.Secret));
                       Podmander.Logging.Info
-                        ("controller", "Generated and persisted registration secret");
+                        ("controller",
+                         "Generated and persisted registration secret");
                    end;
                 else
                    raise;
