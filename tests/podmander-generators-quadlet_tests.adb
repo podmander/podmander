@@ -605,7 +605,7 @@ package body Podmander.Generators.Quadlet_Tests is
          raise;
    end Read_File;
 
-   --  Test golden minimal.container: Image only, no Description
+   --  Fixture comparison minimal.container: Image only, no Description
    procedure Test_Golden_Minimal
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -627,14 +627,14 @@ package body Podmander.Generators.Quadlet_Tests is
          Description   => Null_Unbounded_String,
          WantedBy      => Null_Unbounded_String);
       Golden : constant String :=
-        Read_File ("tests/golden/minimal.container") & ASCII.LF;
+        Read_File ("tests/fixtures/quadlet/minimal.container") & ASCII.LF;
       Output : constant String := Render (Config);
    begin
       Assert (Output = Golden,
-              "Render output for minimal config should match golden file");
+              "Render output for minimal config should match fixture file");
    end Test_Golden_Minimal;
 
-   --  Test golden full.container: Description, Image, 2 env, 2 ports, 1 volume
+   --  Fixture comparison full.container: Description, Image, 2 env, 2 ports, 1 volume
    procedure Test_Golden_Full
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -666,14 +666,14 @@ package body Podmander.Generators.Quadlet_Tests is
          Description   => To_Unbounded_String ("My web app"),
          WantedBy      => To_Unbounded_String ("multi-user.target"));
       Golden : constant String :=
-        Read_File ("tests/golden/full.container") & ASCII.LF;
+        Read_File ("tests/fixtures/quadlet/full.container") & ASCII.LF;
       Output : constant String := Render (Config);
    begin
       Assert (Output = Golden,
-              "Render output for full config should match golden file");
+              "Render output for full config should match fixture file");
    end Test_Golden_Full;
 
-   --  Test golden multi-env.container: 3 environment variables
+   --  Fixture comparison multi-env.container: 3 environment variables
    procedure Test_Golden_Multi_Env
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -701,14 +701,14 @@ package body Podmander.Generators.Quadlet_Tests is
          Description   => To_Unbounded_String ("Env test"),
          WantedBy      => Null_Unbounded_String);
       Golden : constant String :=
-        Read_File ("tests/golden/multi-env.container") & ASCII.LF;
+        Read_File ("tests/fixtures/quadlet/multi-env.container") & ASCII.LF;
       Output : constant String := Render (Config);
    begin
       Assert (Output = Golden,
-              "Render output for multi-env config should match golden file");
+              "Render output for multi-env config should match fixture file");
    end Test_Golden_Multi_Env;
 
-   --  Test golden multi-port.container: 3 port mappings
+   --  Fixture comparison multi-port.container: 3 port mappings
    procedure Test_Golden_Multi_Port
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -736,11 +736,11 @@ package body Podmander.Generators.Quadlet_Tests is
          Description   => To_Unbounded_String ("Port test"),
          WantedBy      => Null_Unbounded_String);
       Golden : constant String :=
-        Read_File ("tests/golden/multi-port.container") & ASCII.LF;
+        Read_File ("tests/fixtures/quadlet/multi-port.container") & ASCII.LF;
       Output : constant String := Render (Config);
    begin
       Assert (Output = Golden,
-              "Render output for multi-port config should match golden file");
+              "Render output for multi-port config should match fixture file");
    end Test_Golden_Multi_Port;
 
    --  Register all test routines
