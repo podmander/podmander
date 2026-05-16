@@ -18,6 +18,18 @@ description = "Clean and rebuild all binaries"
 dir = "{{cwd}}"
 run = "distrobox enter ada_dev -- alr clean && distrobox enter ada_dev -- alr build"
 
+# --- Format ---
+
+[tasks.format]
+description = "Auto-format Ada source files with gnatformat"
+dir = "{{cwd}}"
+run = "distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander.gpr --no-subprojects'"
+
+[tasks."format:check"]
+description = "Check Ada source formatting without modifying files"
+dir = "{{cwd}}"
+run = "distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander.gpr --no-subprojects --check'"
+
 # --- Test Container Lifecycle ---
 
 [tasks."test:container:build"]
