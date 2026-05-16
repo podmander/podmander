@@ -25,8 +25,8 @@ package body Podmander.Generators.Quadlet is
       --  [Container] section header
       Append (Buffer, "[Container]" & ASCII.LF);
 
-      --  ContainerImage is always required
-      Append (Buffer, "ContainerImage=" & Service.Image & ASCII.LF);
+      --  Image is always required
+      Append (Buffer, "Image=" & Service.Image & ASCII.LF);
 
       --  Environment variables
       for I in 1 .. Service.Env_Count loop
@@ -40,16 +40,16 @@ package body Podmander.Generators.Quadlet is
       --  Port mappings
       for I in 1 .. Service.Ports_Count loop
          declare
-            Host_Image      : constant String :=
+            Host_Port      : constant String :=
               Positive'Image (Service.Ports (I).Host);
-            Container_Image : constant String :=
+            Container_Port : constant String :=
               Positive'Image (Service.Ports (I).Container);
          begin
             --  Positive'Image includes a leading space; strip it
             Append (Buffer, "PublishPort=");
-            Append (Buffer, Host_Image (2 .. Host_Image'Last));
+            Append (Buffer, Host_Port (2 .. Host_Port'Last));
             Append (Buffer, ":");
-            Append (Buffer, Container_Image (2 .. Container_Image'Last));
+            Append (Buffer, Container_Port (2 .. Container_Port'Last));
             Append (Buffer, ASCII.LF);
          end;
       end loop;

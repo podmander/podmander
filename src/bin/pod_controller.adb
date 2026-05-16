@@ -34,6 +34,20 @@ begin
       Ctrl.Generate_Join_Token (Token);
       Podmander.Logging.Info
         ("controller", "Join token: " & To_String (Token));
+
+      --  If --test-config was provided, parse and validate the config,
+      --  render the Quadlet, and store it for deployment.
+      declare
+         Config_Path : constant String :=
+           Podmander.CLI.Get ("test-config", "");
+      begin
+         if Config_Path'Length > 0 then
+            if not Ctrl.Load_Test_Deploy (Config_Path) then
+               return;
+            end if;
+         end if;
+      end;
+
       Ctrl.Run;
    end;
 

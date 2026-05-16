@@ -2,13 +2,11 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar.Formatting;
-with Ada.Exceptions;
 with Ada.Strings.Unbounded;
 
 package body Podmander.Controller.Agent.Repository is
 
    use Ada.Strings.Unbounded;
-   use Podmander.Types;
 
    --  ISO 8601 conversion helpers
    --  Ada.Calendar.Formatting.Image returns "YYYY-MM-DD HH:MM:SS"
@@ -39,11 +37,15 @@ package body Podmander.Controller.Agent.Repository is
 
    function String_To_State (S : String) return Agent_State is
    begin
-      if S = "registered" then return Registered;
-      elsif S = "unresponsive" then return Unresponsive;
-      elsif S = "lost" then return Lost;
-      else raise Constraint_Error with "Invalid agent state: " & S;
-      end if;
+       if S = "registered" then
+          return Registered;
+       elsif S = "unresponsive" then
+          return Unresponsive;
+       elsif S = "lost" then
+          return Lost;
+       else
+          raise Constraint_Error with "Invalid agent state: " & S;
+       end if;
    end String_To_State;
 
    ---------------

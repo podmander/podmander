@@ -12,9 +12,9 @@ package Podmander.Messages is
    Decode_Error       : exception;
    Already_Registered : exception;
 
-    --  Message kind discriminator strings used as the first frame
-    Registration_Request_Kind  : constant String := "registration";
-    Registration_Response_Kind : constant String := "registered";
+   --  Message kind discriminator strings used as the first frame
+   Registration_Request_Kind  : constant String := "registration";
+   Registration_Response_Kind : constant String := "registered";
    Heartbeat_Kind  : constant String := "heartbeat";
    Deploy_Kind     : constant String := "deploy";
    Deploy_Ack_Kind : constant String := "deploy_ack";
@@ -43,10 +43,10 @@ package Podmander.Messages is
     --  .Heartbeats) and derive from these. Anchors exist so Message_Handler
     --  primitives can name each message category without depending on any
     --  child package, keeping the parent closed.
-    type Registration_Request_Type is abstract new Protocol_Message
-      with null record;
-    type Registration_Response_Type is abstract new Protocol_Message
-      with null record;
+   type Registration_Request_Type is abstract new Protocol_Message
+     with null record;
+   type Registration_Response_Type is abstract new Protocol_Message
+     with null record;
    type Heartbeat_Message_Type is abstract new Protocol_Message
      with null record;
    type Deploy_Command_Type is abstract new Protocol_Message
@@ -62,9 +62,9 @@ package Podmander.Messages is
    --  adds a new abstract anchor above and a new primitive here; the
    --  compiler then forces every Message_Handler implementation to provide
    --  a body. This interface is the single manifest of known operations.
-    procedure Handle_Registration_Request
-      (H : in out Message_Handler;
-       M : Registration_Request_Type'Class) is abstract;
+   procedure Handle_Registration_Request
+     (H : in out Message_Handler;
+      M : Registration_Request_Type'Class) is abstract;
 
    procedure Handle_Heartbeat
      (H : in out Message_Handler;

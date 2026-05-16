@@ -9,7 +9,6 @@ with Podmander.Agent.Host_Command;
 with Podmander.Agent.Host_Command.Result_Mapping;
 with Podmander.Logging;
 with Podmander.Messages.Result_Codes;
-with Podmander.Messages.Status_Responses;
 
 package body Podmander.Agent.Podman is
 

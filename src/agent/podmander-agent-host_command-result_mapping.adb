@@ -3,8 +3,6 @@
 
 package body Podmander.Agent.Host_Command.Result_Mapping is
 
-   use type Host_Command.Exit_Status;
-
    function To_Result_Code
      (Result : Command_Result) return RC.Result_Code is
    begin

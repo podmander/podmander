@@ -54,10 +54,15 @@ package body Podmander.Config.Parser is
 
             --  Use the first service entry
             declare
+               Service_Name  : constant String :=
+                 To_String (Entries (Entries'First).Key);
                Service_Value : constant TOML_Value :=
                  Entries (Entries'First).Value;
                Config        : Service_Definition;
             begin
+               --  Service name from [service.<name>] section header
+               Config.Name := To_Unbounded_String (Service_Name);
+
                --  Required field: image
                if not Service_Value.Has ("image") then
                   return (Success => False,

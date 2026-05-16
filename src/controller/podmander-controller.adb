@@ -6,12 +6,15 @@ with Ada.Directories;
 with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
+with Podmander.Config.Parser;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
+with Podmander.Generators.Quadlet;
 with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
+with Podmander.Messages.Deploy_Commands;
 with CZMQ.Signals;
 
 package body Podmander.Controller is
@@ -63,7 +66,8 @@ package body Podmander.Controller is
          Certificate => <>,
          Socket      => <>,
          Agents      => <>,
-         Running     => True)
+         Running     => True,
+         Test_Deploy => <>)
       do
          --  Load persisted agents from DB
          C.Agents := Agent.Repository.Load_All (C.DB);
@@ -71,9 +75,8 @@ package body Podmander.Controller is
          --  Per ADR-0035: agents that were Registered or Unresponsive
          --  start as Unresponsive — they must send a heartbeat to prove
          --  they're still alive after the controller restart.
-         declare
-            use type Podmander.Types.Agent_State;
-         begin
+          declare
+          begin
             for Cursor in C.Agents.Iterate loop
                declare
                   Key  : constant String := Agent_Maps.Key (Cursor);
@@ -141,9 +144,9 @@ package body Podmander.Controller is
           end;
 
           CZMQ.Sockets.Open_Router (C.Socket);
-         C.Certificate.Apply (C.Socket);
-         C.Socket.Set_Curve_Server (True);
-         C.Socket.Bind (Get_Bind_Address (Config));
+          C.Certificate.Apply (C.Socket);
+          C.Socket.Set_Curve_Server (True);
+          C.Socket.Bind (Get_Bind_Address (Config));
          Podmander.Logging.Info
            ("controller", "Listening on " & Get_Bind_Address (Config));
       end return;
@@ -226,9 +229,69 @@ package body Podmander.Controller is
             Handle_Message (Self);
          end if;
          Check_Timeouts (Self);
+         Check_Test_Deploy (Self);
       end loop;
       CZMQ.Pollers.Close (Poller);
    end Run;
+
+   procedure Check_Test_Deploy (Self : in out Controller_Instance) is
+   begin
+      --  No pending deploy
+      if Self.Test_Deploy.Service_Name = Null_Unbounded_String then
+         return;
+      end if;
+
+      --  Already sent
+      if Self.Test_Deploy.Deployed then
+         return;
+      end if;
+
+      --  Count agents that are actually connected (Registered state).
+      --  Agents loaded from the DB start as Unresponsive — they must
+      --  send a heartbeat before they're considered connected.
+      declare
+         Registered_Count : Natural := 0;
+         Target_Node_Id   : Unbounded_String := Null_Unbounded_String;
+      begin
+         for Cursor in Self.Agents.Iterate loop
+            declare
+               Info : constant Podmander.Types.Agent_Info :=
+                 Agent_Maps.Element (Cursor);
+            begin
+               if Info.State = Podmander.Types.Registered then
+                  Registered_Count := Registered_Count + 1;
+                  Target_Node_Id := Info.Node_Id;
+               end if;
+            end;
+         end loop;
+
+         if Registered_Count = 0 then
+            --  No agents connected yet, keep waiting
+            return;
+         end if;
+
+         if Registered_Count > 1 then
+            --  --test-config targets a single agent. With multiple agents
+            --  connected, we cannot select a target, so stop with an error.
+            --  The production path (podctl deploy) handles multi-node deploys.
+            Podmander.Logging.Error
+              ("controller",
+               "Multiple agents connected; cannot select target"
+               & " for --test-config."
+               & " Use podctl deploy for multi-node deploys.");
+            Self.Test_Deploy.Deployed := True;
+            Self.Stop;
+            return;
+         end if;
+
+         --  Exactly one Registered agent: send the deploy command
+         Self.Send_Deploy_Command
+           (Node_Id      => To_String (Target_Node_Id),
+            Service_Name => To_String (Self.Test_Deploy.Service_Name),
+            Quadlet      => To_String (Self.Test_Deploy.Quadlet));
+         Self.Test_Deploy.Deployed := True;
+      end;
+   end Check_Test_Deploy;
 
    procedure Stop (Self : in out Controller_Instance) is
    begin
@@ -244,14 +307,72 @@ package body Podmander.Controller is
       end if;
    end Get_Public_Key;
 
-   procedure Generate_Join_Token
-     (Self  : in out Controller_Instance;
-      Token : out Ada.Strings.Unbounded.Unbounded_String) is
+    procedure Generate_Join_Token
+       (Self  : in out Controller_Instance;
+        Token : out Ada.Strings.Unbounded.Unbounded_String) is
+    begin
+       Podmander.Enrollment.Generate_Join_Token
+         (Public_Key => Self.Get_Public_Key,
+          Config     => Self.Config.Enrollment,
+          Token      => Token);
+    end Generate_Join_Token;
+
+   function Load_Test_Deploy
+     (Self : in out Controller_Instance;
+      Path : String) return Boolean
+   is
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse (Path);
    begin
-      Podmander.Enrollment.Generate_Join_Token
-        (Public_Key => Self.Get_Public_Key,
-         Config     => Self.Config.Enrollment,
-         Token      => Token);
-   end Generate_Join_Token;
+      if not Result.Success then
+         Podmander.Logging.Error
+           ("controller",
+            "Failed to parse " & Path & ": "
+            & To_String (Result.Message));
+         return False;
+      end if;
+
+      declare
+         Quadlet_Content : constant String :=
+           Podmander.Generators.Quadlet.Render (Result.Config);
+      begin
+         Self.Test_Deploy :=
+           (Service_Name => Result.Config.Name,
+            Quadlet      => To_Unbounded_String (Quadlet_Content),
+            Deployed     => False);
+         Podmander.Logging.Info
+           ("controller",
+            "Will deploy " & To_String (Result.Config.Name)
+            & " from " & Path);
+         return True;
+      end;
+   end Load_Test_Deploy;
+
+    procedure Send_Deploy_Command
+      (Self         : in out Controller_Instance;
+       Node_Id      : String;
+       Service_Name : String;
+       Quadlet      : String)
+   is
+      use Podmander.Messages.Deploy_Commands;
+      Cmd : constant Deploy_Command :=
+        (Service_Name => To_Unbounded_String (Service_Name),
+         Quadlet      => To_Unbounded_String (Quadlet));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      if not Self.Socket.Is_Valid then
+         Podmander.Logging.Warning
+           ("controller",
+            "Cannot send deploy command: socket not open");
+         return;
+      end if;
+
+      Msg.Add_String (Node_Id);
+      Cmd.Encode (Msg);
+      Msg.Send (Self.Socket);
+      Podmander.Logging.Info
+        ("controller",
+         "Sent deploy command for " & Service_Name & " to " & Node_Id);
+   end Send_Deploy_Command;
 
 end Podmander.Controller;
