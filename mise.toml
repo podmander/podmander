@@ -6,6 +6,16 @@
 
 [tasks]
 
+# --- Build ---
+
+[tasks.build]
+description = "Build all binaries via alr"
+run = "distrobox enter ada_dev -- alr build"
+
+[tasks."build:clean"]
+description = "Clean and rebuild all binaries"
+run = "distrobox enter ada_dev -- alr clean && distrobox enter ada_dev -- alr build"
+
 # --- Test Container Lifecycle ---
 
 [tasks."test:container:build"]
