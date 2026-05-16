@@ -121,3 +121,17 @@ These recur whenever we touch the database layer.
   than silently restructuring. Flag these in the prompt: "If you encounter
   a design constraint that requires an architectural change, stop and report
   it instead of making the change."
+
+## Agent skills
+
+### Issue tracker
+
+Issues live as Forgejo issues (owner: `podmander`, repo: `podmander`). Use the Forgejo MCP server for all operations. See `notes/agents/issue-tracker.md`.
+
+### Triage labels
+
+Triage labels use a `triage/` prefix to match the existing `kind/` and `area/` convention. See `notes/agents/triage-labels.md`.
+
+### Domain docs
+
+Single-context repo. See `notes/agents/domain.md`.
