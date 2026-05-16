@@ -17,11 +17,11 @@ package Podmander.Controller is
    Default_Agent_Timeout : constant Duration := 30.0;
 
    type Controller_Config is record
-      Bind_Address       : String (1 .. 120) := [others => ' '];
-      Bind_Address_Last  : Natural := 0;
-      Agent_Timeout      : Duration := Default_Agent_Timeout;
-      Enrollment         : Podmander.Enrollment.Enrollment_Config;
-      DB_Path            : Ada.Strings.Unbounded.Unbounded_String :=
+      Bind_Address      : String (1 .. 120) := [others => ' '];
+      Bind_Address_Last : Natural := 0;
+      Agent_Timeout     : Duration := Default_Agent_Timeout;
+      Enrollment        : Podmander.Enrollment.Enrollment_Config;
+      DB_Path           : Ada.Strings.Unbounded.Unbounded_String :=
         Ada.Strings.Unbounded.To_Unbounded_String ("");
       --  Path to the SQLite state database.
       --  Empty string means use default: ~/.local/share/podmander/state.db
@@ -31,22 +31,20 @@ package Podmander.Controller is
    end record;
 
    procedure Set_Bind_Address
-     (Config  : in out Controller_Config;
-      Address : String);
+     (Config : in out Controller_Config; Address : String);
 
    function Get_Bind_Address (Config : Controller_Config) return String;
 
-   procedure Set_DB_Path
-     (Config : in out Controller_Config;
-      Path   : String);
+   procedure Set_DB_Path (Config : in out Controller_Config; Path : String);
 
    function Get_DB_Path (Config : Controller_Config) return String;
 
-   package Agent_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Podmander.Types.Agent_Info,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
+   package Agent_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Podmander.Types.Agent_Info,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
 
    --  A deploy that's been queued (via --test-config) but not yet sent.
    --  The controller stores one pending deploy at a time; Test_Deploy on
@@ -93,23 +91,22 @@ package Podmander.Controller is
    function Get_Public_Key (Self : Controller_Instance) return String;
 
    procedure Generate_Join_Token
-      (Self  : in out Controller_Instance;
-       Token : out Ada.Strings.Unbounded.Unbounded_String);
+     (Self  : in out Controller_Instance;
+      Token : out Ada.Strings.Unbounded.Unbounded_String);
    --  Delegates to Podmander.Enrollment.Generate_Join_Token
    --  using this controller's public key and enrollment config.
 
-procedure Send_Deploy_Command
-      (Self         : in out Controller_Instance;
-       Node_Id      : String;
-       Service_Name : String;
-       Quadlet      : String);
+   procedure Send_Deploy_Command
+     (Self         : in out Controller_Instance;
+      Node_Id      : String;
+      Service_Name : String;
+      Quadlet      : String);
    --  Encode a Deploy_Command message and send it to the agent identified
    --  by Node_Id. Used by the --test-config CLI path to push a single
    --  quadlet to a single agent. Logs a warning if the socket is not open.
 
    function Load_Test_Deploy
-     (Self : in out Controller_Instance;
-      Path : String) return Boolean;
+     (Self : in out Controller_Instance; Path : String) return Boolean;
    --  Parse a TOML service config file, render its Quadlet, and store
    --  the result in Test_Deploy. Returns True on success, False on
    --  parse failure (in which case Test_Deploy is unchanged).

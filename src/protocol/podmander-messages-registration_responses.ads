@@ -15,12 +15,12 @@ package Podmander.Messages.Registration_Responses is
       Node_Id : Unbounded_String;
    end record;
 
-   overriding procedure Encode
-     (Self : Registration_Response;
-      Msg  : in out CZMQ.Messages.Message);
+   overriding
+   procedure Encode
+     (Self : Registration_Response; Msg : in out CZMQ.Messages.Message);
 
-   overriding procedure Dispatch_To
-     (Self : Registration_Response;
-      H    : in out Message_Handler'Class);
+   overriding
+   procedure Dispatch_To
+     (Self : Registration_Response; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Registration_Responses;

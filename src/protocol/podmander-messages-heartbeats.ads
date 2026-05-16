@@ -15,12 +15,12 @@ package Podmander.Messages.Heartbeats is
       Timestamp : Ada.Calendar.Time;
    end record;
 
-   overriding procedure Encode
-     (Self : Heartbeat_Message;
-      Msg  : in out CZMQ.Messages.Message);
+   overriding
+   procedure Encode
+     (Self : Heartbeat_Message; Msg : in out CZMQ.Messages.Message);
 
-   overriding procedure Dispatch_To
-     (Self : Heartbeat_Message;
-      H    : in out Message_Handler'Class);
+   overriding
+   procedure Dispatch_To
+     (Self : Heartbeat_Message; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Heartbeats;

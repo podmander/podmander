@@ -6,17 +6,16 @@ with Ada.Strings.Hash;
 
 package body Podmander.Messages is
 
-   package Decoder_Maps is new Ada.Containers.Indefinite_Hashed_Maps
-     (Key_Type        => String,
-      Element_Type    => Decoder_Access,
-      Hash            => Ada.Strings.Hash,
-      Equivalent_Keys => "=");
+   package Decoder_Maps is new
+     Ada.Containers.Indefinite_Hashed_Maps
+       (Key_Type        => String,
+        Element_Type    => Decoder_Access,
+        Hash            => Ada.Strings.Hash,
+        Equivalent_Keys => "=");
 
    Decoders : Decoder_Maps.Map;
 
-   procedure Register
-     (Kind    : String;
-      Decoder : Decoder_Access) is
+   procedure Register (Kind : String; Decoder : Decoder_Access) is
    begin
       if Decoders.Contains (Kind) then
          raise Already_Registered with "kind already registered: " & Kind;

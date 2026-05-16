@@ -19,7 +19,7 @@ package Podmander.Agent is
 
    --  Certificate and Socket are long-lived fields managed via the
    --  CZMQ Open/Close API. On each reconnect cycle, Close is called
-   --  first (idempotent — no-op if already closed), then Open_Dealer
+   --  first (idempotent â no-op if already closed), then Open_Dealer
    --  and Generate re-establish the connection. Finalize releases
    --  resources when the agent shuts down.
    type Agent_Instance is tagged limited record
@@ -35,15 +35,12 @@ package Podmander.Agent is
       Sock              : CZMQ.Sockets.Socket;
    end record;
 
-   procedure Initialize
-     (Self   : in out Agent_Instance;
-      Config : Agent_Config);
+   procedure Initialize (Self : in out Agent_Instance; Config : Agent_Config);
 
    procedure Run (Self : in out Agent_Instance);
 
    procedure Stop (Self : in out Agent_Instance);
 
-   function Get_Server_Public_Key
-     (Self : Agent_Instance) return String;
+   function Get_Server_Public_Key (Self : Agent_Instance) return String;
 
 end Podmander.Agent;

@@ -6,10 +6,7 @@ with Podmander.Logging;
 
 package body Podmander.CLI is
 
-   function Get
-     (Key     : String;
-      Default : String := "") return String
-   is
+   function Get (Key : String; Default : String := "") return String is
       Equal_Prefix : constant String := "--" & Key & "=";
       Name_Prefix  : constant String := "--" & Key;
    begin
@@ -24,8 +21,7 @@ package body Podmander.CLI is
                return Arg (Arg'First + Equal_Prefix'Length .. Arg'Last);
             end if;
 
-            if Arg = Name_Prefix
-              and then I < Ada.Command_Line.Argument_Count
+            if Arg = Name_Prefix and then I < Ada.Command_Line.Argument_Count
             then
                return Ada.Command_Line.Argument (I + 1);
             end if;
@@ -34,10 +30,7 @@ package body Podmander.CLI is
       return Default;
    end Get;
 
-   function Get_Duration
-     (Key     : String;
-      Default : Duration) return Duration
-   is
+   function Get_Duration (Key : String; Default : Duration) return Duration is
       Value : constant String := Get (Key);
    begin
       if Value = "" then
@@ -47,8 +40,11 @@ package body Podmander.CLI is
    exception
       when Constraint_Error =>
          Podmander.Logging.Warning
-           ("cli", "Invalid value for --" & Key
-            & ", using default" & Duration'Image (Default));
+           ("cli",
+            "Invalid value for --"
+            & Key
+            & ", using default"
+            & Duration'Image (Default));
          return Default;
    end Get_Duration;
 

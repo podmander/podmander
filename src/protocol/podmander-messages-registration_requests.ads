@@ -10,16 +10,16 @@ package Podmander.Messages.Registration_Requests is
 
    --  Agent -> Controller: request registration
    type Registration_Request is new Registration_Request_Type with record
-      Agent_Name      : Unbounded_String;
+      Agent_Name        : Unbounded_String;
       Enrollment_Secret : Unbounded_String;
    end record;
 
-   overriding procedure Encode
-     (Self : Registration_Request;
-      Msg  : in out CZMQ.Messages.Message);
+   overriding
+   procedure Encode
+     (Self : Registration_Request; Msg : in out CZMQ.Messages.Message);
 
-   overriding procedure Dispatch_To
-     (Self : Registration_Request;
-      H    : in out Message_Handler'Class);
+   overriding
+   procedure Dispatch_To
+     (Self : Registration_Request; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Registration_Requests;

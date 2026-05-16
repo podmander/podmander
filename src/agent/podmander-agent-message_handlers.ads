@@ -19,27 +19,33 @@ package Podmander.Agent.Message_Handlers is
       Agt : access Podmander.Agent.Agent_Instance;
    end record;
 
-   overriding procedure Handle_Registration_Request
+   overriding
+   procedure Handle_Registration_Request
      (H : in out Agent_Handler;
       M : Podmander.Messages.Registration_Request_Type'Class);
 
-   overriding procedure Handle_Heartbeat
+   overriding
+   procedure Handle_Heartbeat
      (H : in out Agent_Handler;
       M : Podmander.Messages.Heartbeat_Message_Type'Class);
 
-   overriding procedure Handle_Deploy_Command
+   overriding
+   procedure Handle_Deploy_Command
      (H : in out Agent_Handler;
       M : Podmander.Messages.Deploy_Command_Type'Class);
 
-   overriding procedure Handle_Deploy_Result
+   overriding
+   procedure Handle_Deploy_Result
      (H : in out Agent_Handler;
       M : Podmander.Messages.Deploy_Result_Type'Class);
 
-   overriding procedure Handle_Status_Query
+   overriding
+   procedure Handle_Status_Query
      (H : in out Agent_Handler;
       M : Podmander.Messages.Status_Query_Type'Class);
 
-   overriding procedure Handle_Status_Response
+   overriding
+   procedure Handle_Status_Response
      (H : in out Agent_Handler;
       M : Podmander.Messages.Status_Response_Type'Class);
 

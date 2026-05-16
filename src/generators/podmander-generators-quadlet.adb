@@ -79,9 +79,7 @@ package body Podmander.Generators.Quadlet is
    -----------------
 
    procedure Write_File
-     (Service      : Service_Definition;
-      Output_Dir   : String;
-      Service_Name : String)
+     (Service : Service_Definition; Output_Dir : String; Service_Name : String)
    is
       File_Path : constant String :=
         Output_Dir & "/" & Service_Name & ".container";

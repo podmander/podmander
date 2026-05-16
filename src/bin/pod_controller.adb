@@ -24,8 +24,7 @@ begin
    end;
 
    Podmander.Controller.Set_Bind_Address
-     (Config,
-      Podmander.CLI.Get ("bind", "tcp://*:5555"));
+     (Config, Podmander.CLI.Get ("bind", "tcp://*:5555"));
 
    declare
       Ctrl : Podmander.Controller.Controller_Instance :=

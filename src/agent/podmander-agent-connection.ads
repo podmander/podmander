@@ -9,7 +9,7 @@
 
 package Podmander.Agent.Connection is
 
-   --  Run one full connection attempt: connect → enrol → connected
+   --  Run one full connection attempt: connect â enrol â connected
    --  loop. Returns when the cycle ends (registration timeout,
    --  decode error, connection lost, or shutdown). On exit Self.State
    --  reflects whether the cycle succeeded (left in Connected only on

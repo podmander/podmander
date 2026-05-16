@@ -6,7 +6,7 @@
 --
 --  This package owns the DB_Handle (wrapping Ada_Sqlite3.Database) and
 --  exposes it to the Repository packages. Each Repository child package
---  provides domain-driven operations — not generic CRUD — named after the
+--  provides domain-driven operations â not generic CRUD â named after the
 --  business events that trigger them.
 
 with Ada.Exceptions;
@@ -22,11 +22,7 @@ package Podmander.Database is
    --  (see Error_Kind and Format_Error below).
 
    type Error_Kind is
-     (Constraint_Violation,
-      Not_Found,
-      Device_Full,
-      Schema_Error,
-      Unknown);
+     (Constraint_Violation, Not_Found, Device_Full, Schema_Error, Unknown);
    --  Classification of SQLite error conditions. Used by callers that
    --  need to distinguish failure modes (e.g., UNIQUE violation vs I/O).
 
@@ -68,26 +64,20 @@ package Podmander.Database is
    --  Wraps a prepared SQLite statement. Auto-finalizes on scope exit.
    --  Repository packages use this instead of Ada_Sqlite3.Statement directly.
 
-   function Prepare
-     (DB  : in out DB_Handle;
-      SQL : String) return Query_Handle;
+   function Prepare (DB : in out DB_Handle; SQL : String) return Query_Handle;
    --  Prepare a parameterized query. The returned handle holds a reference
    --  to the connection. Auto-finalized when it goes out of scope.
    --  Raises Database_Error on failure.
 
    procedure Bind_Text
-     (QH    : in out Query_Handle;
-      Index : Positive;
-      Value : String);
+     (QH : in out Query_Handle; Index : Positive; Value : String);
    --  Bind a text value to a parameter by position.
 
    function Step (QH : in out Query_Handle) return Boolean;
    --  Execute next step. True if a row is available (ROW), False if done.
    --  Raises Database_Error on SQLite errors.
 
-   function Column_Text
-     (QH    : Query_Handle;
-      Index : Natural) return String;
+   function Column_Text (QH : Query_Handle; Index : Natural) return String;
    --  Read a text column from the current row.
 
    function Changes (DB : in out DB_Handle) return Integer;
@@ -97,16 +87,11 @@ package Podmander.Database is
    --  Execute a one-shot SQL statement (DDL, PRAGMA, etc.).
    --  Raises Database_Error on failure.
 
-   function Get_Setting
-     (DB  : in out DB_Handle;
-      Key : String) return String;
+   function Get_Setting (DB : in out DB_Handle; Key : String) return String;
    --  Return the value for Key from controller_settings.
    --  Raises Database_Error with Not_Found if the key does not exist.
 
-   procedure Set_Setting
-     (DB    : in out DB_Handle;
-      Key   : String;
-      Value : String);
+   procedure Set_Setting (DB : in out DB_Handle; Key : String; Value : String);
    --  Insert or update a setting in controller_settings (upsert).
 
 private
@@ -117,9 +102,10 @@ private
    --  Ada automatically finalizes the Ada_Sqlite3.Database component
    --  when DB_Handle goes out of scope. The Finalize override is empty.
 
-   overriding procedure Finalize (Handle : in out DB_Handle);
+   overriding
+   procedure Finalize (Handle : in out DB_Handle);
    --  Empty override. Ada auto-finalizes the DB component after this.
-   --  Do NOT call Handle.DB.Finalize explicitly — that would cause
+   --  Do NOT call Handle.DB.Finalize explicitly â that would cause
    --  double-finalization.
 
    type Query_Handle is limited record

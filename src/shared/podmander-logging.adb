@@ -9,11 +9,7 @@ package body Podmander.Logging is
    Minimum_Level : Log_Level := Info;
 
    Syslog_Priorities : constant array (Log_Level) of Natural :=
-     [Debug    => 7,
-      Info     => 6,
-      Warning  => 4,
-      Error    => 3,
-      Critical => 2];
+     [Debug => 7, Info => 6, Warning => 4, Error => 3, Critical => 2];
 
    Level_Labels : constant array (Log_Level) of String (1 .. 8) :=
      [Debug    => "DEBUG   ",
@@ -48,14 +44,9 @@ package body Podmander.Logging is
       return Minimum_Level;
    end Get_Level;
 
-   procedure Emit
-     (Level     : Log_Level;
-      Component : String;
-      Message   : String) is
-      Pri_Str : constant String :=
-        Syslog_Priorities (Level)'Image;
-      Pri_Tr  : constant String :=
-        Pri_Str (Pri_Str'First + 1 .. Pri_Str'Last);
+   procedure Emit (Level : Log_Level; Component : String; Message : String) is
+      Pri_Str : constant String := Syslog_Priorities (Level)'Image;
+      Pri_Tr  : constant String := Pri_Str (Pri_Str'First + 1 .. Pri_Str'Last);
    begin
       if Level < Minimum_Level then
          return;
@@ -63,11 +54,15 @@ package body Podmander.Logging is
 
       if Running_In_Terminal then
          Ada.Text_IO.Put_Line
-           ("[" & Level_Labels (Level) & "] "
-            & "[" & Component & "] " & Message);
+           ("["
+            & Level_Labels (Level)
+            & "] "
+            & "["
+            & Component
+            & "] "
+            & Message);
       else
-         Ada.Text_IO.Put_Line
-           ("<" & Pri_Tr & ">" & Message);
+         Ada.Text_IO.Put_Line ("<" & Pri_Tr & ">" & Message);
       end if;
    end Emit;
 

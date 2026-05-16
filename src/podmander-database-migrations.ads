@@ -7,8 +7,6 @@
 
 with Ada.Strings.Unbounded;
 
-private with Podmander.Database;
-
 package Podmander.Database.Migrations is
 
    type Migration is record
@@ -27,7 +25,7 @@ package Podmander.Database.Migrations is
    procedure Run_Pending (Handle : in out DB_Handle);
    --  Read the current schema version from the database and apply any
    --  pending migrations in order. Each migration runs inside a single
-   --  transaction — either all pending migrations apply or none do.
+   --  transaction â either all pending migrations apply or none do.
    --  Raises Database_Error with Schema_Error kind on failure.
 
 private
@@ -37,13 +35,12 @@ private
    --  restriction: PRAGMA journal_mode cannot run inside a transaction).
    --  The table creation and seed insert run inside the transaction.
 
-   Migration_001_WAL_SQL : constant String :=
-     "PRAGMA journal_mode=WAL;";
+   Migration_001_WAL_SQL : constant String := "PRAGMA journal_mode=WAL;";
 
    Migration_001_Table_SQL : constant String :=
-     "CREATE TABLE IF NOT EXISTS schema_version (" &
-     "version INTEGER PRIMARY KEY);" &
-     "INSERT OR IGNORE INTO schema_version (version) VALUES (0);";
+     "CREATE TABLE IF NOT EXISTS schema_version ("
+     & "version INTEGER PRIMARY KEY);"
+     & "INSERT OR IGNORE INTO schema_version (version) VALUES (0);";
 
    --  Full migration 001 combines WAL pragma (pre-transaction) and
    --  table creation (in-transaction). Run_Pending splits execution
@@ -52,26 +49,30 @@ private
      Migration_001_WAL_SQL & Migration_001_Table_SQL;
 
    Migration_002_SQL : constant String :=
-     "CREATE TABLE IF NOT EXISTS agents (" &
-     "name       TEXT PRIMARY KEY," &
-     "node_id    TEXT NOT NULL," &
-     "state      TEXT NOT NULL CHECK (state IN ('registered', 'unresponsive', 'lost'))," &
-     "last_seen  TEXT NOT NULL);";
+     "CREATE TABLE IF NOT EXISTS agents ("
+     & "name       TEXT PRIMARY KEY,"
+     & "node_id    TEXT NOT NULL,"
+     & "state      TEXT NOT NULL"
+     & " CHECK (state IN ('registered', 'unresponsive', 'lost')),"
+     & "last_seen  TEXT NOT NULL);";
 
    Migration_003_SQL : constant String :=
-     "CREATE TABLE IF NOT EXISTS controller_settings (" &
-     "key   TEXT PRIMARY KEY," &
-     "value TEXT NOT NULL);";
+     "CREATE TABLE IF NOT EXISTS controller_settings ("
+     & "key   TEXT PRIMARY KEY,"
+     & "value TEXT NOT NULL);";
 
    Migration_History : constant Migration_Array :=
-     (1 => (Version => 1,
-            SQL     => Ada.Strings.Unbounded.To_Unbounded_String
-                        (Migration_001_SQL)),
-       2 => (Version => 2,
-            SQL     => Ada.Strings.Unbounded.To_Unbounded_String
-                        (Migration_002_SQL)),
-       3 => (Version => 3,
-            SQL     => Ada.Strings.Unbounded.To_Unbounded_String
-                        (Migration_003_SQL)));
+     [1 =>
+        (Version => 1,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
+      2 =>
+        (Version => 2,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
+      3 =>
+        (Version => 3,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL))];
 
 end Podmander.Database.Migrations;

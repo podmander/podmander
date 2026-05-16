@@ -15,11 +15,11 @@ package Podmander.Messages is
    --  Message kind discriminator strings used as the first frame
    Registration_Request_Kind  : constant String := "registration";
    Registration_Response_Kind : constant String := "registered";
-   Heartbeat_Kind  : constant String := "heartbeat";
-   Deploy_Kind     : constant String := "deploy";
-   Deploy_Ack_Kind : constant String := "deploy_ack";
-   Status_Kind     : constant String := "status";
-   Status_Ack_Kind : constant String := "status_ack";
+   Heartbeat_Kind             : constant String := "heartbeat";
+   Deploy_Kind                : constant String := "deploy";
+   Deploy_Ack_Kind            : constant String := "deploy_ack";
+   Status_Kind                : constant String := "status";
+   Status_Ack_Kind            : constant String := "status_ack";
 
    --  Base interface for all protocol messages
    type Protocol_Message is interface;
@@ -28,72 +28,67 @@ package Podmander.Messages is
    type Message_Handler is limited interface;
 
    procedure Encode
-     (Self : Protocol_Message;
-      Msg  : in out CZMQ.Messages.Message) is abstract;
+     (Self : Protocol_Message; Msg : in out CZMQ.Messages.Message)
+   is abstract;
 
    --  Route this message to the matching Handle_* method on a handler.
    --  Each concrete message's override is a single-line routing call;
    --  the message itself never contains handling logic.
    procedure Dispatch_To
-     (Self : Protocol_Message;
-      H    : in out Message_Handler'Class) is abstract;
+     (Self : Protocol_Message; H : in out Message_Handler'Class)
+   is abstract;
 
-    --  Abstract type anchors. Concrete message types live in child packages
-    --  (Podmander.Messages.Registration_Requests, .Registration_Responses,
-    --  .Heartbeats) and derive from these. Anchors exist so Message_Handler
-    --  primitives can name each message category without depending on any
-    --  child package, keeping the parent closed.
+   --  Abstract type anchors. Concrete message types live in child packages
+   --  (Podmander.Messages.Registration_Requests, .Registration_Responses,
+   --  .Heartbeats) and derive from these. Anchors exist so Message_Handler
+   --  primitives can name each message category without depending on any
+   --  child package, keeping the parent closed.
    type Registration_Request_Type is abstract new Protocol_Message
-     with null record;
+   with null record;
    type Registration_Response_Type is abstract new Protocol_Message
-     with null record;
+   with null record;
    type Heartbeat_Message_Type is abstract new Protocol_Message
-     with null record;
-   type Deploy_Command_Type is abstract new Protocol_Message
-     with null record;
-   type Deploy_Result_Type is abstract new Protocol_Message
-     with null record;
-   type Status_Query_Type is abstract new Protocol_Message
-     with null record;
-   type Status_Response_Type is abstract new Protocol_Message
-     with null record;
+   with null record;
+   type Deploy_Command_Type is abstract new Protocol_Message with null record;
+   type Deploy_Result_Type is abstract new Protocol_Message with null record;
+   type Status_Query_Type is abstract new Protocol_Message with null record;
+   type Status_Response_Type is abstract new Protocol_Message with null record;
 
    --  Handler contract for inbound messages. Adding a new message category
    --  adds a new abstract anchor above and a new primitive here; the
    --  compiler then forces every Message_Handler implementation to provide
    --  a body. This interface is the single manifest of known operations.
    procedure Handle_Registration_Request
-     (H : in out Message_Handler;
-      M : Registration_Request_Type'Class) is abstract;
+     (H : in out Message_Handler; M : Registration_Request_Type'Class)
+   is abstract;
 
    procedure Handle_Heartbeat
-     (H : in out Message_Handler;
-      M : Heartbeat_Message_Type'Class) is abstract;
+     (H : in out Message_Handler; M : Heartbeat_Message_Type'Class)
+   is abstract;
 
    procedure Handle_Deploy_Command
-     (H : in out Message_Handler;
-      M : Deploy_Command_Type'Class) is abstract;
+     (H : in out Message_Handler; M : Deploy_Command_Type'Class)
+   is abstract;
 
    procedure Handle_Deploy_Result
-     (H : in out Message_Handler;
-      M : Deploy_Result_Type'Class) is abstract;
+     (H : in out Message_Handler; M : Deploy_Result_Type'Class)
+   is abstract;
 
    procedure Handle_Status_Query
-     (H : in out Message_Handler;
-      M : Status_Query_Type'Class) is abstract;
+     (H : in out Message_Handler; M : Status_Query_Type'Class)
+   is abstract;
 
    procedure Handle_Status_Response
-     (H : in out Message_Handler;
-      M : Status_Response_Type'Class) is abstract;
+     (H : in out Message_Handler; M : Status_Response_Type'Class)
+   is abstract;
 
    --  Decoder registry: each concrete message type registers a decoder
    --  keyed by its kind string at child-package elaboration.
-   type Decoder_Access is access function
-     (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class;
+   type Decoder_Access is
+     access function
+       (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class;
 
-   procedure Register
-     (Kind    : String;
-      Decoder : Decoder_Access);
+   procedure Register (Kind : String; Decoder : Decoder_Access);
 
    --  Decode a CZMQ message into the appropriate protocol message.
    --  Raises Decode_Error if the message is malformed or the kind is not

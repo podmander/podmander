@@ -5,8 +5,11 @@ package Podmander.Config.Parser is
 
    type Parse_Result (Success : Boolean) is record
       case Success is
-         when True  => Config : Service_Definition;
-         when False => Message : Ada.Strings.Unbounded.Unbounded_String;
+         when True =>
+            Config : Service_Definition;
+
+         when False =>
+            Message : Ada.Strings.Unbounded.Unbounded_String;
       end case;
    end record;
 

@@ -5,12 +5,11 @@ with Ada.Characters.Handling;
 
 package body Podmander.Messages.Result_Codes is
 
-   function Encode_Code (Code : Result_Code) return String is
-     (Ada.Characters.Handling.To_Upper (Result_Code'Image (Code)));
+   function Encode_Code (Code : Result_Code) return String
+   is (Ada.Characters.Handling.To_Upper (Result_Code'Image (Code)));
 
    function Decode_Code (S : String) return Result_Code is
-      Upper : constant String :=
-        Ada.Characters.Handling.To_Upper (S);
+      Upper : constant String := Ada.Characters.Handling.To_Upper (S);
    begin
       return Result_Code'Value (Upper);
    exception

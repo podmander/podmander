@@ -3,9 +3,9 @@
 
 package body Podmander.Messages.Status_Responses is
 
-   overriding procedure Encode
-     (Self : Status_Response;
-      Msg  : in out CZMQ.Messages.Message) is
+   overriding
+   procedure Encode
+     (Self : Status_Response; Msg : in out CZMQ.Messages.Message) is
    begin
       Msg.Add_String (Status_Ack_Kind);
       Msg.Add_String (RC.Encode_Code (Self.Code));
@@ -13,9 +13,9 @@ package body Podmander.Messages.Status_Responses is
       Msg.Add_String (SU.To_String (Self.Error_Message));
    end Encode;
 
-   overriding procedure Dispatch_To
-     (Self : Status_Response;
-      H    : in out Message_Handler'Class) is
+   overriding
+   procedure Dispatch_To
+     (Self : Status_Response; H : in out Message_Handler'Class) is
    begin
       H.Handle_Status_Response (Self);
    end Dispatch_To;
@@ -32,10 +32,11 @@ package body Podmander.Messages.Status_Responses is
          Containers    : constant String := Msg.Pop_String;
          Error_Message : constant String := Msg.Pop_String;
       begin
-         return Status_Response'
-           (Code          => Code,
-            Containers    => SU.To_Unbounded_String (Containers),
-            Error_Message => SU.To_Unbounded_String (Error_Message));
+         return
+           Status_Response'
+             (Code          => Code,
+              Containers    => SU.To_Unbounded_String (Containers),
+              Error_Message => SU.To_Unbounded_String (Error_Message));
       end;
    end Decode_Impl;
 

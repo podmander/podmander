@@ -8,7 +8,8 @@ with Podmander.Messages.Deploy_Commands;
 
 package body Podmander.Agent.Message_Handlers is
 
-   overriding procedure Handle_Registration_Request
+   overriding
+   procedure Handle_Registration_Request
      (H : in out Agent_Handler;
       M : Podmander.Messages.Registration_Request_Type'Class)
    is
@@ -18,7 +19,8 @@ package body Podmander.Agent.Message_Handlers is
         ("agent", "Registration_Request is agent-to-controller only");
    end Handle_Registration_Request;
 
-   overriding procedure Handle_Heartbeat
+   overriding
+   procedure Handle_Heartbeat
      (H : in out Agent_Handler;
       M : Podmander.Messages.Heartbeat_Message_Type'Class)
    is
@@ -28,7 +30,8 @@ package body Podmander.Agent.Message_Handlers is
         ("agent", "Heartbeat is agent-to-controller only");
    end Handle_Heartbeat;
 
-   overriding procedure Handle_Deploy_Command
+   overriding
+   procedure Handle_Deploy_Command
      (H : in out Agent_Handler;
       M : Podmander.Messages.Deploy_Command_Type'Class)
    is
@@ -37,13 +40,13 @@ package body Podmander.Agent.Message_Handlers is
       Name   : constant String := To_String (Cmd.Service_Name);
       Result : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
         Podmander.Agent.Podman.Install_Quadlet
-          (Service_Name => Name,
-           Quadlet      => To_String (Cmd.Quadlet));
+          (Service_Name => Name, Quadlet => To_String (Cmd.Quadlet));
    begin
       Send_Deploy_Result (H, Result);
    end Handle_Deploy_Command;
 
-   overriding procedure Handle_Deploy_Result
+   overriding
+   procedure Handle_Deploy_Result
      (H : in out Agent_Handler;
       M : Podmander.Messages.Deploy_Result_Type'Class)
    is
@@ -64,9 +67,9 @@ package body Podmander.Agent.Message_Handlers is
       Msg.Send (H.Agt.Sock);
    end Send_Deploy_Result;
 
-   overriding procedure Handle_Status_Query
-     (H : in out Agent_Handler;
-      M : Podmander.Messages.Status_Query_Type'Class)
+   overriding
+   procedure Handle_Status_Query
+     (H : in out Agent_Handler; M : Podmander.Messages.Status_Query_Type'Class)
    is
       pragma Unreferenced (M);
       Result : constant Podmander.Messages.Status_Responses.Status_Response :=
@@ -75,7 +78,8 @@ package body Podmander.Agent.Message_Handlers is
       Send_Status_Response (H, Result);
    end Handle_Status_Query;
 
-   overriding procedure Handle_Status_Response
+   overriding
+   procedure Handle_Status_Response
      (H : in out Agent_Handler;
       M : Podmander.Messages.Status_Response_Type'Class)
    is

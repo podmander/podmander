@@ -1,8 +1,6 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
-with Ada.Exceptions;
-with Ada.Strings.Unbounded;
 with Ada_Sqlite3;
 with Podmander.Logging;
 
@@ -16,7 +14,7 @@ package body Podmander.Database.Migrations is
       --  yet (fresh database), the SELECT will fail and we treat it
       --  as version 0 (all migrations pending).
       Current_Version : Natural := 0;
-      Have_Version   : Boolean := False;
+      Have_Version    : Boolean := False;
    begin
       --  Try to read current version
       begin
@@ -26,22 +24,19 @@ package body Podmander.Database.Migrations is
                 (Handle.DB, "SELECT version FROM schema_version");
          begin
             if Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW then
-               Current_Version :=
-                 Natural (Ada_Sqlite3.Column_Int (Stmt, 0));
+               Current_Version := Natural (Ada_Sqlite3.Column_Int (Stmt, 0));
                Have_Version := True;
             end if;
-            --  Statement auto-finalizes on scope exit
+         --  Statement auto-finalizes on scope exit
          end;
       exception
          when Ada_Sqlite3.SQLite_Error =>
-            --  Table doesn't exist yet — fresh database, version 0
+            --  Table doesn't exist yet â fresh database, version 0
             null;
       end;
 
       --  Nothing to do if already at the latest version
-      if Have_Version
-        and then Current_Version >= Migration_History'Last
-      then
+      if Have_Version and then Current_Version >= Migration_History'Last then
          return;
       end if;
 
@@ -80,11 +75,9 @@ package body Podmander.Database.Migrations is
                   Handle.DB.Execute (To_String (M.SQL));
                end if;
                Handle.DB.Execute
-                 ("UPDATE schema_version SET version = " &
-                  M.Version'Image);
+                 ("UPDATE schema_version SET version = " & M.Version'Image);
                Podmander.Logging.Info
-                 ("database",
-                  "Applied migration " & M.Version'Image);
+                 ("database", "Applied migration " & M.Version'Image);
             end if;
          end loop;
 
@@ -99,8 +92,10 @@ package body Podmander.Database.Migrations is
                when Ada_Sqlite3.SQLite_Error =>
                   null;  --  Best-effort rollback
             end;
-            raise Database_Error with Format_Error
-              (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+            raise Database_Error
+              with
+                Format_Error
+                  (Classify_Error (Ada.Exceptions.Exception_Message (E)));
       end;
    end Run_Pending;
 

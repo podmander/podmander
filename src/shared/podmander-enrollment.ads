@@ -14,9 +14,9 @@ package Podmander.Enrollment is
 
    use Ada.Strings.Unbounded;
 
-   Token_Prefix      : constant String    := "PTKN-";
-   Public_Key_Length : constant Positive  := 40;
-   Secret_Length     : constant Positive  := 32;
+   Token_Prefix      : constant String := "PTKN-";
+   Public_Key_Length : constant Positive := 40;
+   Secret_Length     : constant Positive := 32;
    Separator         : constant Character := '-';
 
    --  Raised by Parse_Join_Token when the input does not match the expected
@@ -32,15 +32,12 @@ package Podmander.Enrollment is
       Secret : Unbounded_String;
    end record;
 
-   procedure Set_Secret
-     (Config : in out Enrollment_Config;
-      Value  : String);
+   procedure Set_Secret (Config : in out Enrollment_Config; Value : String);
 
    function Get_Secret (Config : Enrollment_Config) return String;
 
    function Secret_Matches
-     (Config : Enrollment_Config;
-      Value  : String) return Boolean;
+     (Config : Enrollment_Config; Value : String) return Boolean;
 
    procedure Generate_Join_Token
      (Public_Key : String;

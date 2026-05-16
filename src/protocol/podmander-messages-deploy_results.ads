@@ -17,12 +17,11 @@ package Podmander.Messages.Deploy_Results is
       Error_Message : SU.Unbounded_String;
    end record;
 
-   overriding procedure Encode
-     (Self : Deploy_Result;
-      Msg  : in out CZMQ.Messages.Message);
+   overriding
+   procedure Encode (Self : Deploy_Result; Msg : in out CZMQ.Messages.Message);
 
-   overriding procedure Dispatch_To
-     (Self : Deploy_Result;
-      H    : in out Message_Handler'Class);
+   overriding
+   procedure Dispatch_To
+     (Self : Deploy_Result; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Deploy_Results;

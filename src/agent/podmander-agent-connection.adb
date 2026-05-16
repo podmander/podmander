@@ -35,8 +35,7 @@ package body Podmander.Agent.Connection is
    end Send_Message;
 
    procedure Send_Registration
-     (Self : Agent_Instance;
-      Sock : in out CZMQ.Sockets.Socket)
+     (Self : Agent_Instance; Sock : in out CZMQ.Sockets.Socket)
    is
       use Podmander.Messages.Registration_Requests;
    begin
@@ -49,27 +48,25 @@ package body Podmander.Agent.Connection is
    end Send_Registration;
 
    procedure Send_Heartbeat
-     (Self : Agent_Instance;
-      Sock : in out CZMQ.Sockets.Socket)
+     (Self : Agent_Instance; Sock : in out CZMQ.Sockets.Socket)
    is
       use Podmander.Messages.Heartbeats;
    begin
       Send_Message
         (Sock,
          Heartbeat_Message'
-           (Agent_Id  => Self.Node_Id,
-            Timestamp => Ada.Calendar.Clock),
+           (Agent_Id => Self.Node_Id, Timestamp => Ada.Calendar.Clock),
          "Sent heartbeat");
    end Send_Heartbeat;
 
    procedure Run_Cycle (Self : in out Agent_Instance) is
    begin
-      --  Close previous cycle's resources (idempotent — no-op if
+      --  Close previous cycle's resources (idempotent â no-op if
       --  already closed or never opened).
       CZMQ.Sockets.Close (Self.Sock);
       CZMQ.Certificates.Close (Self.Certificate);
 
-      --  Disconnected → Enrolling: open the socket and send register.
+      --  Disconnected â Enrolling: open the socket and send register.
       Podmander.Logging.Info ("agent", "Connecting to controller...");
       CZMQ.Certificates.Generate (Self.Certificate);
       CZMQ.Sockets.Open_Dealer (Self.Sock);
@@ -92,11 +89,13 @@ package body Podmander.Agent.Connection is
 
          if Status = CZMQ.Messages.Timeout then
             Podmander.Logging.Warning
-              ("agent", "Registration timeout, retrying in"
-               & Duration'Image (Self.Backoff) & "s");
+              ("agent",
+               "Registration timeout, retrying in"
+               & Duration'Image (Self.Backoff)
+               & "s");
             delay Self.Backoff;
-            Self.Backoff := Duration'Min
-              (Self.Backoff * 2.0, Self.Config.Max_Backoff);
+            Self.Backoff :=
+              Duration'Min (Self.Backoff * 2.0, Self.Config.Max_Backoff);
             Self.State := Podmander.Types.Disconnected;
             return;
          end if;
@@ -134,9 +133,7 @@ package body Podmander.Agent.Connection is
          Handler : Message_Handlers.Agent_Handler :=
            (Agt => Self'Unchecked_Access);
       begin
-         while Self.Running
-           and then not CZMQ.Signals.Is_Interrupted
-         loop
+         while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
             declare
                use type Ada.Calendar.Time;
                Next_Heartbeat : Ada.Calendar.Time;
@@ -152,16 +149,17 @@ package body Podmander.Agent.Connection is
                      CZMQ.Messages.Receive (Self.Sock, Msg, Status);
                      if Status /= CZMQ.Messages.Timeout then
                         declare
-                           Decoded : constant
-                             Podmander.Messages.Protocol_Message'Class :=
-                             Podmander.Messages.Decode (Msg);
+                           Decoded :
+                             constant Podmander
+                                        .Messages
+                                        .Protocol_Message'Class :=
+                               Podmander.Messages.Decode (Msg);
                         begin
                            Decoded.Dispatch_To (Handler);
                         exception
                            when Podmander.Messages.Decode_Error =>
                               Podmander.Logging.Warning
-                                ("agent",
-                                 "Malformed message from controller");
+                                ("agent", "Malformed message from controller");
                         end;
                      end if;
                   end;

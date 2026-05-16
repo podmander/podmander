@@ -9,10 +9,10 @@ package Podmander.Logging is
 
    function Get_Level return Log_Level;
 
-   procedure Debug    (Component : String; Message : String);
-   procedure Info     (Component : String; Message : String);
-   procedure Warning  (Component : String; Message : String);
-   procedure Error    (Component : String; Message : String);
+   procedure Debug (Component : String; Message : String);
+   procedure Info (Component : String; Message : String);
+   procedure Warning (Component : String; Message : String);
+   procedure Error (Component : String; Message : String);
    procedure Critical (Component : String; Message : String);
 
 end Podmander.Logging;

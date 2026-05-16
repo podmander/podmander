@@ -5,18 +5,18 @@ with Ada.Calendar.Formatting;
 
 package body Podmander.Messages.Heartbeats is
 
-   overriding procedure Encode
-     (Self : Heartbeat_Message;
-      Msg  : in out CZMQ.Messages.Message) is
+   overriding
+   procedure Encode
+     (Self : Heartbeat_Message; Msg : in out CZMQ.Messages.Message) is
    begin
       Msg.Add_String (Heartbeat_Kind);
       Msg.Add_String (To_String (Self.Agent_Id));
       Msg.Add_String (Ada.Calendar.Formatting.Image (Self.Timestamp));
    end Encode;
 
-   overriding procedure Dispatch_To
-     (Self : Heartbeat_Message;
-      H    : in out Message_Handler'Class) is
+   overriding
+   procedure Dispatch_To
+     (Self : Heartbeat_Message; H : in out Message_Handler'Class) is
    begin
       H.Handle_Heartbeat (Self);
    end Dispatch_To;
@@ -31,9 +31,10 @@ package body Podmander.Messages.Heartbeats is
          Agent_Id  : constant String := Msg.Pop_String;
          Timestamp : constant String := Msg.Pop_String;
       begin
-         return Heartbeat_Message'
-           (Agent_Id  => To_Unbounded_String (Agent_Id),
-            Timestamp => Ada.Calendar.Formatting.Value (Timestamp));
+         return
+           Heartbeat_Message'
+             (Agent_Id  => To_Unbounded_String (Agent_Id),
+              Timestamp => Ada.Calendar.Formatting.Value (Timestamp));
       end;
    end Decode_Impl;
 

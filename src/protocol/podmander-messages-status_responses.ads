@@ -20,12 +20,12 @@ package Podmander.Messages.Status_Responses is
       Error_Message : SU.Unbounded_String;
    end record;
 
-   overriding procedure Encode
-     (Self : Status_Response;
-      Msg  : in out CZMQ.Messages.Message);
+   overriding
+   procedure Encode
+     (Self : Status_Response; Msg : in out CZMQ.Messages.Message);
 
-   overriding procedure Dispatch_To
-     (Self : Status_Response;
-      H    : in out Message_Handler'Class);
+   overriding
+   procedure Dispatch_To
+     (Self : Status_Response; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Status_Responses;

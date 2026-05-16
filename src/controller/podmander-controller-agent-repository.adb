@@ -29,23 +29,28 @@ package body Podmander.Controller.Agent.Repository is
    function State_To_String (State : Agent_State) return String is
    begin
       case State is
-         when Registered   => return "registered";
-         when Unresponsive => return "unresponsive";
-         when Lost         => return "lost";
+         when Registered   =>
+            return "registered";
+
+         when Unresponsive =>
+            return "unresponsive";
+
+         when Lost         =>
+            return "lost";
       end case;
    end State_To_String;
 
    function String_To_State (S : String) return Agent_State is
    begin
-       if S = "registered" then
-          return Registered;
-       elsif S = "unresponsive" then
-          return Unresponsive;
-       elsif S = "lost" then
-          return Lost;
-       else
-          raise Constraint_Error with "Invalid agent state: " & S;
-       end if;
+      if S = "registered" then
+         return Registered;
+      elsif S = "unresponsive" then
+         return Unresponsive;
+      elsif S = "lost" then
+         return Lost;
+      else
+         raise Constraint_Error with "Invalid agent state: " & S;
+      end if;
    end String_To_State;
 
    ---------------
@@ -53,12 +58,13 @@ package body Podmander.Controller.Agent.Repository is
    ---------------
 
    procedure Register
-     (DB    : in out DB_Handle;
-      Agent : Podmander.Types.Agent_Info)
+     (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
    is
-      QH : Query_Handle := Prepare
-        (DB, "INSERT INTO agents (name, node_id, state, last_seen) " &
-             "VALUES (?, ?, ?, ?)");
+      QH : Query_Handle :=
+        Prepare
+          (DB,
+           "INSERT INTO agents (name, node_id, state, last_seen) "
+           & "VALUES (?, ?, ?, ?)");
    begin
       Bind_Text (QH, 1, To_String (Agent.Name));
       Bind_Text (QH, 2, To_String (Agent.Node_Id));
@@ -73,12 +79,10 @@ package body Podmander.Controller.Agent.Repository is
    --  Touch --
    -----------
 
-   procedure Touch
-     (DB    : in out DB_Handle;
-      Agent : Podmander.Types.Agent_Info)
+   procedure Touch (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
    is
-      QH : Query_Handle := Prepare
-        (DB, "UPDATE agents SET last_seen = ? WHERE name = ?");
+      QH : Query_Handle :=
+        Prepare (DB, "UPDATE agents SET last_seen = ? WHERE name = ?");
    begin
       Bind_Text (QH, 1, Time_To_ISO8601 (Agent.Last_Seen));
       Bind_Text (QH, 2, To_String (Agent.Name));
@@ -86,11 +90,14 @@ package body Podmander.Controller.Agent.Repository is
          null;  --  UPDATE returns no rows
       end loop;
       if Changes (DB) = 0 then
-         raise Database_Error with Format_Error
-           ((Kind    => Not_Found,
-             Message => To_Unbounded_String ("Agent not found: " &
-               To_String (Agent.Name)),
-             Code    => 0));
+         raise Database_Error
+           with
+             Format_Error
+               ((Kind    => Not_Found,
+                 Message =>
+                   To_Unbounded_String
+                     ("Agent not found: " & To_String (Agent.Name)),
+                 Code    => 0));
       end if;
    end Touch;
 
@@ -99,11 +106,10 @@ package body Podmander.Controller.Agent.Repository is
    ---------------
 
    procedure Set_State
-     (DB    : in out DB_Handle;
-      Agent : Podmander.Types.Agent_Info)
+     (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
    is
-      QH : Query_Handle := Prepare
-        (DB, "UPDATE agents SET state = ? WHERE name = ?");
+      QH : Query_Handle :=
+        Prepare (DB, "UPDATE agents SET state = ? WHERE name = ?");
    begin
       Bind_Text (QH, 1, State_To_String (Agent.State));
       Bind_Text (QH, 2, To_String (Agent.Name));
@@ -111,11 +117,14 @@ package body Podmander.Controller.Agent.Repository is
          null;  --  UPDATE returns no rows
       end loop;
       if Changes (DB) = 0 then
-         raise Database_Error with Format_Error
-           ((Kind    => Not_Found,
-             Message => To_Unbounded_String ("Agent not found: " &
-               To_String (Agent.Name)),
-             Code    => 0));
+         raise Database_Error
+           with
+             Format_Error
+               ((Kind    => Not_Found,
+                 Message =>
+                   To_Unbounded_String
+                     ("Agent not found: " & To_String (Agent.Name)),
+                 Code    => 0));
       end if;
    end Set_State;
 
@@ -124,15 +133,15 @@ package body Podmander.Controller.Agent.Repository is
    --------------
 
    function Load_All (DB : in out DB_Handle) return Agent_Maps.Map is
-      QH  : Query_Handle := Prepare
-        (DB, "SELECT name, node_id, state, last_seen FROM agents");
+      QH  : Query_Handle :=
+        Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
       Map : Agent_Maps.Map;
       Rec : Agent_Info;
    begin
       while Step (QH) loop
-         Rec.Name      := To_Unbounded_String (Column_Text (QH, 0));
-         Rec.Node_Id   := To_Unbounded_String (Column_Text (QH, 1));
-         Rec.State     := String_To_State (Column_Text (QH, 2));
+         Rec.Name := To_Unbounded_String (Column_Text (QH, 0));
+         Rec.Node_Id := To_Unbounded_String (Column_Text (QH, 1));
+         Rec.State := String_To_State (Column_Text (QH, 2));
          Rec.Last_Seen := ISO8601_To_Time (Column_Text (QH, 3));
          Map.Insert (To_String (Rec.Name), Rec);
       end loop;
@@ -143,17 +152,15 @@ package body Podmander.Controller.Agent.Repository is
    --  Remove --
    -------------
 
-   procedure Remove
-     (DB    : in out DB_Handle;
-      Agent : Podmander.Types.Agent_Info) is
-      QH : Query_Handle := Prepare
-        (DB, "DELETE FROM agents WHERE name = ?");
+   procedure Remove (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
+   is
+      QH : Query_Handle := Prepare (DB, "DELETE FROM agents WHERE name = ?");
    begin
       Bind_Text (QH, 1, To_String (Agent.Name));
       while Step (QH) loop
          null;  --  DELETE returns no rows
       end loop;
-      --  No-op if agent does not exist — no error raised
+   --  No-op if agent does not exist â no error raised
    end Remove;
 
 end Podmander.Controller.Agent.Repository;

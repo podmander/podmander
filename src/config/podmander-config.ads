@@ -41,11 +41,11 @@ package Podmander.Config is
       Name          : Unbounded_String;
       Image         : Unbounded_String;
       Env           : Env_Array (1 .. MAX_ENV_ENTRIES);
-      Env_Count     : Natural          := 0;
+      Env_Count     : Natural := 0;
       Ports         : Port_Array (1 .. MAX_PORTS_ENTRIES);
-      Ports_Count   : Natural          := 0;
+      Ports_Count   : Natural := 0;
       Volumes       : Volume_Array (1 .. MAX_VOLUMES_ENTRIES);
-      Volumes_Count : Natural          := 0;
+      Volumes_Count : Natural := 0;
       Description   : Unbounded_String;
       WantedBy      : Unbounded_String;
    end record;

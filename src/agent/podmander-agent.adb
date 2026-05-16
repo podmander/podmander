@@ -10,9 +10,8 @@ package body Podmander.Agent is
 
    use Ada.Strings.Unbounded;
 
-   procedure Initialize
-     (Self   : in out Agent_Instance;
-      Config : Agent_Config) is
+   procedure Initialize (Self : in out Agent_Instance; Config : Agent_Config)
+   is
    begin
       Self.Config := Config;
       Self.Running := True;
@@ -34,16 +33,16 @@ package body Podmander.Agent is
       end if;
 
       Podmander.Logging.Info
-        ("agent", "Agent """ & To_String (Config.Agent_Name)
+        ("agent",
+         "Agent """
+         & To_String (Config.Agent_Name)
          & """ starting, controller at "
          & To_String (Config.Controller_Address));
    end Initialize;
 
    procedure Run (Self : in out Agent_Instance) is
    begin
-      while Self.Running
-        and then not CZMQ.Signals.Is_Interrupted
-      loop
+      while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
          Connection.Run_Cycle (Self);
       end loop;
    end Run;
@@ -53,8 +52,7 @@ package body Podmander.Agent is
       Self.Running := False;
    end Stop;
 
-   function Get_Server_Public_Key
-     (Self : Agent_Instance) return String is
+   function Get_Server_Public_Key (Self : Agent_Instance) return String is
    begin
       return To_String (Self.Server_Public_Key);
    end Get_Server_Public_Key;

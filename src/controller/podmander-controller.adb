@@ -26,8 +26,7 @@ package body Podmander.Controller is
    Poll_Interval_Ms : constant := 1000;
 
    procedure Set_Bind_Address
-     (Config  : in out Controller_Config;
-      Address : String) is
+     (Config : in out Controller_Config; Address : String) is
    begin
       Config.Bind_Address (1 .. Address'Length) := Address;
       Config.Bind_Address_Last := Address'Length;
@@ -38,9 +37,7 @@ package body Podmander.Controller is
       return Config.Bind_Address (1 .. Config.Bind_Address_Last);
    end Get_Bind_Address;
 
-   procedure Set_DB_Path
-     (Config : in out Controller_Config;
-      Path   : String) is
+   procedure Set_DB_Path (Config : in out Controller_Config; Path : String) is
    begin
       Config.DB_Path := To_Unbounded_String (Path);
    end Set_DB_Path;
@@ -54,29 +51,30 @@ package body Podmander.Controller is
      (Config : Controller_Config) return Controller_Instance
    is
       DB_Path : constant String :=
-        (if Get_DB_Path (Config) = "" then
+        (if Get_DB_Path (Config) = ""
+         then
            Ada.Environment_Variables.Value ("HOME")
            & "/.local/share/podmander/state.db"
-         else
-           Get_DB_Path (Config));
+         else Get_DB_Path (Config));
    begin
-      return C : Controller_Instance :=
-        (Config      => Config,
-         DB          => Database.Open (DB_Path),
-         Certificate => <>,
-         Socket      => <>,
-         Agents      => <>,
-         Running     => True,
-         Test_Deploy => <>)
+      return
+         C : Controller_Instance :=
+           (Config      => Config,
+            DB          => Database.Open (DB_Path),
+            Certificate => <>,
+            Socket      => <>,
+            Agents      => <>,
+            Running     => True,
+            Test_Deploy => <>)
       do
          --  Load persisted agents from DB
          C.Agents := Agent.Repository.Load_All (C.DB);
 
          --  Per ADR-0035: agents that were Registered or Unresponsive
-         --  start as Unresponsive — they must send a heartbeat to prove
+         --  start as Unresponsive â they must send a heartbeat to prove
          --  they're still alive after the controller restart.
-          declare
-          begin
+         declare
+         begin
             for Cursor in C.Agents.Iterate loop
                declare
                   Key  : constant String := Agent_Maps.Key (Cursor);
@@ -91,62 +89,63 @@ package body Podmander.Controller is
             end loop;
          end;
 
-          --  Load or generate CURVE certificate
-          declare
-             Cert_Path : constant String :=
-               Ada.Directories.Containing_Directory (DB_Path)
-               & "/controller.crt";
-          begin
-             if Ada.Directories.Exists (Cert_Path) then
-                C.Certificate.Load (Cert_Path);
-                Podmander.Logging.Info
-                  ("controller",
-                   "Loaded CURVE certificate from " & Cert_Path);
-             else
-                C.Certificate.Generate;
-                C.Certificate.Save (Cert_Path);
-                Podmander.Logging.Info
-                  ("controller",
-                   "Generated and saved CURVE certificate to " & Cert_Path);
-             end if;
-          end;
+         --  Load or generate CURVE certificate
+         declare
+            Cert_Path : constant String :=
+              Ada.Directories.Containing_Directory (DB_Path)
+              & "/controller.crt";
+         begin
+            if Ada.Directories.Exists (Cert_Path) then
+               C.Certificate.Load (Cert_Path);
+               Podmander.Logging.Info
+                 ("controller", "Loaded CURVE certificate from " & Cert_Path);
+            else
+               C.Certificate.Generate;
+               C.Certificate.Save (Cert_Path);
+               Podmander.Logging.Info
+                 ("controller",
+                  "Generated and saved CURVE certificate to " & Cert_Path);
+            end if;
+         end;
 
-          --  Load or generate registration secret
-          declare
-             use Podmander.Database;
-          begin
-             C.Config.Enrollment.Secret :=
-               Ada.Strings.Unbounded.To_Unbounded_String
-                 (Get_Setting (C.DB, "registration_secret"));
-             Podmander.Logging.Info
-               ("controller", "Loaded registration secret from DB");
-          exception
-             when E : Database_Error =>
-                if Parse_Error (E).Kind = Not_Found then
-                   --  First start: generate and persist a new secret
-                   declare
-                      Token : Ada.Strings.Unbounded.Unbounded_String;
-                   begin
-                      Podmander.Enrollment.Generate_Join_Token
-                        (Public_Key => C.Get_Public_Key,
-                         Config     => C.Config.Enrollment,
-                         Token      => Token);
-                      Set_Setting (C.DB, "registration_secret",
-                                   Ada.Strings.Unbounded.To_String
-                                     (C.Config.Enrollment.Secret));
-                      Podmander.Logging.Info
-                        ("controller",
-                         "Generated and persisted registration secret");
-                   end;
-                else
-                   raise;
-                end if;
-          end;
+         --  Load or generate registration secret
+         declare
+            use Podmander.Database;
+         begin
+            C.Config.Enrollment.Secret :=
+              Ada.Strings.Unbounded.To_Unbounded_String
+                (Get_Setting (C.DB, "registration_secret"));
+            Podmander.Logging.Info
+              ("controller", "Loaded registration secret from DB");
+         exception
+            when E : Database_Error =>
+               if Parse_Error (E).Kind = Not_Found then
+                  --  First start: generate and persist a new secret
+                  declare
+                     Token : Ada.Strings.Unbounded.Unbounded_String;
+                  begin
+                     Podmander.Enrollment.Generate_Join_Token
+                       (Public_Key => C.Get_Public_Key,
+                        Config     => C.Config.Enrollment,
+                        Token      => Token);
+                     Set_Setting
+                       (C.DB,
+                        "registration_secret",
+                        Ada.Strings.Unbounded.To_String
+                          (C.Config.Enrollment.Secret));
+                     Podmander.Logging.Info
+                       ("controller",
+                        "Generated and persisted registration secret");
+                  end;
+               else
+                  raise;
+               end if;
+         end;
 
-          CZMQ.Sockets.Open_Router (C.Socket);
-          C.Certificate.Apply (C.Socket);
-          C.Socket.Set_Curve_Server (True);
-          C.Socket.Bind (Get_Bind_Address (Config));
+         CZMQ.Sockets.Open_Router (C.Socket);
+         C.Certificate.Apply (C.Socket);
+         C.Socket.Set_Curve_Server (True);
+         C.Socket.Bind (Get_Bind_Address (Config));
          Podmander.Logging.Info
            ("controller", "Listening on " & Get_Bind_Address (Config));
       end return;
@@ -159,8 +158,7 @@ package body Podmander.Controller is
       --  Safe: Handler is stack-local to Handle_Message and cannot outlive
       --  Self. Unchecked_Access avoids aliasing-aspect declarations here.
       Handler : Message_Handlers.Controller_Handler :=
-        (Ctrl     => Self'Unchecked_Access,
-         Identity => Null_Unbounded_String);
+        (Ctrl => Self'Unchecked_Access, Identity => Null_Unbounded_String);
    begin
       CZMQ.Messages.Receive (Self.Socket, Msg, Status);
       if Status = CZMQ.Messages.Timeout then
@@ -176,8 +174,8 @@ package body Podmander.Controller is
       exception
          when Podmander.Messages.Decode_Error =>
             Podmander.Logging.Warning
-              ("controller", "Malformed message from "
-               & To_String (Handler.Identity));
+              ("controller",
+               "Malformed message from " & To_String (Handler.Identity));
       end;
    end Handle_Message;
 
@@ -222,9 +220,7 @@ package body Podmander.Controller is
       Poller : CZMQ.Pollers.Poller;
    begin
       CZMQ.Pollers.Open (Poller, Self.Socket);
-      while Self.Running
-        and then not CZMQ.Signals.Is_Interrupted
-      loop
+      while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
          if Poller.Wait (Poll_Interval_Ms) then
             Handle_Message (Self);
          end if;
@@ -247,7 +243,7 @@ package body Podmander.Controller is
       end if;
 
       --  Count agents that are actually connected (Registered state).
-      --  Agents loaded from the DB start as Unresponsive — they must
+      --  Agents loaded from the DB start as Unresponsive â they must
       --  send a heartbeat before they're considered connected.
       declare
          Registered_Count : Natural := 0;
@@ -307,19 +303,18 @@ package body Podmander.Controller is
       end if;
    end Get_Public_Key;
 
-    procedure Generate_Join_Token
-       (Self  : in out Controller_Instance;
-        Token : out Ada.Strings.Unbounded.Unbounded_String) is
-    begin
-       Podmander.Enrollment.Generate_Join_Token
-         (Public_Key => Self.Get_Public_Key,
-          Config     => Self.Config.Enrollment,
-          Token      => Token);
-    end Generate_Join_Token;
+   procedure Generate_Join_Token
+     (Self  : in out Controller_Instance;
+      Token : out Ada.Strings.Unbounded.Unbounded_String) is
+   begin
+      Podmander.Enrollment.Generate_Join_Token
+        (Public_Key => Self.Get_Public_Key,
+         Config     => Self.Config.Enrollment,
+         Token      => Token);
+   end Generate_Join_Token;
 
    function Load_Test_Deploy
-     (Self : in out Controller_Instance;
-      Path : String) return Boolean
+     (Self : in out Controller_Instance; Path : String) return Boolean
    is
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse (Path);
@@ -327,8 +322,7 @@ package body Podmander.Controller is
       if not Result.Success then
          Podmander.Logging.Error
            ("controller",
-            "Failed to parse " & Path & ": "
-            & To_String (Result.Message));
+            "Failed to parse " & Path & ": " & To_String (Result.Message));
          return False;
       end if;
 
@@ -342,17 +336,16 @@ package body Podmander.Controller is
             Deployed     => False);
          Podmander.Logging.Info
            ("controller",
-            "Will deploy " & To_String (Result.Config.Name)
-            & " from " & Path);
+            "Will deploy " & To_String (Result.Config.Name) & " from " & Path);
          return True;
       end;
    end Load_Test_Deploy;
 
-    procedure Send_Deploy_Command
-      (Self         : in out Controller_Instance;
-       Node_Id      : String;
-       Service_Name : String;
-       Quadlet      : String)
+   procedure Send_Deploy_Command
+     (Self         : in out Controller_Instance;
+      Node_Id      : String;
+      Service_Name : String;
+      Quadlet      : String)
    is
       use Podmander.Messages.Deploy_Commands;
       Cmd : constant Deploy_Command :=
@@ -362,8 +355,7 @@ package body Podmander.Controller is
    begin
       if not Self.Socket.Is_Valid then
          Podmander.Logging.Warning
-           ("controller",
-            "Cannot send deploy command: socket not open");
+           ("controller", "Cannot send deploy command: socket not open");
          return;
       end if;
 

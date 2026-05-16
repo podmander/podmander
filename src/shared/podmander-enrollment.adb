@@ -28,9 +28,7 @@ package body Podmander.Enrollment is
       end;
    end Random_Hex;
 
-   procedure Set_Secret
-     (Config : in out Enrollment_Config;
-      Value  : String) is
+   procedure Set_Secret (Config : in out Enrollment_Config; Value : String) is
    begin
       Config.Secret := To_Unbounded_String (Value);
    end Set_Secret;
@@ -41,8 +39,7 @@ package body Podmander.Enrollment is
    end Get_Secret;
 
    function Secret_Matches
-     (Config : Enrollment_Config;
-      Value  : String) return Boolean is
+     (Config : Enrollment_Config; Value : String) return Boolean is
    begin
       return To_String (Config.Secret) = Value;
    end Secret_Matches;
@@ -50,15 +47,15 @@ package body Podmander.Enrollment is
    procedure Generate_Join_Token
      (Public_Key : String;
       Config     : in out Enrollment_Config;
-      Token      : out Unbounded_String)
-   is
+      Token      : out Unbounded_String) is
    begin
       --  Generate a new secret only if one isn't already set
       if Config.Secret = Null_Unbounded_String then
          Config.Secret := To_Unbounded_String (Random_Hex (Secret_Length));
       end if;
-      Token := To_Unbounded_String
-        (Token_Prefix & Public_Key & Separator & To_String (Config.Secret));
+      Token :=
+        To_Unbounded_String
+          (Token_Prefix & Public_Key & Separator & To_String (Config.Secret));
    end Generate_Join_Token;
 
    function Parse_Join_Token (Token : String) return Parsed_Token is
@@ -84,8 +81,8 @@ package body Podmander.Enrollment is
 
       return
         (Public_Key => To_Unbounded_String (Token (Key_Start .. Key_End)),
-         Secret     => To_Unbounded_String
-                         (Token (Secret_Start .. Secret_End)));
+         Secret     =>
+           To_Unbounded_String (Token (Secret_Start .. Secret_End)));
    end Parse_Join_Token;
 
 end Podmander.Enrollment;
