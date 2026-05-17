@@ -1,6 +1,6 @@
 # ADR-0010: SSH for Data Plane and Node Access
 
-**Status**: Accepted
+**Status**: Superseded by [ADR-0036](0036-zeromq-unified-transport.md)
 **Date**: 2026-04-12
 
 ## Context

@@ -1,6 +1,6 @@
 # ADR-0032: SSH-Based Node Bootstrap with Role-Based Installation
 
-**Status**: Accepted
+**Status**: Abandoned
 **Date**: 2026-04-12
 
 ## Context

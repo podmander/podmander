@@ -17,7 +17,7 @@ ADRs capture architecturally significant decisions — the *why* behind the syst
 | [0007](0007-services-as-systemd-units.md) | Services as systemd units, not agent child processes | Accepted | 2026-04-12 |
 | [0008](0008-one-operation-per-service.md) | One concurrent operation per service | Accepted | 2026-04-12 |
 | [0009](0009-zeromq-curve-for-control-plane.md) | ZeroMQ with CURVE encryption for control plane | Accepted | 2026-04-12 |
-| [0010](0010-ssh-for-data-plane.md) | SSH for data plane and node access | Accepted | 2026-04-12 |
+| [0010](0010-ssh-for-data-plane.md) | SSH for data plane and node access | Superseded by ADR-0036 | 2026-04-12 |
 | [0011](0011-podman-quadlet-for-containers.md) | Podman with Quadlet for container execution | Accepted | 2026-04-12 |
 | [0012](0012-rootless-containers-rootful-agent.md) | Rootless containers with rootful agent | Accepted | 2026-04-12 |
 | [0013](0013-wireguard-optional-node-encryption.md) | WireGuard as optional node-level encryption | Accepted | 2026-04-12 |
@@ -39,7 +39,8 @@ ADRs capture architecturally significant decisions — the *why* behind the syst
 | [0029](0029-restic-and-native-send-for-backups.md) | Restic and native send for volume backups | Accepted | 2026-04-12 |
 | [0030](0030-decentralized-journal-logging.md) | Decentralized logging via systemd journal | Accepted | 2026-04-12 |
 | [0031](0031-integration-first-monitoring.md) | Integration-first monitoring (not built-in) | Accepted | 2026-04-12 |
-| [0032](0032-ssh-based-node-bootstrap.md) | SSH-based node bootstrap with role-based installation | Accepted | 2026-04-12 |
+| [0032](0032-ssh-based-node-bootstrap.md) | SSH-based node bootstrap with role-based installation | Abandoned | 2026-04-12 |
 | [0033](0033-git-based-stack-collections.md) | Git-based stack collections with Jinja parameters | Accepted | 2026-04-12 |
 | 0034 | CLI-to-controller communication protocol | Proposed | — |
 | [0035](0035-database-layer-design.md) | Database layer design | Proposed | 2026-05-11 |
+| [0036](0036-zeromq-unified-transport.md) | ZeroMQ as sole runtime transport between controller and agent | Accepted | 2026-05-17 |

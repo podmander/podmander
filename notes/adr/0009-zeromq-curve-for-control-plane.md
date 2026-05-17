@@ -56,11 +56,11 @@ For HA, all controller instances share the same CURVE keypair, so agents reconne
 - Cons: Requires a certificate authority or certificate distribution mechanism. More complex connection management for persistent agent connections. No Ada gRPC library available.
 - Why rejected: Certificate management adds operational complexity for the target audience. No Ada implementation.
 
-### Plain SSH (reuse data plane for control)
+### Plain SSH (single protocol for all communication)
 
-- Pros: Already required for the data plane (see [ADR-0010](0010-ssh-for-data-plane.md)). Single protocol simplifies architecture.
-- Cons: SSH is connection-oriented without built-in async messaging. Implementing command/status/heartbeat patterns over SSH would require a custom protocol layer. No persistent connection with automatic reconnection.
-- Why rejected: Poor fit for async command-and-status messaging patterns. Would require building a bespoke protocol on top of SSH, negating the simplicity benefit.
+- Pros: Single protocol for commands and file transfers. SSH is widely understood and available.
+- Cons: SSH is connection-oriented without built-in async messaging. Implementing command/status/heartbeat patterns over SSH would require a custom protocol layer. No persistent connection with automatic reconnection. File transfers over SSH would require persistent key management and connection lifecycle handling.
+- Why rejected: Poor fit for async command-and-status messaging patterns. Would require building a bespoke protocol on top of SSH, negating the simplicity benefit. ZMQ now handles file payloads as well (see [ADR-0036](0036-zeromq-unified-transport.md)), eliminating the need for SSH as a runtime transport entirely.
 
 ### MQTT
 
