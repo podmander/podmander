@@ -243,7 +243,7 @@ package body Podmander.Controller is
       end if;
 
       --  Count agents that are actually connected (Registered state).
-      --  Agents loaded from the DB start as Unresponsive â they must
+      --  Agents loaded from the DB start as Unresponsive - they must
       --  send a heartbeat before they're considered connected.
       declare
          Registered_Count : Natural := 0;
