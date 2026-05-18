@@ -10,7 +10,7 @@ package body Podmander.Messages.Heartbeats is
      (Self : Heartbeat_Message; Msg : in out CZMQ.Messages.Message) is
    begin
       Msg.Add_String (Heartbeat_Kind);
-      Msg.Add_String (To_String (Self.Agent_Id));
+      Msg.Add_String (To_String (Self.Node_Id));
       Msg.Add_String (Ada.Calendar.Formatting.Image (Self.Timestamp));
    end Encode;
 
@@ -28,12 +28,12 @@ package body Podmander.Messages.Heartbeats is
          raise Decode_Error with "heartbeat: missing payload frames";
       end if;
       declare
-         Agent_Id  : constant String := Msg.Pop_String;
-         Timestamp : constant String := Msg.Pop_String;
-      begin
-         return
-           Heartbeat_Message'
-             (Agent_Id  => To_Unbounded_String (Agent_Id),
+          Node_Id  : constant String := Msg.Pop_String;
+          Timestamp : constant String := Msg.Pop_String;
+       begin
+          return
+            Heartbeat_Message'
+              (Node_Id  => To_Unbounded_String (Node_Id),
               Timestamp => Ada.Calendar.Formatting.Value (Timestamp));
       end;
    end Decode_Impl;

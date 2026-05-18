@@ -55,7 +55,7 @@ package body Podmander.Agent.Connection is
       Send_Message
         (Sock,
          Heartbeat_Message'
-           (Agent_Id => Self.Node_Id, Timestamp => Ada.Calendar.Clock),
+            (Node_Id => Self.Node_Id, Timestamp => Ada.Calendar.Clock),
          "Sent heartbeat");
    end Send_Heartbeat;
 

@@ -96,7 +96,7 @@ package body Podmander.Messages_Tests is
       use Podmander.Messages.Heartbeats;
       Now      : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Original : constant Heartbeat_Message :=
-        (Agent_Id  => To_Unbounded_String ("node-42"),
+        (Node_Id  => To_Unbounded_String ("node-42"),
          Timestamp => Now);
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
@@ -112,8 +112,8 @@ package body Podmander.Messages_Tests is
            (Decoded in Heartbeat_Message,
             "Expected Heartbeat_Message");
          Assert
-           (To_String (Heartbeat_Message (Decoded).Agent_Id) = "node-42",
-            "Agent ID mismatch");
+            (To_String (Heartbeat_Message (Decoded).Node_Id) = "node-42",
+             "Node ID mismatch");
          --  Timestamp survives round-trip through string formatting
          --  (sub-second precision may be lost)
          Assert

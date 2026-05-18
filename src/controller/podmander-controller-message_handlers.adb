@@ -102,23 +102,23 @@ package body Podmander.Controller.Message_Handlers is
    is
       use Podmander.Messages.Heartbeats;
       HB       : constant Heartbeat_Message := Heartbeat_Message (M);
-      Agent_Id : constant String := To_String (HB.Agent_Id);
+      Node_Id : constant String := To_String (HB.Node_Id);
    begin
-      if H.Ctrl.Agents.Contains (Agent_Id) then
+      if H.Ctrl.Agents.Contains (Node_Id) then
          declare
-            Info : Podmander.Types.Agent_Info := H.Ctrl.Agents (Agent_Id);
+            Info : Podmander.Types.Agent_Info := H.Ctrl.Agents (Node_Id);
          begin
             Info.Last_Seen := Ada.Calendar.Clock;
             if Info.State /= Podmander.Types.Registered then
                Info.State := Podmander.Types.Registered;
                Agent.Repository.Set_State (H.Ctrl.DB, Info);
-               Podmander.Logging.Info
-                 ("controller", "Agent " & Agent_Id & " reconnected");
+                Podmander.Logging.Info
+                  ("controller", "Agent " & Node_Id & " reconnected");
             end if;
             Agent.Repository.Touch (H.Ctrl.DB, Info);
-            H.Ctrl.Agents.Replace (Agent_Id, Info);
+            H.Ctrl.Agents.Replace (Node_Id, Info);
             Podmander.Logging.Debug
-              ("controller", "Heartbeat from " & Agent_Id);
+              ("controller", "Heartbeat from " & Node_Id);
          end;
       else
          Podmander.Logging.Warning

@@ -159,15 +159,15 @@ package body Podmander.Controller_Tests is
       pragma Unreferenced (T);
       use Podmander.Messages.Heartbeats;
       HB : constant Heartbeat_Message :=
-        (Agent_Id  => To_Unbounded_String ("node-1"),
+        (Node_Id  => To_Unbounded_String ("node-1"),
          Timestamp => Ada.Calendar.Clock);
       Spy : Spy_Handler;
    begin
       HB.Dispatch_To (Spy);
       Assert (Spy.Kind = Heartbeat_Seen, "Expected Heartbeat_Seen");
       Assert
-        (To_String (Spy.Last_Heartbeat.Agent_Id) = "node-1",
-         "Expected agent_id node-1");
+        (To_String (Spy.Last_Heartbeat.Node_Id) = "node-1",
+         "Expected node_id node-1");
    end Test_Dispatch_Heartbeat;
 
     --  Test: Polymorphic dispatch through Protocol_Message'Class routes
@@ -491,7 +491,7 @@ package body Podmander.Controller_Tests is
          State     => Podmander.Types.Registered,
          Last_Seen => Past);
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Agent_Id  => To_Unbounded_String ("node-xyz"),
+        (Node_Id  => To_Unbounded_String ("node-xyz"),
          Timestamp => Ada.Calendar.Clock);
     begin
        Ctrl.Agents.Insert ("node-xyz", Info);
@@ -512,7 +512,7 @@ package body Podmander.Controller_Tests is
       H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
         Make_Handler (Ctrl'Access, "unknown");
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Agent_Id  => To_Unbounded_String ("unknown"),
+        (Node_Id  => To_Unbounded_String ("unknown"),
          Timestamp => Ada.Calendar.Clock);
    begin
       H.Handle_Heartbeat (HB);
@@ -538,7 +538,7 @@ package body Podmander.Controller_Tests is
          State     => Podmander.Types.Lost,
          Last_Seen => Ada.Calendar.Clock - 300.0);
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Agent_Id  => To_Unbounded_String ("lost-node"),
+        (Node_Id  => To_Unbounded_String ("lost-node"),
          Timestamp => Ada.Calendar.Clock);
     begin
        Ctrl.Agents.Insert ("lost-node", Info);
