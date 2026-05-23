@@ -60,33 +60,33 @@ package body Podmander.Controller is
          else Get_DB_Path (Config));
    begin
       return
-          C : Controller_Instance :=
-            (Config      => Config,
-             DB          => Database.Open (DB_Path),
-             Certificate => <>,
-             Socket      => <>,
-             Running     => True,
-             Test_Deploy => <>)
+         C : Controller_Instance :=
+           (Config      => Config,
+            DB          => Database.Open (DB_Path),
+            Certificate => <>,
+            Socket      => <>,
+            Running     => True,
+            Test_Deploy => <>)
       do
-          --  Per ADR-0037: agents that were Registered or Unresponsive
-          --  start as Unresponsive â they must send a heartbeat to prove
-          --  they're still alive after the controller restart.
-          declare
-             All_Agents : constant Podmander.Types.Agent_Maps.Map :=
-               Agent.Repository.Load_All (C.DB);
-          begin
-             for Cursor in All_Agents.Iterate loop
-                declare
-                   Info : Podmander.Types.Agent_Info :=
-                     Podmander.Types.Agent_Maps.Element (Cursor);
-                begin
-                   if Info.State /= Podmander.Types.Lost then
-                      Info.State := Podmander.Types.Unresponsive;
-                      Agent.Repository.Set_State (C.DB, Info);
-                   end if;
-                end;
-             end loop;
-          end;
+         --  Per ADR-0037: agents that were Registered or Unresponsive
+         --  start as Unresponsive Ã¢ÂÂ they must send a heartbeat to prove
+         --  they're still alive after the controller restart.
+         declare
+            All_Agents : constant Podmander.Types.Agent_Maps.Map :=
+              Agent.Repository.Load_All (C.DB);
+         begin
+            for Cursor in All_Agents.Iterate loop
+               declare
+                  Info : Podmander.Types.Agent_Info :=
+                    Podmander.Types.Agent_Maps.Element (Cursor);
+               begin
+                  if Info.State /= Podmander.Types.Lost then
+                     Info.State := Podmander.Types.Unresponsive;
+                     Agent.Repository.Set_State (C.DB, Info);
+                  end if;
+               end;
+            end loop;
+         end;
 
          --  Load or generate CURVE certificate
          declare
@@ -186,15 +186,14 @@ package body Podmander.Controller is
         Self.Config.Agent_Timeout * 2.0;
       Lost_Threshold         : constant Duration :=
         Self.Config.Agent_Timeout * 3.0;
-      All_Agents            : constant Podmander.Types.Agent_Maps.Map :=
+      All_Agents             : constant Podmander.Types.Agent_Maps.Map :=
         Agent.Repository.Load_All (Self.DB);
    begin
       for Cursor in All_Agents.Iterate loop
          declare
             Info    : Podmander.Types.Agent_Info :=
               Podmander.Types.Agent_Maps.Element (Cursor);
-            Name    : constant String :=
-              To_String (Info.Name);
+            Name    : constant String := To_String (Info.Name);
             Elapsed : constant Duration := Now - Info.Last_Seen;
          begin
             if Elapsed >= Lost_Threshold
@@ -232,8 +231,7 @@ package body Podmander.Controller is
    end Run;
 
    function To_Service_Definition
-     (SV : Service_Version) return Service_Definition
-   is
+     (SV : Service_Version) return Service_Definition is
    begin
       return
         (Name          => SV.Service_Name,
@@ -261,7 +259,8 @@ package body Podmander.Controller is
             Found        : Boolean := False;
          begin
             for Cursor in All_Agents.Iterate loop
-               if To_String (Podmander.Types.Agent_Maps.Element (Cursor).Node_Id)
+               if To_String
+                    (Podmander.Types.Agent_Maps.Element (Cursor).Node_Id)
                  = Node_Id_Str
                then
                   Found := True;
@@ -271,10 +270,10 @@ package body Podmander.Controller is
 
             if Found then
                declare
-                  SV     : constant Service_Version :=
+                  SV      : constant Service_Version :=
                     Service.Repository.Get_Latest_Version
                       (Self.DB, Svc_Name_Str);
-                  Config : constant Service_Definition :=
+                  Config  : constant Service_Definition :=
                     To_Service_Definition (SV);
                   Quadlet : constant String :=
                     Podmander.Generators.Quadlet.Render (Config);
@@ -411,8 +410,7 @@ package body Podmander.Controller is
    begin
       for E of Actual loop
          declare
-            Svc_Name : constant String :=
-              To_String (E.Service_Name);
+            Svc_Name : constant String := To_String (E.Service_Name);
          begin
             declare
                Latest : constant Service_Version :=
@@ -430,8 +428,7 @@ package body Podmander.Controller is
          exception
             when Podmander.Database.Database_Error =>
                Podmander.Logging.Warning
-                 ("controller",
-                  "No service_versions entry for " & Svc_Name);
+                 ("controller", "No service_versions entry for " & Svc_Name);
          end;
       end loop;
       return Result;

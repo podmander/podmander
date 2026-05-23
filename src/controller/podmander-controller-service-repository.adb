@@ -25,8 +25,7 @@ package body Podmander.Controller.Service.Repository is
    is
       Result : Podmander.Controller.Service_Version;
    begin
-      Result.Service_Name :=
-        To_Unbounded_String (Column_Text (QH, 0));
+      Result.Service_Name := To_Unbounded_String (Column_Text (QH, 0));
       Result.Version := Positive'Value (Column_Text (QH, 1));
       Result.Image := To_Unbounded_String (Column_Text (QH, 2));
       Parse_Env_Array (Column_Text (QH, 3), Result.Env, Result.Env_Count);
@@ -40,11 +39,12 @@ package body Podmander.Controller.Service.Repository is
    exception
       when Constraint_Error =>
          raise Database_Error
-           with Format_Error
-             ((Kind    => Unknown,
-               Message =>
-                 To_Unbounded_String ("Invalid version number in database"),
-               Code    => 0));
+           with
+             Format_Error
+               ((Kind    => Unknown,
+                 Message =>
+                   To_Unbounded_String ("Invalid version number in database"),
+                 Code    => 0));
    end Row_To_Service_Version;
 
    --------------------
@@ -52,8 +52,7 @@ package body Podmander.Controller.Service.Repository is
    --------------------
 
    procedure Create_Version
-     (DB      : in out DB_Handle;
-      Version : Podmander.Controller.Service_Version)
+     (DB : in out DB_Handle; Version : Podmander.Controller.Service_Version)
    is
       QH : Query_Handle :=
         Prepare
@@ -64,17 +63,16 @@ package body Podmander.Controller.Service.Repository is
            & "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
    begin
       Bind_Text (QH, 1, To_String (Version.Service_Name));
-      Bind_Text (QH, 2,
-                  Ada.Strings.Fixed.Trim (Version.Version'Image,
-                                          Ada.Strings.Left));
+      Bind_Text
+        (QH,
+         2,
+         Ada.Strings.Fixed.Trim (Version.Version'Image, Ada.Strings.Left));
       Bind_Text (QH, 3, To_String (Version.Image));
-      Bind_Text (QH, 4,
-                  Env_Array_To_JSON (Version.Env, Version.Env_Count));
-      Bind_Text (QH, 5,
-                  Port_Array_To_JSON (Version.Ports, Version.Ports_Count));
-      Bind_Text (QH, 6,
-                  Volume_Array_To_JSON (Version.Volumes,
-                                        Version.Volumes_Count));
+      Bind_Text (QH, 4, Env_Array_To_JSON (Version.Env, Version.Env_Count));
+      Bind_Text
+        (QH, 5, Port_Array_To_JSON (Version.Ports, Version.Ports_Count));
+      Bind_Text
+        (QH, 6, Volume_Array_To_JSON (Version.Volumes, Version.Volumes_Count));
       Bind_Text (QH, 7, To_String (Version.Description));
       Bind_Text (QH, 8, To_String (Version.Wanted_By));
       Bind_Text (QH, 9, Time_To_ISO8601 (Version.Created_At));
@@ -88,9 +86,7 @@ package body Podmander.Controller.Service.Repository is
    -----------------
 
    function Get_Version
-     (DB           : in out DB_Handle;
-      Service_Name : String;
-      Version      : Positive)
+     (DB : in out DB_Handle; Service_Name : String; Version : Positive)
       return Podmander.Controller.Service_Version
    is
       QH : Query_Handle :=
@@ -102,20 +98,23 @@ package body Podmander.Controller.Service.Repository is
            & "WHERE service_name = ? AND version = ?");
    begin
       Bind_Text (QH, 1, Service_Name);
-      Bind_Text (QH, 2,
-                  Ada.Strings.Fixed.Trim (Version'Image, Ada.Strings.Left));
+      Bind_Text
+        (QH, 2, Ada.Strings.Fixed.Trim (Version'Image, Ada.Strings.Left));
       if Step (QH) then
          return Row_To_Service_Version (DB, QH);
       else
          raise Database_Error
-           with Format_Error
-             ((Kind    => Not_Found,
-               Message =>
-                 To_Unbounded_String
-                   ("Service version not found: " & Service_Name
-                    & " v" & Ada.Strings.Fixed.Trim (Version'Image,
-                                                      Ada.Strings.Left)),
-               Code    => 0));
+           with
+             Format_Error
+               ((Kind    => Not_Found,
+                 Message =>
+                   To_Unbounded_String
+                     ("Service version not found: "
+                      & Service_Name
+                      & " v"
+                      & Ada.Strings.Fixed.Trim
+                          (Version'Image, Ada.Strings.Left)),
+                 Code    => 0));
       end if;
    end Get_Version;
 
@@ -124,8 +123,7 @@ package body Podmander.Controller.Service.Repository is
    ------------------------
 
    function Get_Latest_Version
-     (DB           : in out DB_Handle;
-      Service_Name : String)
+     (DB : in out DB_Handle; Service_Name : String)
       return Podmander.Controller.Service_Version
    is
       QH : Query_Handle :=
@@ -142,12 +140,13 @@ package body Podmander.Controller.Service.Repository is
          return Row_To_Service_Version (DB, QH);
       else
          raise Database_Error
-           with Format_Error
-             ((Kind    => Not_Found,
-               Message =>
-                 To_Unbounded_String
-                   ("No versions found for service: " & Service_Name),
-               Code    => 0));
+           with
+             Format_Error
+               ((Kind    => Not_Found,
+                 Message =>
+                   To_Unbounded_String
+                     ("No versions found for service: " & Service_Name),
+                 Code    => 0));
       end if;
    end Get_Latest_Version;
 

@@ -17,8 +17,7 @@ package body Podmander.Controller.Actual_State.Repository is
 
    function Row_To_Entry
      (DB : in out DB_Handle; QH : in out Query_Handle)
-      return Podmander.Controller.Actual_State_Entry
-   is
+      return Podmander.Controller.Actual_State_Entry is
    begin
       return
         (Service_Name => To_Unbounded_String (Column_Text (QH, 0)),
@@ -28,12 +27,13 @@ package body Podmander.Controller.Actual_State.Repository is
    exception
       when Constraint_Error =>
          raise Database_Error
-           with Format_Error
-             ((Kind    => Unknown,
-               Message =>
-                 To_Unbounded_String
-                   ("Invalid version number in actual_state"),
-               Code    => 0));
+           with
+             Format_Error
+               ((Kind    => Unknown,
+                 Message =>
+                   To_Unbounded_String
+                     ("Invalid version number in actual_state"),
+                 Code    => 0));
    end Row_To_Entry;
 
    -----------
@@ -41,8 +41,7 @@ package body Podmander.Controller.Actual_State.Repository is
    -----------
 
    procedure Upsert
-     (DB  : in out DB_Handle;
-      Rec : Podmander.Controller.Actual_State_Entry)
+     (DB : in out DB_Handle; Rec : Podmander.Controller.Actual_State_Entry)
    is
       QH : Query_Handle :=
         Prepare
@@ -53,9 +52,8 @@ package body Podmander.Controller.Actual_State.Repository is
    begin
       Bind_Text (QH, 1, To_String (Rec.Service_Name));
       Bind_Text (QH, 2, To_String (Rec.Node_Id));
-      Bind_Text (QH, 3,
-                  Ada.Strings.Fixed.Trim (Rec.Version'Image,
-                                          Ada.Strings.Left));
+      Bind_Text
+        (QH, 3, Ada.Strings.Fixed.Trim (Rec.Version'Image, Ada.Strings.Left));
       Bind_Text (QH, 4, Time_To_ISO8601 (Rec.Updated_At));
       while Step (QH) loop
          null;
@@ -70,7 +68,7 @@ package body Podmander.Controller.Actual_State.Repository is
      (DB : in out DB_Handle)
       return Podmander.Controller.Actual_State_Vectors.Vector
    is
-      QH  : Query_Handle :=
+      QH     : Query_Handle :=
         Prepare
           (DB,
            "SELECT service_name, node_id, version, updated_at "
@@ -88,11 +86,10 @@ package body Podmander.Controller.Actual_State.Repository is
    --------------------
 
    function Get_For_Service
-     (DB           : in out DB_Handle;
-      Service_Name : String)
+     (DB : in out DB_Handle; Service_Name : String)
       return Podmander.Controller.Actual_State_Vectors.Vector
    is
-      QH  : Query_Handle :=
+      QH     : Query_Handle :=
         Prepare
           (DB,
            "SELECT service_name, node_id, version, updated_at "
@@ -111,9 +108,7 @@ package body Podmander.Controller.Actual_State.Repository is
    -------------
 
    procedure Remove
-     (DB           : in out DB_Handle;
-      Service_Name : String;
-      Node_Id      : String)
+     (DB : in out DB_Handle; Service_Name : String; Node_Id : String)
    is
       QH : Query_Handle :=
         Prepare

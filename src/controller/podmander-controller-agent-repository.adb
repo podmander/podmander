@@ -132,10 +132,12 @@ package body Podmander.Controller.Agent.Repository is
    --  Load_All --
    --------------
 
-    function Load_All (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map is
-       QH  : Query_Handle :=
-         Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
-       Map : Podmander.Types.Agent_Maps.Map;
+   function Load_All
+     (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map
+   is
+      QH  : Query_Handle :=
+        Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
+      Map : Podmander.Types.Agent_Maps.Map;
       Rec : Agent_Info;
    begin
       while Step (QH) loop
@@ -160,7 +162,7 @@ package body Podmander.Controller.Agent.Repository is
       while Step (QH) loop
          null;  --  DELETE returns no rows
       end loop;
-   --  No-op if agent does not exist â no error raised
+   --  No-op if agent does not exist Ã¢ÂÂ no error raised
    end Remove;
 
 end Podmander.Controller.Agent.Repository;

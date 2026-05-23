@@ -22,7 +22,8 @@ package Podmander.Controller.Agent.Repository is
    --  Update an agent's connection state.
    --  Raises Database_Error with Not_Found if the agent does not exist.
 
-    function Load_All (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map;
+   function Load_All
+     (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map;
    --  Return all persisted agents as an in-memory map.
 
    procedure Remove
