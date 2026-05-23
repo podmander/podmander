@@ -251,13 +251,13 @@ package body Podmander.Controller is
    procedure Reconcile_State (Self : in out Controller_Instance) is
       Mismatches : constant State_Mismatch_Vectors.Vector :=
         Find_State_Mismatches (Self.DB);
+      All_Agents : constant Podmander.Types.Agent_Maps.Map :=
+        Agent.Repository.Load_All (Self.DB);
    begin
       for M of Mismatches loop
          declare
             Node_Id_Str  : constant String := To_String (M.Node_Id);
             Svc_Name_Str : constant String := To_String (M.Service_Name);
-            All_Agents   : constant Podmander.Types.Agent_Maps.Map :=
-              Agent.Repository.Load_All (Self.DB);
             Found        : Boolean := False;
          begin
             for Cursor in All_Agents.Iterate loop
