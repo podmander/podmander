@@ -1,11 +1,13 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with Ada.Calendar;
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 with CZMQ.Certificates;
 with CZMQ.Sockets;
+with Podmander.Config;
 with Podmander.Database;
 with Podmander.Enrollment;
 with Podmander.Types;
@@ -13,6 +15,36 @@ with Podmander.Types;
 package Podmander.Controller is
 
    use Podmander.Types;
+   use Podmander.Config;
+
+   --  State tracking types
+
+   type Service_Version is record
+      Service_Name  : Ada.Strings.Unbounded.Unbounded_String;
+      Version       : Positive;
+      Image         : Ada.Strings.Unbounded.Unbounded_String;
+      Env           : Env_Array (1 .. MAX_ENV_ENTRIES);
+      Env_Count     : Natural := 0;
+      Ports         : Port_Array (1 .. MAX_PORTS_ENTRIES);
+      Ports_Count   : Natural := 0;
+      Volumes       : Volume_Array (1 .. MAX_VOLUMES_ENTRIES);
+      Volumes_Count : Natural := 0;
+      Description   : Ada.Strings.Unbounded.Unbounded_String;
+      Wanted_By     : Ada.Strings.Unbounded.Unbounded_String;
+      Created_At    : Ada.Calendar.Time;
+   end record;
+
+   type Service_Node_Key is record
+      Service_Name : Ada.Strings.Unbounded.Unbounded_String;
+      Node_Id      : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
+   type Actual_State_Entry is record
+      Service_Name : Ada.Strings.Unbounded.Unbounded_String;
+      Node_Id      : Ada.Strings.Unbounded.Unbounded_String;
+      Version      : Positive;
+      Updated_At   : Ada.Calendar.Time;
+   end record;
 
    Default_Agent_Timeout : constant Duration := 30.0;
 
