@@ -1,6 +1,7 @@
 # ADR-0035: Database Layer Design
 
 **Date**: 2026-05-11
+**Status**: Superseded by ADR-0037
 
 ## Context
 

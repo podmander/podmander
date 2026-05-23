@@ -32,7 +32,7 @@ erDiagram
     Placement }o--|| Service : "assigns"
 
     %% === Reconciliation ===
-    Supervisor-Loop ||--|| Expected-State : "reads"
+    Supervisor-Loop ||--|| Desired-State : "reads"
     Supervisor-Loop ||--|| Actual-State : "compares"
     Agent ||--|| Actual-State : "reports"
 
@@ -99,13 +99,22 @@ placement rules, resource limits, health checks, and dependencies on other
 services within the same stack. Services are the unit of scaling and rollback.
 Examples: a replicated API, a singleton database, a daemonset-style exporter.
 
+### Abstract Service Definition (ASD)
+
+The structured representation of a service's configuration — image, environment
+variables, ports, volumes, and other parameters — independent of any specific
+execution format. The ASD is what the TOML parser produces and what the quadlet
+generator consumes. It is the source of truth for what a service *is*; the
+quadlet is a derived artifact rendered from it on demand.
+_Avoid_: Service definition (ambiguous — could mean the ASD or the TOML input)
+
 ### Service Version
 
-An immutable snapshot of a service's definition at a point in time. Every
-`podctl deploy` that changes a service creates a new version. The controller
-retains N versions per service (default 10). Rollback creates a new version
-with content from a previous version (like `git revert`), so version numbers
-always increase.
+An immutable snapshot of a service's ASD at a point in time. Every `podctl
+deploy` that changes a service creates a new version. The controller retains N
+versions per service (default 10). Rollback creates a new version with content
+from a previous version (like `git revert`), so version numbers always increase.
+Expected State and Actual State reference a specific Service Version.
 
 ### Quadlet
 
@@ -121,12 +130,14 @@ secrets. Podmander does not call Podman directly for container lifecycle —
 instead it generates Quadlet files that systemd and Podman interpret. Podman
 runs rootless by default under a dedicated unprivileged user.
 
-### Placement
+### Placement Rule
 
-The controller's decision about which node(s) should run a given service.
+A constraint in desired state that determines which nodes a service can run on.
 Placement rules include `replicas` (N instances distributed across nodes),
-`singleton` (exactly one), and `all` (one per node, daemonset-style). The
-scheduler makes placement decisions; the supervisor loop enforces them.
+`singleton` (exactly one), and `all` (one per node, daemonset-style). Rules
+can reference node labels (e.g., "dedicated-vcpu"). Placement rules are part
+of desired state, not expected state.
+_Avoid_: Placement (ambiguous — could mean rule or decision)
 
 ### Join Token
 
@@ -137,11 +148,11 @@ authorization). Tokens can be rotated without affecting already-enrolled nodes.
 
 ### Scheduler
 
-The controller component that decides which node(s) should run each service
-instance. The scheduler evaluates placement rules, node labels, resource
+The controller component that evaluates placement rules, node labels, resource
 availability, and constraints to produce expected state from desired state. It
 runs as part of each reconciliation cycle and whenever the operator deploys or
-scales a service.
+scales a service. When conditions change (node labels, availability), the
+scheduler re-runs and updates expected state.
 
 ### Secret
 
@@ -158,20 +169,31 @@ be snapshotted on deploy and rolled back alongside service versions.
 
 ### Desired State
 
-What the operator has declared via deployed stacks and `podctl` commands:
-services, volumes, placement rules, and secrets. Stored in SQLite by the
-controller.
+What the operator wants: the latest Service Version for each service, plus
+placement rules and other deployment intent. Stored in SQLite by the
+controller. The supervisor loop compares desired state against actual state to
+detect drift. For MVP, desired state is simply the latest Service Version per
+service; placement rules are added when the scheduler is implemented.
 
 ### Expected State
 
-What the controller has decided should exist on each node right now, based on
-desired state and scheduling decisions. This is the target the supervisor loop
-works toward.
+The scheduler's concrete assignment of service versions to specific nodes,
+derived from desired state and current node topology. Each entry specifies
+one service version on one node (e.g., "api v3 on worker-01"). Expected state
+is regenerable — when conditions change (node loses a label, node goes down),
+the scheduler re-runs and produces new expected state. **For MVP, expected
+state collapses into desired state because placement is trivial (deploy to
+the connected agent). Expected State becomes a separate layer when the
+scheduler is implemented.**
 
 ### Actual State
 
-What is actually running on each node, as reported by agents (via Podman API
-queries and systemd status). The supervisor loop compares expected vs actual.
+What is actually running on each node, as reported by agents. Each entry
+specifies one service version on one node. For MVP, actual state tracks only
+which version is deployed where; runtime status (RUNNING, STOPPED,
+DEPLOY_FAILED, etc.) is added when agents report service-level status. The
+supervisor loop compares actual state against desired state (MVP) or expected
+state (full model) to detect drift.
 
 ### Supervisor Loop
 
