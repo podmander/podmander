@@ -19,7 +19,8 @@ package Podmander.Controller is
    --  State tracking types
 
    type Service_Version is record
-      Service_Name  : Ada.Strings.Unbounded.Unbounded_String;
+      Id            : Integer;
+      Service_Id    : Integer;
       Version       : Positive;
       Image         : Ada.Strings.Unbounded.Unbounded_String;
       Env           : Env_Array (1 .. MAX_ENV_ENTRIES);

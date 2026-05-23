@@ -231,39 +231,41 @@ package body Podmander.Controller is
       CZMQ.Pollers.Close (Poller);
    end Run;
 
-    function To_Service_Definition
-      (SV : Service_Version) return Service_Definition is
-    begin
-       return
-         (Name          => SV.Service_Name,
-          Image         => SV.Image,
-          Env           => SV.Env,
-          Env_Count     => SV.Env_Count,
-          Ports         => SV.Ports,
-          Ports_Count   => SV.Ports_Count,
-          Volumes       => SV.Volumes,
-          Volumes_Count => SV.Volumes_Count,
-          Description   => SV.Description,
-          WantedBy      => SV.Wanted_By);
-    end To_Service_Definition;
+     function To_Service_Definition
+       (SV : Service_Version; Name : String) return Service_Definition is
+     begin
+        return
+          (Name          => To_Unbounded_String (Name),
+           Image         => SV.Image,
+           Env           => SV.Env,
+           Env_Count     => SV.Env_Count,
+           Ports         => SV.Ports,
+           Ports_Count   => SV.Ports_Count,
+           Volumes       => SV.Volumes,
+           Volumes_Count => SV.Volumes_Count,
+           Description   => SV.Description,
+           WantedBy      => SV.Wanted_By);
+     end To_Service_Definition;
 
-    function To_Service_Version
-      (SD : Service_Definition; Version_Num : Positive) return Service_Version is
-    begin
-       return
-         (Service_Name   => SD.Name,
-          Version        => Version_Num,
-          Image          => SD.Image,
-          Env            => SD.Env,
-          Env_Count      => SD.Env_Count,
-          Ports          => SD.Ports,
-          Ports_Count    => SD.Ports_Count,
-          Volumes        => SD.Volumes,
-          Volumes_Count  => SD.Volumes_Count,
-          Description    => SD.Description,
-          Wanted_By      => SD.WantedBy,
-          Created_At     => Ada.Calendar.Clock);
-    end To_Service_Version;
+     function To_Service_Version
+       (SD : Service_Definition; Version_Num : Positive;
+        Service_Id : Integer) return Service_Version is
+     begin
+        return
+          (Id             => 0,
+           Service_Id     => Service_Id,
+           Version        => Version_Num,
+           Image          => SD.Image,
+           Env            => SD.Env,
+           Env_Count      => SD.Env_Count,
+           Ports          => SD.Ports,
+           Ports_Count    => SD.Ports_Count,
+           Volumes        => SD.Volumes,
+           Volumes_Count  => SD.Volumes_Count,
+           Description    => SD.Description,
+           Wanted_By      => SD.WantedBy,
+           Created_At     => Ada.Calendar.Clock);
+     end To_Service_Version;
 
     procedure Reconcile_State (Self : in out Controller_Instance) is
       Mismatches : constant State_Mismatch_Vectors.Vector :=
@@ -287,21 +289,23 @@ package body Podmander.Controller is
                end if;
             end loop;
 
-            if Found then
-               declare
-                  SV      : constant Service_Version :=
-                    Service.Repository.Get_Latest_Version
-                      (Self.DB, Svc_Name_Str);
-                  Config  : constant Service_Definition :=
-                    To_Service_Definition (SV);
-                  Quadlet : constant String :=
-                    Podmander.Generators.Quadlet.Render (Config);
-               begin
-                  Self.Send_Deploy_Command
-                    (Node_Id      => Node_Id_Str,
-                     Service_Name => Svc_Name_Str,
-                     Quadlet      => Quadlet);
-               end;
+             if Found then
+                declare
+                   Svc     : constant Service.Service :=
+                     Service.Repository.Get_By_Name (Self.DB, Svc_Name_Str);
+                   SV      : constant Service_Version :=
+                     Service.Repository.Get_Latest_Version
+                       (Self.DB, Svc.Id);
+                   Config  : constant Service_Definition :=
+                     To_Service_Definition (SV, Svc_Name_Str);
+                   Quadlet : constant String :=
+                     Podmander.Generators.Quadlet.Render (Config);
+                begin
+                   Self.Send_Deploy_Command
+                     (Node_Id      => Node_Id_Str,
+                      Service_Name => Svc_Name_Str,
+                      Quadlet      => Quadlet);
+                end;
             end if;
          end;
       end loop;
@@ -405,33 +409,37 @@ package body Podmander.Controller is
           return False;
        end if;
 
-       declare
-          Quadlet_Content : constant String :=
-            Podmander.Generators.Quadlet.Render (Result.Config);
-          Version_Num     : Positive := 1;
-       begin
-          --  Determine the next version number for this service.
-          --  If a version already exists, increment; otherwise start at 1.
-          begin
-             declare
-                Latest : constant Service_Version :=
-                  Service.Repository.Get_Latest_Version
-                    (Self.DB, To_String (Result.Config.Name));
-             begin
-                Version_Num := Latest.Version + 1;
-             end;
-          exception
-             when Podmander.Database.Database_Error =>
-                --  No existing version for this service; start at 1
-                null;
-          end;
+        declare
+           Quadlet_Content : constant String :=
+             Podmander.Generators.Quadlet.Render (Result.Config);
+           Name            : constant String :=
+             To_String (Result.Config.Name);
+           Version_Num     : Positive := 1;
+           Svc             : constant Service.Service :=
+             Service.Repository.Create (Self.DB, Name);
+        begin
+           --  Determine the next version number for this service.
+           --  If a version already exists, increment; otherwise start at 1.
+           begin
+              declare
+                 Latest : constant Service_Version :=
+                   Service.Repository.Get_Latest_Version
+                     (Self.DB, Svc.Id);
+              begin
+                 Version_Num := Latest.Version + 1;
+              end;
+           exception
+              when Podmander.Database.Database_Error =>
+                 --  No existing version for this service; start at 1
+                 null;
+           end;
 
-          declare
-             SV : constant Service_Version :=
-               To_Service_Version (Result.Config, Version_Num);
-          begin
-             Service.Repository.Create_Version (Self.DB, SV);
-          end;
+           declare
+              SV : constant Service_Version :=
+                To_Service_Version (Result.Config, Version_Num, Svc.Id);
+           begin
+              Service.Repository.Create_Version (Self.DB, SV);
+           end;
 
           Self.Test_Deploy :=
             (Service_Name => Result.Config.Name,
@@ -445,37 +453,39 @@ package body Podmander.Controller is
     end Load_Test_Deploy;
 
    function Find_State_Mismatches
-     (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector
-   is
-      Actual : Actual_State_Vectors.Vector :=
-        Actual_State.Repository.Get_All (DB);
-      Result : State_Mismatch_Vectors.Vector;
-   begin
-      for E of Actual loop
-         declare
-            Svc_Name : constant String := To_String (E.Service_Name);
-         begin
-            declare
-               Latest : constant Service_Version :=
-                 Service.Repository.Get_Latest_Version (DB, Svc_Name);
-            begin
-               if E.Version < Latest.Version then
-                  Result.Append
-                    (State_Mismatch'
-                       (Service_Name    => E.Service_Name,
-                        Node_Id         => E.Node_Id,
-                        Desired_Version => Latest.Version,
-                        Current_Version => E.Version));
-               end if;
-            end;
-         exception
-            when Podmander.Database.Database_Error =>
-               Podmander.Logging.Warning
-                 ("controller", "No service_versions entry for " & Svc_Name);
-         end;
-      end loop;
-      return Result;
-   end Find_State_Mismatches;
+      (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector
+    is
+       Actual : Actual_State_Vectors.Vector :=
+         Actual_State.Repository.Get_All (DB);
+       Result : State_Mismatch_Vectors.Vector;
+    begin
+       for E of Actual loop
+          declare
+             Svc_Name : constant String := To_String (E.Service_Name);
+          begin
+             declare
+                Svc    : constant Service.Service :=
+                  Service.Repository.Get_By_Name (DB, Svc_Name);
+                Latest : constant Service_Version :=
+                  Service.Repository.Get_Latest_Version (DB, Svc.Id);
+             begin
+                if E.Version < Latest.Version then
+                   Result.Append
+                     (State_Mismatch'
+                        (Service_Name    => E.Service_Name,
+                         Node_Id         => E.Node_Id,
+                         Desired_Version => Latest.Version,
+                         Current_Version => E.Version));
+                end if;
+             end;
+          exception
+             when Podmander.Database.Database_Error =>
+                Podmander.Logging.Warning
+                  ("controller", "No service_versions entry for " & Svc_Name);
+          end;
+       end loop;
+       return Result;
+    end Find_State_Mismatches;
 
    procedure Send_Deploy_Command
      (Self         : in out Controller_Instance;

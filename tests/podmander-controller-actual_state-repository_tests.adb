@@ -36,18 +36,21 @@ package body Podmander.Controller.Actual_State.Repository_Tests is
    My_Node    : constant String := "node-001";
    My_Node2   : constant String := "node-002";
 
-   --  Create a minimal service version so actual_state FK constraint is met
-   procedure Seed_Service_Version
-     (Handle : in out DB.DB_Handle; Service : String; Version : Positive)
-   is
-      SV : Podmander.Controller.Service_Version;
-   begin
-      SV.Service_Name := To_Unbounded_String (Service);
-      SV.Version := Version;
-      SV.Image := To_Unbounded_String ("test:latest");
-      SV.Created_At := Ada.Calendar.Clock;
-      Svc.Create_Version (Handle, SV);
-   end Seed_Service_Version;
+    --  Create a minimal service version for testing
+    procedure Seed_Service_Version
+      (Handle : in out DB.DB_Handle; Service : String; Version : Positive)
+    is
+       Svc_Rec : constant Podmander.Controller.Service.Service :=
+         Svc.Create (Handle, Service);
+       SV      : Podmander.Controller.Service_Version;
+    begin
+       SV.Id := 0;
+       SV.Service_Id := Svc_Rec.Id;
+       SV.Version := Version;
+       SV.Image := To_Unbounded_String ("test:latest");
+       SV.Created_At := Ada.Calendar.Clock;
+       Svc.Create_Version (Handle, SV);
+    end Seed_Service_Version;
 
    function Make_Entry
      (Service : String; Node : String; Version : Positive)

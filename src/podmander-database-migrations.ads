@@ -84,35 +84,62 @@ private
       & "FOREIGN KEY (service_name, version)"
       & "  REFERENCES service_versions(service_name, version));";
 
-    Migration_006_SQL : constant String :=
-      "CREATE TABLE IF NOT EXISTS services ("
-      & "id   INTEGER PRIMARY KEY AUTOINCREMENT,"
-      & "name TEXT NOT NULL UNIQUE);";
+     Migration_006_SQL : constant String :=
+       "CREATE TABLE IF NOT EXISTS services ("
+       & "id   INTEGER PRIMARY KEY AUTOINCREMENT,"
+       & "name TEXT NOT NULL UNIQUE);";
 
-    Migration_History : constant Migration_Array :=
-      [1 =>
-         (Version => 1,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
-       2 =>
-         (Version => 2,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
-       3 =>
-         (Version => 3,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL)),
-       4 =>
-         (Version => 4,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_004_SQL)),
-       5 =>
-         (Version => 5,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_005_SQL)),
-       6 =>
-         (Version => 6,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_006_SQL))];
+     Migration_007_SQL : constant String :=
+       "DROP TABLE IF EXISTS actual_state;"
+       & "DROP TABLE IF EXISTS service_versions;"
+       & "CREATE TABLE IF NOT EXISTS service_versions ("
+       & "id           INTEGER PRIMARY KEY AUTOINCREMENT,"
+       & "service_id   INTEGER NOT NULL,"
+       & "version      INTEGER NOT NULL,"
+       & "image        TEXT NOT NULL,"
+       & "env          TEXT NOT NULL,"
+       & "ports        TEXT NOT NULL,"
+       & "volumes      TEXT NOT NULL,"
+       & "description  TEXT NOT NULL DEFAULT '',"
+       & "wanted_by    TEXT NOT NULL DEFAULT '',"
+       & "created_at   TEXT NOT NULL,"
+       & "FOREIGN KEY (service_id) REFERENCES services(id),"
+       & "UNIQUE (service_id, version));"
+       & "CREATE TABLE IF NOT EXISTS actual_state ("
+       & "service_name  TEXT NOT NULL,"
+       & "node_id       TEXT NOT NULL,"
+       & "version       INTEGER NOT NULL,"
+       & "updated_at    TEXT NOT NULL,"
+       & "PRIMARY KEY (service_name, node_id));";
+
+     Migration_History : constant Migration_Array :=
+       [1 =>
+          (Version => 1,
+           SQL     =>
+             Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
+        2 =>
+          (Version => 2,
+           SQL     =>
+             Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
+        3 =>
+          (Version => 3,
+           SQL     =>
+             Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL)),
+        4 =>
+          (Version => 4,
+           SQL     =>
+             Ada.Strings.Unbounded.To_Unbounded_String (Migration_004_SQL)),
+        5 =>
+          (Version => 5,
+           SQL     =>
+             Ada.Strings.Unbounded.To_Unbounded_String (Migration_005_SQL)),
+        6 =>
+          (Version => 6,
+           SQL     =>
+             Ada.Strings.Unbounded.To_Unbounded_String (Migration_006_SQL)),
+        7 =>
+          (Version => 7,
+           SQL     =>
+             Ada.Strings.Unbounded.To_Unbounded_String (Migration_007_SQL))];
 
 end Podmander.Database.Migrations;

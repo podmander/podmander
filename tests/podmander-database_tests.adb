@@ -397,9 +397,9 @@ package body Podmander.Database_Tests is
          Stmt : Ada_Sqlite3.Statement :=
            Ada_Sqlite3.Prepare
              (Conn,
-              "SELECT service_name, version, image, env, ports, "
-              & "volumes, description, wanted_by, created_at "
-              & "FROM service_versions");
+               "SELECT id, service_id, version, image, env, ports, "
+               & "volumes, description, wanted_by, created_at "
+               & "FROM service_versions");
       begin
          --  Preparing the query should not raise â table exists with correct columns
          null;
