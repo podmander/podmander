@@ -19,8 +19,8 @@ package Podmander.Enrollment is
    Secret_Length     : constant Positive := 32;
    Separator         : constant Character := '-';
 
-   --  Raised by Parse_Join_Token when the input does not match the expected
-   --  shape. The agent treats this as a fatal configuration error.
+   -- Raised by Parse_Join_Token when the input does not match the expected
+   -- shape. The agent treats this as a fatal configuration error.
    Parse_Error : exception;
 
    type Parsed_Token is record

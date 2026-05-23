@@ -10,10 +10,10 @@ package Podmander.Messages.Status_Responses is
    package SU renames Ada.Strings.Unbounded;
    package RC renames Podmander.Messages.Result_Codes;
 
-   --  Agent -> Controller: report running container status.
-   --  Containers holds tab-separated name/status pairs (one per line) when the
-   --  query succeeded; empty otherwise. Error_Message holds the error detail
-   --  when Code /= Ok; empty on success.
+   -- Agent -> Controller: report running container status.
+   -- Containers holds tab-separated name/status pairs (one per line) when the
+   -- query succeeded; empty otherwise. Error_Message holds the error detail
+   -- when Code /= Ok; empty on success.
    type Status_Response is new Status_Response_Type with record
       Code          : RC.Result_Code := RC.Ok;
       Containers    : SU.Unbounded_String;

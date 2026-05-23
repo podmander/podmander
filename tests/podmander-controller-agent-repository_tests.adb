@@ -30,7 +30,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    overriding
    procedure Register_Tests (T : in out Repository_Test);
 
-   --  Format time as ISO 8601 for string comparison
+   -- Format time as ISO 8601 for string comparison
    function Format_Time (T : Ada.Calendar.Time) return String is
       Raw : constant String := Ada.Calendar.Formatting.Image (T);
    begin
@@ -38,7 +38,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Format_Time;
 
    ---------
-   --  Register + Load_All
+   -- Register + Load_All
    ---------
 
    procedure Test_Register_And_Load_All (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -67,7 +67,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Register_And_Load_All;
 
    ---------
-   --  Register duplicate
+   -- Register duplicate
    ---------
 
    procedure Test_Register_Duplicate_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -97,7 +97,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Register_Duplicate_Raises;
 
    ---------
-   --  Touch updates last_seen
+   -- Touch updates last_seen
    ---------
 
    procedure Test_Touch_Updates_Last_Seen (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -129,7 +129,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Touch_Updates_Last_Seen;
 
    ---------
-   --  Touch not found
+   -- Touch not found
    ---------
 
    procedure Test_Touch_Not_Found_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -158,7 +158,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Touch_Not_Found_Raises;
 
    ---------
-   --  Set_State updates state
+   -- Set_State updates state
    ---------
 
    procedure Test_Set_State_Updates_State (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -189,7 +189,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Set_State_Updates_State;
 
    ---------
-   --  Set_State not found
+   -- Set_State not found
    ---------
 
    procedure Test_Set_State_Not_Found_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -218,7 +218,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Set_State_Not_Found_Raises;
 
    ---------
-   --  Remove deletes agent
+   -- Remove deletes agent
    ---------
 
    procedure Test_Remove_Deletes_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -244,7 +244,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Remove_Deletes_Agent;
 
    ---------
-   --  Remove not found is no-op
+   -- Remove not found is no-op
    ---------
 
    procedure Test_Remove_Not_Found_Noop (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -259,7 +259,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Map  : Podmander.Types.Agent_Maps.Map;
    begin
       Repo.Register (D, Info);
-      --  Remove a different (non-existent) agent
+      -- Remove a different (non-existent) agent
       Repo.Remove
         (D,
          (Name      => To_Unbounded_String ("nonexistent"),
@@ -271,7 +271,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    end Test_Remove_Not_Found_Noop;
 
    ---------
-   --  Register tests
+   -- Register tests
    ---------
 
    overriding

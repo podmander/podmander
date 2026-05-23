@@ -50,12 +50,12 @@ package body Podmander.Agent.Connection is
 
    procedure Run_Cycle (Self : in out Agent_Instance) is
    begin
-      --  Close previous cycle's resources (idempotent ÃÂ¢ÃÂÃÂ no-op if
-      --  already closed or never opened).
+      -- Close previous cycle's resources (idempotent  -- no-op if
+      -- already closed or never opened).
       CZMQ.Sockets.Close (Self.Sock);
       CZMQ.Certificates.Close (Self.Certificate);
 
-      --  Disconnected ÃÂ¢ÃÂÃÂ Enrolling: open the socket and send register.
+      -- Disconnected -> Enrolling: open the socket and send register.
       Podmander.Logging.Info ("agent", "Connecting to controller...");
       CZMQ.Certificates.Generate (Self.Certificate);
       CZMQ.Sockets.Open_Dealer (Self.Sock);
@@ -68,7 +68,7 @@ package body Podmander.Agent.Connection is
       Send_Registration (Self, Self.Sock);
       Self.State := Podmander.Types.Enrolling;
 
-      --  Enrolling: wait for register response.
+      -- Enrolling: wait for register response.
       declare
          Msg    : CZMQ.Messages.Message;
          Status : CZMQ.Messages.Receive_Status;
@@ -107,8 +107,8 @@ package body Podmander.Agent.Connection is
             return;
       end;
 
-      --  Connected: heartbeat-bounded receive loop until shutdown,
-      --  Stop, or connection error.
+      -- Connected: heartbeat-bounded receive loop until shutdown,
+      -- Stop, or connection error.
       Self.Sock.Set_Receive_Timeout (Poll_Interval_Ms);
       declare
          Handler : Message_Handlers.Agent_Handler := (Agt => Self'Unchecked_Access);

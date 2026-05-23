@@ -11,9 +11,9 @@ package Podmander.Messages.Result_Codes is
       Internal);        --  Agent-side bug / unexpected state
 
    function Encode_Code (Code : Result_Code) return String;
-   --  Returns the wire representation: "OK", "FAILED", etc.
+   -- Returns the wire representation: "OK", "FAILED", etc.
 
    function Decode_Code (S : String) return Result_Code;
-   --  Raises Decode_Error for unknown strings.
+   -- Raises Decode_Error for unknown strings.
 
 end Podmander.Messages.Result_Codes;

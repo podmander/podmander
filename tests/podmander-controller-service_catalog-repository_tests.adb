@@ -31,8 +31,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    overriding
    procedure Register_Tests (T : in out Repository_Test);
 
-   --  Helper: create a service and at least one version so FK constraints
-   --  are satisfied. Returns the service id.
+   -- Helper: create a service and at least one version so FK constraints
+   -- are satisfied. Returns the service id.
    function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Integer is
       Svc_Rec : constant Podmander.Controller.Service.Service := Svc_Repo.Create (Handle, Name);
       SV      : Podmander.Controller.Service_Version;
@@ -49,7 +49,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Seed_Service;
 
    ---------------------
-   --  Test_Create_Entry
+   -- Test_Create_Entry
    ---------------------
 
    procedure Test_Create_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -68,7 +68,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Create_Entry;
 
    -------------------------------
-   --  Test_Create_Entry_Unscheduled
+   -- Test_Create_Entry_Unscheduled
    -------------------------------
 
    procedure Test_Create_Entry_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -83,7 +83,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Create_Entry_Unscheduled;
 
    -----------------
-   --  Test_Get_By_Id
+   -- Test_Get_By_Id
    -----------------
 
    procedure Test_Get_By_Id (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -101,7 +101,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Get_By_Id;
 
    ---------------------------
-   --  Test_Get_By_Id_Not_Found
+   -- Test_Get_By_Id_Not_Found
    ---------------------------
 
    procedure Test_Get_By_Id_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -129,7 +129,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Get_By_Id_Not_Found;
 
    -----------------------
-   --  Test_Get_Unscheduled
+   -- Test_Get_Unscheduled
    -----------------------
 
    procedure Test_Get_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -150,17 +150,17 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Get_Unscheduled;
 
    ----------------
-   --  Test_Get_Drift
+   -- Test_Get_Drift
    ----------------
 
    procedure Test_Get_Drift (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D     : DB.DB_Handle := DB.Open (":memory:");
       Svc   : Integer := Seed_Service (D, "web", 3);
-      --  Entry with matching versions (no drift)
+      -- Entry with matching versions (no drift)
       E1    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 3);
-      --  Entry with drift: current 0 != target 2
+      -- Entry with drift: current 0 != target 2
       E2    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-2", Target_Version => 2);
       Drift : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Drift (D);
@@ -178,7 +178,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Ignored : Boolean;
       Drift   : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
-      --  Mark entry as failed
+      -- Mark entry as failed
       Ignored := Repo.Update_On_Failure (D, E1.Id);
       pragma Unreferenced (Ignored);
       Drift := Repo.Get_Drift (D);
@@ -186,7 +186,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Get_Drift_Excludes_Failed;
 
    --------------------------
-   --  Test_Update_On_Success
+   -- Test_Update_On_Success
    --------------------------
 
    procedure Test_Update_On_Success (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -198,11 +198,11 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
-      --  Mark as failed first
+      -- Mark as failed first
       Updated := Repo.Update_On_Failure (D, Cat_Ent.Id);
       Assert (Updated, "Update_On_Failure should return True");
 
-      --  Then mark as success
+      -- Then mark as success
       Updated := Repo.Update_On_Success (D, Cat_Ent.Id, Current_Version => 2);
       Assert (Updated, "Update_On_Success should return True");
 
@@ -221,7 +221,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Update_On_Success_Not_Found;
 
    --------------------------
-   --  Test_Update_On_Failure
+   -- Test_Update_On_Failure
    --------------------------
 
    procedure Test_Update_On_Failure (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -250,7 +250,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Update_On_Failure_Not_Found;
 
    --------------------
-   --  Test_Assign_Node
+   -- Test_Assign_Node
    --------------------
 
    procedure Test_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -279,7 +279,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Assign_Node_Not_Found;
 
    -------------------
-   --  Test_Set_Target
+   -- Test_Set_Target
    -------------------
 
    procedure Test_Set_Target (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -291,11 +291,11 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
-      --  First mark as failed
+      -- First mark as failed
       Updated := Repo.Update_On_Failure (D, Cat_Ent.Id);
       Assert (Updated, "Update_On_Failure should return True");
 
-      --  Set new target (should also clear failed)
+      -- Set new target (should also clear failed)
       Updated := Repo.Set_Target (D, Cat_Ent.Id, Target_Version => 3);
       Assert (Updated, "Set_Target should return True");
 

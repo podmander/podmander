@@ -53,14 +53,14 @@ package body Podmander.Controller.Message_Handlers is
             State     => Podmander.Types.Registered,
             Last_Seen => Ada.Calendar.Clock);
       begin
-         --  Persist to DB
+         -- Persist to DB
          begin
             Agent.Repository.Register (H.Ctrl.DB, Info);
          exception
             when E : Podmander.Database.Database_Error =>
                if Podmander.Database.Parse_Error (E).Kind = Podmander.Database.Constraint_Violation then
-                  --  Agent already in DB (re-registration after restart).
-                  --  Update instead of insert.
+                  -- Agent already in DB (re-registration after restart).
+                  -- Update instead of insert.
                   Agent.Repository.Touch (H.Ctrl.DB, Info);
                   Agent.Repository.Set_State (H.Ctrl.DB, Info);
                else
@@ -92,8 +92,8 @@ package body Podmander.Controller.Message_Handlers is
       Found      : Boolean := False;
       All_Agents : constant Podmander.Types.Agent_Maps.Map := Agent.Repository.Load_All (H.Ctrl.DB);
    begin
-      --  The map is keyed by agent name, not by Node_Id, so we must
-      --  scan linearly to find the agent with the matching Node_Id.
+      -- The map is keyed by agent name, not by Node_Id, so we must
+      -- scan linearly to find the agent with the matching Node_Id.
       for Cur in All_Agents.Iterate loop
          declare
             Info : Podmander.Types.Agent_Info := Podmander.Types.Agent_Maps.Element (Cur);
@@ -133,7 +133,7 @@ package body Podmander.Controller.Message_Handlers is
       Result : constant Deploy_Result := Deploy_Result (M);
    begin
       if Result.Catalog_Id > 0 then
-         --  Catalog-based deploy: update the catalog entry
+         -- Catalog-based deploy: update the catalog entry
          if Result.Code = Podmander.Messages.Result_Codes.Ok then
             declare
                use Podmander.Controller.Service_Catalog.Repository;
@@ -167,7 +167,7 @@ package body Podmander.Controller.Message_Handlers is
             end;
          end if;
       else
-         --  Legacy path (catalog_id = 0): just log
+         -- Legacy path (catalog_id = 0): just log
          if Result.Code = Podmander.Messages.Result_Codes.Ok then
             Podmander.Logging.Info ("controller", "Deploy succeeded for " & To_String (Result.Service_Name));
          else

@@ -63,9 +63,9 @@ package body Podmander.Controller is
          C : Controller_Instance :=
            (Config => Config, DB => Database.Open (DB_Path), Certificate => <>, Socket => <>, Running => True)
       do
-         --  Per ADR-0037: agents that were Registered or Unresponsive
-         --  start as Unresponsive ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ they must send a heartbeat to prove
-         --  they're still alive after the controller restart.
+         -- Per ADR-0037: agents that were Registered or Unresponsive
+         -- start as Unresponsive  -- they must send a heartbeat to prove
+         -- they're still alive after the controller restart.
          declare
             All_Agents : constant Podmander.Types.Agent_Maps.Map := Agent.Repository.Load_All (C.DB);
          begin
@@ -81,7 +81,7 @@ package body Podmander.Controller is
             end loop;
          end;
 
-         --  Load or generate CURVE certificate
+         -- Load or generate CURVE certificate
          declare
             Cert_Path : constant String := Ada.Directories.Containing_Directory (DB_Path) & "/controller.crt";
          begin
@@ -95,7 +95,7 @@ package body Podmander.Controller is
             end if;
          end;
 
-         --  Load or generate registration secret
+         -- Load or generate registration secret
          declare
             use Podmander.Database;
          begin
@@ -105,7 +105,7 @@ package body Podmander.Controller is
          exception
             when E : Database_Error =>
                if Parse_Error (E).Kind = Not_Found then
-                  --  First start: generate and persist a new secret
+                  -- First start: generate and persist a new secret
                   declare
                      Token : Ada.Strings.Unbounded.Unbounded_String;
                   begin
@@ -132,8 +132,8 @@ package body Podmander.Controller is
       Msg    : CZMQ.Messages.Message;
       Status : CZMQ.Messages.Receive_Status;
 
-      --  Safe: Handler is stack-local to Handle_Message and cannot outlive
-      --  Self. Unchecked_Access avoids aliasing-aspect declarations here.
+      -- Safe: Handler is stack-local to Handle_Message and cannot outlive
+      -- Self. Unchecked_Access avoids aliasing-aspect declarations here.
       Handler : Message_Handlers.Controller_Handler :=
         (Ctrl => Self'Unchecked_Access, Identity => Null_Unbounded_String);
    begin
@@ -231,7 +231,7 @@ package body Podmander.Controller is
       use Podmander.Controller.Service_Catalog.Repository;
       use Podmander.Messages.Deploy_Commands;
 
-      --  Step 1: Schedule unscheduled entries
+      -- Step 1: Schedule unscheduled entries
       Unscheduled : constant Catalog_Entry_Vectors.Vector := Get_Unscheduled (Self.DB);
    begin
       for Cursor in Unscheduled.Iterate loop
@@ -265,11 +265,11 @@ package body Podmander.Controller is
                Podmander.Logging.Warning
                  ("controller", "Cannot schedule catalog entry " & Cat_Entry.Id'Image & ": multiple agents connected");
             end if;
-         --  If no agents connected, leave unscheduled and try next iteration
+         -- If no agents connected, leave unscheduled and try next iteration
          end;
       end loop;
 
-      --  Step 2: Deploy drifted entries
+      -- Step 2: Deploy drifted entries
       declare
          Drift : constant Catalog_Entry_Vectors.Vector := Get_Drift (Self.DB);
       begin
@@ -278,13 +278,13 @@ package body Podmander.Controller is
                Cat_Entry : constant Service_Catalog_Entry := Catalog_Entry_Vectors.Element (Cursor);
                Node_Id   : constant String := To_String (Cat_Entry.Node_Id);
             begin
-               --  Skip entries without a node (shouldn't happen after step 1,
-               --  but guard against race conditions)
+               -- Skip entries without a node (shouldn't happen after step 1,
+               -- but guard against race conditions)
                if Node_Id = "" then
                   goto Continue;
                end if;
 
-               --  Look up the service version to get the ASD
+               -- Look up the service version to get the ASD
                declare
                   SV           : constant Service_Version :=
                     Service.Repository.Get_Version (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version);
@@ -366,7 +366,7 @@ package body Podmander.Controller is
             return False;
          end if;
 
-         --  Find connected agent (MVP: single-agent deployment)
+         -- Find connected agent (MVP: single-agent deployment)
          declare
             Node_Id          : Unbounded_String := Null_Unbounded_String;
             All_Agents       : constant Podmander.Types.Agent_Maps.Map := Agent.Repository.Load_All (Self.DB);

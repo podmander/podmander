@@ -33,7 +33,7 @@ package body Podmander.Messages_Tests is
    overriding
    procedure Register_Tests (T : in out Message_Test);
 
-   --  Test: Registration_Request round-trip encode/decode
+   -- Test: Registration_Request round-trip encode/decode
    procedure Test_Registration_Request_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Registration_Requests;
@@ -55,7 +55,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Registration_Request_Round_Trip;
 
-   --  Test: Registration_Response round-trip encode/decode
+   -- Test: Registration_Response round-trip encode/decode
    procedure Test_Registration_Response_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Registration_Responses;
@@ -74,7 +74,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Registration_Response_Round_Trip;
 
-   --  Test: Heartbeat_Message round-trip encode/decode
+   -- Test: Heartbeat_Message round-trip encode/decode
    procedure Test_Heartbeat_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Heartbeats;
@@ -92,13 +92,13 @@ package body Podmander.Messages_Tests is
       begin
          Assert (Decoded in Heartbeat_Message, "Expected Heartbeat_Message");
          Assert (To_String (Heartbeat_Message (Decoded).Node_Id) = "node-42", "Node ID mismatch");
-         --  Timestamp survives round-trip through string formatting
-         --  (sub-second precision may be lost)
+         -- Timestamp survives round-trip through string formatting
+         -- (sub-second precision may be lost)
          Assert (abs (Heartbeat_Message (Decoded).Timestamp - Now) < 1.0, "Timestamp drift exceeds 1 second");
       end;
    end Test_Heartbeat_Round_Trip;
 
-   --  Test: Deploy_Command round-trip encode/decode
+   -- Test: Deploy_Command round-trip encode/decode
    procedure Test_Deploy_Command_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Commands;
@@ -123,7 +123,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Deploy_Command_Round_Trip;
 
-   --  Test: Deploy_Result round-trip encode/decode (Ok)
+   -- Test: Deploy_Result round-trip encode/decode (Ok)
    procedure Test_Deploy_Result_Ok_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
@@ -148,7 +148,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Deploy_Result_Ok_Round_Trip;
 
-   --  Test: Deploy_Result round-trip encode/decode (Failed)
+   -- Test: Deploy_Result round-trip encode/decode (Failed)
    procedure Test_Deploy_Result_Failed_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
@@ -170,7 +170,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Deploy_Result_Failed_Round_Trip;
 
-   --  Test: Deploy_Result round-trip encode/decode (Unavailable)
+   -- Test: Deploy_Result round-trip encode/decode (Unavailable)
    procedure Test_Deploy_Result_Unavailable_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
@@ -192,7 +192,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Deploy_Result_Unavailable_Round_Trip;
 
-   --  Test: Status_Query round-trip encode/decode
+   -- Test: Status_Query round-trip encode/decode
    procedure Test_Status_Query_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Status_Queries;
@@ -210,7 +210,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Status_Query_Round_Trip;
 
-   --  Test: Status_Response round-trip encode/decode (Ok)
+   -- Test: Status_Response round-trip encode/decode (Ok)
    procedure Test_Status_Response_Ok_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Status_Responses;
@@ -243,7 +243,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Status_Response_Ok_Round_Trip;
 
-   --  Test: Status_Response round-trip encode/decode (Failed)
+   -- Test: Status_Response round-trip encode/decode (Failed)
    procedure Test_Status_Response_Failed_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Status_Responses;
@@ -265,7 +265,7 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Status_Response_Failed_Round_Trip;
 
-   --  Test: Result_Code encode/decode round-trip
+   -- Test: Result_Code encode/decode round-trip
    procedure Test_Result_Code_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
    begin
@@ -274,7 +274,7 @@ package body Podmander.Messages_Tests is
       end loop;
    end Test_Result_Code_Round_Trip;
 
-   --  Test: Decode_Code raises Decode_Error for unknown string
+   -- Test: Decode_Code raises Decode_Error for unknown string
    procedure Test_Decode_Code_Unknown (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
    begin
@@ -290,7 +290,7 @@ package body Podmander.Messages_Tests is
          null;  --  Expected
    end Test_Decode_Code_Unknown;
 
-   --  Stub decoder for Registration test (library-level so 'Access is valid).
+   -- Stub decoder for Registration test (library-level so 'Access is valid).
    function Stub_Decoder (Msg : in out CZMQ.Messages.Message) return Podmander.Messages.Protocol_Message'Class;
 
    function Stub_Decoder (Msg : in out CZMQ.Messages.Message) return Podmander.Messages.Protocol_Message'Class is
@@ -301,7 +301,7 @@ package body Podmander.Messages_Tests is
           (Agent_Name => To_Unbounded_String (""), Enrollment_Secret => To_Unbounded_String (""));
    end Stub_Decoder;
 
-   --  Test: Registering an already-registered kind raises Already_Registered
+   -- Test: Registering an already-registered kind raises Already_Registered
    procedure Test_Register_Duplicate_Kind (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
    begin
@@ -312,7 +312,7 @@ package body Podmander.Messages_Tests is
          null;  --  Expected
    end Test_Register_Duplicate_Kind;
 
-   --  Test: Decode of unknown message type raises Decode_Error
+   -- Test: Decode of unknown message type raises Decode_Error
    procedure Test_Decode_Unknown_Kind (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
@@ -356,7 +356,7 @@ package body Podmander.Messages_Tests is
         (T, Test_Register_Duplicate_Kind'Access, "Registering an existing kind raises Already_Registered");
    end Register_Tests;
 
-   --  Suite setup
+   -- Suite setup
    Result : aliased AUnit.Test_Suites.Test_Suite;
    TC     : aliased Message_Test;
 

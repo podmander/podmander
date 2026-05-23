@@ -24,11 +24,11 @@ package Podmander.Controller.Registrar is
    end record;
 
    function Register (DB : in out DB_Handle; ASD : Podmander.Config.Service_Definition) return Register_Result;
-   --  Register a service from its parsed ASD:
-   --  1. Create the services row (INSERT OR IGNORE, then SELECT)
-   --  2. Determine next version number (latest + 1, or 1 if none)
-   --  3. Create the service_versions row
-   --  Returns a Register_Result with the created Service_Version on success,
-   --  or an error code on failure.
+   -- Register a service from its parsed ASD:
+   -- 1. Create the services row (INSERT OR IGNORE, then SELECT)
+   -- 2. Determine next version number (latest + 1, or 1 if none)
+   -- 3. Create the service_versions row
+   -- Returns a Register_Result with the created Service_Version on success,
+   -- or an error code on failure.
 
 end Podmander.Controller.Registrar;

@@ -20,13 +20,13 @@ package body Podmander.Enrollment_Tests is
    overriding
    procedure Register_Tests (T : in out Enrollment_Test);
 
-   --  A 40-character placeholder that mimics a Z85-encoded CURVE public key.
-   --  Generate_Join_Token does not validate Z85, so any 40-char string works.
+   -- A 40-character placeholder that mimics a Z85-encoded CURVE public key.
+   -- Generate_Join_Token does not validate Z85, so any 40-char string works.
    Sample_Public_Key : constant String := "0123456789012345678901234567890123456789";
 
-   --  Test: a freshly generated token round-trips through Parse_Join_Token,
-   --  reproducing both the public key embedded by the controller and the
-   --  secret stored in Enrollment_Config.
+   -- Test: a freshly generated token round-trips through Parse_Join_Token,
+   -- reproducing both the public key embedded by the controller and the
+   -- secret stored in Enrollment_Config.
    procedure Test_Roundtrip_Recovers_Public_Key_And_Secret (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : Podmander.Enrollment.Enrollment_Config;
@@ -47,7 +47,7 @@ package body Podmander.Enrollment_Tests is
       end;
    end Test_Roundtrip_Recovers_Public_Key_And_Secret;
 
-   --  Test: a token without the PTKN- prefix is rejected.
+   -- Test: a token without the PTKN- prefix is rejected.
    procedure Test_Wrong_Prefix_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Bogus : constant String := "XXXX-" & Sample_Public_Key & "-" & "00000000000000000000000000000000";
@@ -63,8 +63,8 @@ package body Podmander.Enrollment_Tests is
          null;
    end Test_Wrong_Prefix_Raises;
 
-   --  Test: a token that does not span the full prefix+key+sep+secret length
-   --  is rejected before any indexing occurs.
+   -- Test: a token that does not span the full prefix+key+sep+secret length
+   -- is rejected before any indexing occurs.
    procedure Test_Too_Short_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
    begin
@@ -79,7 +79,7 @@ package body Podmander.Enrollment_Tests is
          null;
    end Test_Too_Short_Raises;
 
-   --  Test: a fully-empty token is rejected.
+   -- Test: a fully-empty token is rejected.
    procedure Test_Empty_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
    begin
@@ -94,8 +94,8 @@ package body Podmander.Enrollment_Tests is
          null;
    end Test_Empty_Raises;
 
-   --  Test: calling Generate_Join_Token twice reuses the same secret
-   --  when one is already set in the config.
+   -- Test: calling Generate_Join_Token twice reuses the same secret
+   -- when one is already set in the config.
    procedure Test_Generate_Join_Token_Reuses_Secret (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : Podmander.Enrollment.Enrollment_Config;

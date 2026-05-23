@@ -21,11 +21,11 @@ package Podmander.Controller.Scheduler is
 
    function Schedule
      (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive; Node_Id : String) return Schedule_Result;
-   --  Create or update a catalog entry for the given service.
-   --  If an entry already exists for this service, update target_version
-   --  and clear failed. If no entry exists, create one with
-   --  current_version = 0 and the given target_version.
-   --  Node_Id is the connected agent's node name, or empty string
-   --  if no agent is connected (will be stored as NULL).
+   -- Create or update a catalog entry for the given service.
+   -- If an entry already exists for this service, update target_version
+   -- and clear failed. If no entry exists, create one with
+   -- current_version = 0 and the given target_version.
+   -- Node_Id is the connected agent's node name, or empty string
+   -- if no agent is connected (will be stored as NULL).
 
 end Podmander.Controller.Scheduler;

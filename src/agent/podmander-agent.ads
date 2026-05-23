@@ -17,11 +17,11 @@ package Podmander.Agent is
       Max_Backoff          : Duration := 60.0;
    end record;
 
-   --  Certificate and Socket are long-lived fields managed via the
-   --  CZMQ Open/Close API. On each reconnect cycle, Close is called
-   --  first (idempotent ÃÂ¢ÃÂÃÂ no-op if already closed), then Open_Dealer
-   --  and Generate re-establish the connection. Finalize releases
-   --  resources when the agent shuts down.
+   -- Certificate and Socket are long-lived fields managed via the
+   -- CZMQ Open/Close API. On each reconnect cycle, Close is called
+   -- first (idempotent  -- no-op if already closed), then Open_Dealer
+   -- and Generate re-establish the connection. Finalize releases
+   -- resources when the agent shuts down.
    type Agent_Instance is tagged limited record
       Config            : Agent_Config;
       State             : Podmander.Types.Connection_State := Podmander.Types.Disconnected;

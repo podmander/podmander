@@ -26,7 +26,7 @@ package body Podmander.Generators.Quadlet_Tests is
    overriding
    procedure Register_Tests (T : in out Quadlet_Test);
 
-   --  Test rendering a minimal service with only Image set
+   -- Test rendering a minimal service with only Image set
    procedure Test_Render_Minimal (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -46,7 +46,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "Image=nginx:latest") > 0, "Output should contain Image=nginx:latest");
    end Test_Render_Minimal;
 
-   --  Test rendering a service with one environment variable
+   -- Test rendering a service with one environment variable
    procedure Test_Render_Single_Env (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -67,7 +67,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "Environment=FOO=bar") > 0, "Output should contain Environment=FOO=bar");
    end Test_Render_Single_Env;
 
-   --  Test rendering a service with two environment variables
+   -- Test rendering a service with two environment variables
    procedure Test_Render_Multiple_Env (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -90,7 +90,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "Environment=BAZ=qux") > 0, "Output should contain Environment=BAZ=qux");
    end Test_Render_Multiple_Env;
 
-   --  Test rendering a service with one port mapping
+   -- Test rendering a service with one port mapping
    procedure Test_Render_Single_Port (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -109,7 +109,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "PublishPort=8080:80") > 0, "Output should contain PublishPort=8080:80");
    end Test_Render_Single_Port;
 
-   --  Test rendering a service with two port mappings
+   -- Test rendering a service with two port mappings
    procedure Test_Render_Multiple_Ports (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -132,7 +132,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "PublishPort=443:443") > 0, "Output should contain PublishPort=443:443");
    end Test_Render_Multiple_Ports;
 
-   --  Test rendering a service with one volume mapping
+   -- Test rendering a service with one volume mapping
    procedure Test_Render_Single_Volume (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -153,7 +153,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "Volume=/data:/data") > 0, "Output should contain Volume=/data:/data");
    end Test_Render_Single_Volume;
 
-   --  Test rendering a full container with all field types
+   -- Test rendering a full container with all field types
    procedure Test_Render_Full_Container (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -186,7 +186,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "Volume=/data:/data") > 0, "Output should contain Volume=/data:/data");
    end Test_Render_Full_Container;
 
-   --  Test rendering a service with a Description (should emit [Unit] section)
+   -- Test rendering a service with a Description (should emit [Unit] section)
    procedure Test_Render_Description_Present (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -208,7 +208,7 @@ package body Podmander.Generators.Quadlet_Tests is
          "Output should contain Description=My web app");
    end Test_Render_Description_Present;
 
-   --  Test rendering a service with empty Description (no [Unit] section)
+   -- Test rendering a service with empty Description (no [Unit] section)
    procedure Test_Render_Description_Empty (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -227,7 +227,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Strings.Fixed.Index (Output, "[Unit]") = 0, "Output should NOT contain [Unit] section");
    end Test_Render_Description_Empty;
 
-   --  Test rendering a service with explicit WantedBy
+   -- Test rendering a service with explicit WantedBy
    procedure Test_Render_WantedBy_Specified (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -249,7 +249,7 @@ package body Podmander.Generators.Quadlet_Tests is
          "Output should contain WantedBy=multi-user.target");
    end Test_Render_WantedBy_Specified;
 
-   --  Test rendering a service with default WantedBy
+   -- Test rendering a service with default WantedBy
    procedure Test_Render_WantedBy_Default (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -271,7 +271,7 @@ package body Podmander.Generators.Quadlet_Tests is
          "Output should contain default WantedBy=multi-user.target");
    end Test_Render_WantedBy_Default;
 
-   --  Test sections appear in correct order: [Unit] < [Container] < [Install]
+   -- Test sections appear in correct order: [Unit] < [Container] < [Install]
    procedure Test_Render_Full_Sections (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config        : constant Service_Definition :=
@@ -297,7 +297,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Container_Pos < Install_Pos, "[Container] section should appear before [Install]");
    end Test_Render_Full_Sections;
 
-   --  Test Write_File creates a .container file on disk
+   -- Test Write_File creates a .container file on disk
    procedure Test_Write_File_Creates_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -315,7 +315,7 @@ package body Podmander.Generators.Quadlet_Tests is
       FName  : constant String := "test-svc";
       FPath  : constant String := Dir & "/" & FName & ".container";
    begin
-      --  Clean up from previous runs
+      -- Clean up from previous runs
       begin
          Ada.Directories.Delete_Tree (Dir);
       exception
@@ -327,7 +327,7 @@ package body Podmander.Generators.Quadlet_Tests is
 
       Assert (Ada.Directories.Exists (FPath), "File " & FPath & " should exist");
 
-      --  Clean up
+      -- Clean up
       Ada.Directories.Delete_Tree (Dir);
    exception
       when others =>
@@ -340,7 +340,7 @@ package body Podmander.Generators.Quadlet_Tests is
          raise;
    end Test_Write_File_Creates_File;
 
-   --  Test Write_File creates the output directory if it does not exist
+   -- Test Write_File creates the output directory if it does not exist
    procedure Test_Write_File_Creates_Directory (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -358,7 +358,7 @@ package body Podmander.Generators.Quadlet_Tests is
       FName  : constant String := "test-svc";
       FPath  : constant String := Dir & "/" & FName & ".container";
    begin
-      --  Clean up from previous runs
+      -- Clean up from previous runs
       begin
          Ada.Directories.Delete_Tree (Dir);
       exception
@@ -371,7 +371,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Ada.Directories.Exists (Dir), "Directory " & Dir & " should exist");
       Assert (Ada.Directories.Exists (FPath), "File " & FPath & " should exist");
 
-      --  Clean up
+      -- Clean up
       Ada.Directories.Delete_Tree (Dir);
    exception
       when others =>
@@ -384,7 +384,7 @@ package body Podmander.Generators.Quadlet_Tests is
          raise;
    end Test_Write_File_Creates_Directory;
 
-   --  Test Write_File content matches Render output
+   -- Test Write_File content matches Render output
    procedure Test_Write_File_Content_Matches_Render (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config   : constant Service_Definition :=
@@ -407,7 +407,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Last     : Natural;
       Actual   : Ada.Strings.Unbounded.Unbounded_String := Ada.Strings.Unbounded.Null_Unbounded_String;
    begin
-      --  Clean up from previous runs
+      -- Clean up from previous runs
       begin
          Ada.Directories.Delete_Tree (Dir);
       exception
@@ -427,7 +427,7 @@ package body Podmander.Generators.Quadlet_Tests is
 
       Assert (Ada.Strings.Unbounded.To_String (Actual) = Expected, "File content should match Render output");
 
-      --  Clean up
+      -- Clean up
       Ada.Directories.Delete_Tree (Dir);
    exception
       when others =>
@@ -441,7 +441,7 @@ package body Podmander.Generators.Quadlet_Tests is
    end Test_Write_File_Content_Matches_Render;
 
    ---------------
-   --  Read_File  --
+   -- Read_File  --
    ---------------
 
    function Read_File (Path : String) return String is
@@ -465,7 +465,7 @@ package body Podmander.Generators.Quadlet_Tests is
          raise;
    end Read_File;
 
-   --  Fixture comparison minimal.container: Image only, no Description
+   -- Fixture comparison minimal.container: Image only, no Description
    procedure Test_Golden_Minimal (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -485,7 +485,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Output = Golden, "Render output for minimal config should match fixture file");
    end Test_Golden_Minimal;
 
-   --  Fixture comparison full.container: Description, Image, 2 env, 2 ports, 1 volume
+   -- Fixture comparison full.container: Description, Image, 2 env, 2 ports, 1 volume
    procedure Test_Golden_Full (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -513,7 +513,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Output = Golden, "Render output for full config should match fixture file");
    end Test_Golden_Full;
 
-   --  Fixture comparison multi-env.container: 3 environment variables
+   -- Fixture comparison multi-env.container: 3 environment variables
    procedure Test_Golden_Multi_Env (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -537,7 +537,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Output = Golden, "Render output for multi-env config should match fixture file");
    end Test_Golden_Multi_Env;
 
-   --  Fixture comparison multi-port.container: 3 port mappings
+   -- Fixture comparison multi-port.container: 3 port mappings
    procedure Test_Golden_Multi_Port (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
@@ -561,7 +561,7 @@ package body Podmander.Generators.Quadlet_Tests is
       Assert (Output = Golden, "Render output for multi-port config should match fixture file");
    end Test_Golden_Multi_Port;
 
-   --  Register all test routines
+   -- Register all test routines
    overriding
    procedure Register_Tests (T : in out Quadlet_Test) is
       use AUnit.Test_Cases.Registration;

@@ -8,7 +8,7 @@ package Podmander.Messages.Registration_Requests is
 
    use Ada.Strings.Unbounded;
 
-   --  Agent -> Controller: request registration
+   -- Agent -> Controller: request registration
    type Registration_Request is new Registration_Request_Type with record
       Agent_Name        : Unbounded_String;
       Enrollment_Secret : Unbounded_String;

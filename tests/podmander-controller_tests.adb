@@ -43,9 +43,9 @@ package body Podmander.Controller_Tests is
    overriding
    procedure Register_Tests (T : in out Controller_Test);
 
-   --  A Message_Handler that records which primitive was invoked and
-   --  a copy of the received message. Used to verify Dispatch_To routes
-   --  polymorphically to the right typed handler method.
+   -- A Message_Handler that records which primitive was invoked and
+   -- a copy of the received message. Used to verify Dispatch_To routes
+   -- polymorphically to the right typed handler method.
    type Spy_Kind is
      (None,
       Registration_Seen,
@@ -129,7 +129,7 @@ package body Podmander.Controller_Tests is
       H.Last_Status_Resp := Podmander.Messages.Status_Responses.Status_Response (M);
    end Handle_Status_Response;
 
-   --  Test: Registration_Request.Dispatch_To routes to Handle_Registration_Request
+   -- Test: Registration_Request.Dispatch_To routes to Handle_Registration_Request
    procedure Test_Dispatch_Registration_Request (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Registration_Requests;
@@ -142,7 +142,7 @@ package body Podmander.Controller_Tests is
       Assert (To_String (Spy.Last_Registration.Agent_Name) = "web-1", "Expected agent_name web-1");
    end Test_Dispatch_Registration_Request;
 
-   --  Test: Heartbeat_Message.Dispatch_To routes to Handle_Heartbeat
+   -- Test: Heartbeat_Message.Dispatch_To routes to Handle_Heartbeat
    procedure Test_Dispatch_Heartbeat (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Heartbeats;
@@ -154,8 +154,8 @@ package body Podmander.Controller_Tests is
       Assert (To_String (Spy.Last_Heartbeat.Node_Id) = "node-1", "Expected node_id node-1");
    end Test_Dispatch_Heartbeat;
 
-   --  Test: Polymorphic dispatch through Protocol_Message'Class routes
-   --  to the concrete type's handler.
+   -- Test: Polymorphic dispatch through Protocol_Message'Class routes
+   -- to the concrete type's handler.
    procedure Test_Dispatch_Polymorphic (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Registration_Requests;
@@ -168,7 +168,7 @@ package body Podmander.Controller_Tests is
       Assert (Spy.Kind = Registration_Seen, "Polymorphic dispatch did not reach Registration handler");
    end Test_Dispatch_Polymorphic;
 
-   --  Test: Registration_Response.Dispatch_To raises Program_Error
+   -- Test: Registration_Response.Dispatch_To raises Program_Error
    procedure Test_Dispatch_Response_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Registration_Responses;
@@ -182,7 +182,7 @@ package body Podmander.Controller_Tests is
          null;  --  Expected
    end Test_Dispatch_Response_Raises;
 
-   --  Test: Set_DB_Path / Get_DB_Path round-trip correctly
+   -- Test: Set_DB_Path / Get_DB_Path round-trip correctly
    procedure Test_Controller_DB_Path_Accessors (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : Podmander.Controller.Controller_Config;
@@ -192,7 +192,7 @@ package body Podmander.Controller_Tests is
         (Podmander.Controller.Get_DB_Path (Config) = "/tmp/test.db", "Set_DB_Path / Get_DB_Path round-trip failed");
    end Test_Controller_DB_Path_Accessors;
 
-   --  Test: Make_Listening_Controller with :memory: DB path returns instance
+   -- Test: Make_Listening_Controller with :memory: DB path returns instance
    procedure Test_Controller_Make_With_DB (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : Podmander.Controller.Controller_Config;
@@ -210,7 +210,7 @@ package body Podmander.Controller_Tests is
          Assert (False, "Make_Listening_Controller with :memory: raised");
    end Test_Controller_Make_With_DB;
 
-   --  Test: Agents persist across database connections (simulating restart)
+   -- Test: Agents persist across database connections (simulating restart)
    procedure Test_Startup_Loading (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use type Podmander.Types.Agent_State;
@@ -225,21 +225,21 @@ package body Podmander.Controller_Tests is
       Cur     : Podmander.Types.Agent_Maps.Cursor;
       Element : Podmander.Types.Agent_Info;
    begin
-      --  Phase 1: Open DB, register an agent, close (handle auto-finalized)
+      -- Phase 1: Open DB, register an agent, close (handle auto-finalized)
       declare
          D : Podmander.Database.DB_Handle := Podmander.Database.Open (DB_Path);
       begin
          Podmander.Controller.Agent.Repository.Register (D, Info);
       end;
 
-      --  Phase 2: Open same DB (simulating controller restart), load agents
+      -- Phase 2: Open same DB (simulating controller restart), load agents
       declare
          D : Podmander.Database.DB_Handle := Podmander.Database.Open (DB_Path);
       begin
          Loaded := Podmander.Controller.Agent.Repository.Load_All (D);
       end;
 
-      --  Verify the persisted agent was loaded
+      -- Verify the persisted agent was loaded
       Assert (Natural (Loaded.Length) = 1, "Should have 1 agent after reload");
 
       Cur := Loaded.Find ("persisted-agent");
@@ -249,7 +249,7 @@ package body Podmander.Controller_Tests is
       Assert (To_String (Element.Name) = "persisted-agent", "Agent name should match after reload");
       Assert (Element.State = Podmander.Types.Registered, "Agent state should be as persisted before restart");
 
-      --  Cleanup
+      -- Cleanup
       begin
          Ada.Directories.Delete_File (DB_Path);
       exception
@@ -279,7 +279,7 @@ package body Podmander.Controller_Tests is
          raise;
    end Test_Startup_Loading;
 
-   --  Test infrastructure for temp databases
+   -- Test infrastructure for temp databases
    Test_Counter : Natural := 0;
 
    function Unique_Temp_Path return String is
@@ -310,7 +310,7 @@ package body Podmander.Controller_Tests is
       end;
    end Cleanup_DB;
 
-   --  Helpers for Controller_Handler tests that work without a live socket.
+   -- Helpers for Controller_Handler tests that work without a live socket.
    function Make_Ctrl return Podmander.Controller.Controller_Instance is
    begin
       return
@@ -328,8 +328,8 @@ package body Podmander.Controller_Tests is
       return (Ctrl => Ctrl, Identity => To_Unbounded_String (Identity));
    end Make_Handler;
 
-   --  Test: Load_Test_Deploy with a valid TOML file parses, registers,
-   --  and schedules through the pipeline.
+   -- Test: Load_Test_Deploy with a valid TOML file parses, registers,
+   -- and schedules through the pipeline.
    procedure Test_Load_Test_Deploy_Valid_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Ctrl   : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
@@ -338,7 +338,7 @@ package body Podmander.Controller_Tests is
       Assert (Result, "Load_Test_Deploy should return True for valid file");
    end Test_Load_Test_Deploy_Valid_File;
 
-   --  Test: Load_Test_Deploy with a nonexistent path returns False
+   -- Test: Load_Test_Deploy with a nonexistent path returns False
    procedure Test_Load_Test_Deploy_Invalid_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Ctrl   : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
@@ -347,8 +347,8 @@ package body Podmander.Controller_Tests is
       Assert (not Result, "Load_Test_Deploy should return False for invalid file");
    end Test_Load_Test_Deploy_Invalid_File;
 
-   --  Test: Handle_Registration_Request adds the agent to the controller's map
-   --  when Socket is not yet open (reply Send is guarded by Is_Valid).
+   -- Test: Handle_Registration_Request adds the agent to the controller's map
+   -- when Socket is not yet open (reply Send is guarded by Is_Valid).
    procedure Test_Handle_Registration_Request_Adds_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
@@ -365,7 +365,7 @@ package body Podmander.Controller_Tests is
       end;
    end Test_Handle_Registration_Request_Adds_Agent;
 
-   --  Test: Handle_Heartbeat on a registered agent updates Last_Seen.
+   -- Test: Handle_Heartbeat on a registered agent updates Last_Seen.
    procedure Test_Handle_Heartbeat_Updates_Last_Seen (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use type Ada.Calendar.Time;
@@ -391,7 +391,7 @@ package body Podmander.Controller_Tests is
       end;
    end Test_Handle_Heartbeat_Updates_Last_Seen;
 
-   --  Test: Handle_Heartbeat for unknown agent does not mutate Agents.
+   -- Test: Handle_Heartbeat for unknown agent does not mutate Agents.
    procedure Test_Handle_Heartbeat_Unknown_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
@@ -407,8 +407,8 @@ package body Podmander.Controller_Tests is
       end;
    end Test_Handle_Heartbeat_Unknown_Agent;
 
-   --  Test: Handle_Heartbeat transitions a non-Registered agent back
-   --  to Registered.
+   -- Test: Handle_Heartbeat transitions a non-Registered agent back
+   -- to Registered.
    procedure Test_Handle_Heartbeat_Reconnect (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use type Podmander.Types.Agent_State;
@@ -436,14 +436,14 @@ package body Podmander.Controller_Tests is
       end;
    end Test_Handle_Heartbeat_Reconnect;
 
-   --  Test: Make_Listening_Controller loads an existing secret from DB
+   -- Test: Make_Listening_Controller loads an existing secret from DB
    procedure Test_Controller_Startup_Loads_Secret (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Database;
       DB_Path : constant String := Unique_Temp_Path;
       Config  : Podmander.Controller.Controller_Config;
    begin
-      --  Pre-seed a registration secret in the DB via a separate connection
+      -- Pre-seed a registration secret in the DB via a separate connection
       declare
          Pre_Handle : DB_Handle := Open (DB_Path);
       begin
@@ -468,7 +468,7 @@ package body Podmander.Controller_Tests is
          raise;
    end Test_Controller_Startup_Loads_Secret;
 
-   --  Test: Make_Listening_Controller generates a new secret when none exists
+   -- Test: Make_Listening_Controller generates a new secret when none exists
    procedure Test_Controller_Startup_Generates_Secret (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Database;
@@ -486,7 +486,7 @@ package body Podmander.Controller_Tests is
          Assert (Loaded_Secret'Length > 0, "Controller should have generated a non-empty secret");
       end;
 
-      --  Verify the secret was persisted via a separate connection
+      -- Verify the secret was persisted via a separate connection
       declare
          Post_Handle      : DB_Handle := Open (DB_Path);
          Persisted_Secret : constant String := Get_Setting (Post_Handle, "registration_secret");
@@ -500,8 +500,8 @@ package body Podmander.Controller_Tests is
          raise;
    end Test_Controller_Startup_Generates_Secret;
 
-   --  Test: Handle_Deploy_Result logs warning when no Service_Version exists
-   --  (defensive: should not crash even if version lookup fails)
+   -- Test: Handle_Deploy_Result logs warning when no Service_Version exists
+   -- (defensive: should not crash even if version lookup fails)
    procedure Test_Handle_Deploy_Result_No_Version (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
@@ -512,9 +512,9 @@ package body Podmander.Controller_Tests is
          Service_Name  => To_Unbounded_String ("web"),
          Error_Message => Null_Unbounded_String);
    begin
-      --  No Service_Version created for "web" Ã¢ÂÂ this should not crash
+      -- No Service_Version created for "web"  -- this should not crash
       H.Handle_Deploy_Result (Res);
-      --  If we get here without crashing, the defensive handler worked
+      -- If we get here without crashing, the defensive handler worked
       Assert (True, "Handle_Deploy_Result should not crash without version");
    end Test_Handle_Deploy_Result_No_Version;
 

@@ -11,7 +11,7 @@ package body Podmander.Controller.Scheduler is
    use Ada.Strings.Unbounded;
    use Podmander.Controller.Service_Catalog.Repository;
 
-   --  Dummy entry returned in error cases where no real entry exists.
+   -- Dummy entry returned in error cases where no real entry exists.
    Dummy_Entry : constant Podmander.Controller.Service_Catalog_Entry :=
      (Id              => 0,
       Service_Id      => 0,
@@ -22,7 +22,7 @@ package body Podmander.Controller.Scheduler is
       Updated_At      => Clock);
 
    ---------------
-   --  Schedule
+   -- Schedule
    ---------------
 
    function Schedule
@@ -34,10 +34,10 @@ package body Podmander.Controller.Scheduler is
          Updated  : Boolean;
          pragma Unreferenced (Updated);
       begin
-         --  Entry exists Ã¢ÂÂ update target and clear failed
+         -- Entry exists  -- update target and clear failed
          Updated := Set_Target (DB, Existing.Id, Target_Version);
 
-         --  Assign node if one is provided
+         -- Assign node if one is provided
          if Node_Id /= "" then
             Updated := Assign_Node (DB, Existing.Id, Node_Id);
          end if;
@@ -50,7 +50,7 @@ package body Podmander.Controller.Scheduler is
             Info : constant Error_Info := Parse_Error (E);
          begin
             if Info.Kind = Not_Found then
-               --  No existing entry Ã¢ÂÂ create a new one
+               -- No existing entry  -- create a new one
                return
                  (Ok            => True,
                   Catalog_Entry =>

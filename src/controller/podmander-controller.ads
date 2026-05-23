@@ -16,7 +16,7 @@ package Podmander.Controller is
    use Podmander.Types;
    use Podmander.Config;
 
-   --  State tracking types
+   -- State tracking types
 
    type Service_Version is record
       Id            : Integer;
@@ -60,11 +60,11 @@ package Podmander.Controller is
       Agent_Timeout     : Duration := Default_Agent_Timeout;
       Enrollment        : Podmander.Enrollment.Enrollment_Config;
       DB_Path           : Ada.Strings.Unbounded.Unbounded_String := Ada.Strings.Unbounded.To_Unbounded_String ("");
-      --  Path to the SQLite state database.
-      --  Empty string means use default: ~/.local/share/podmander/state.db
-      --  Uses Unbounded_String (not fixed String like Bind_Address) because
-      --  filesystem paths vary widely in length; Bind_Address uses fixed
-      --  String because it comes from CLI parsing with known max length.
+      -- Path to the SQLite state database.
+      -- Empty string means use default: ~/.local/share/podmander/state.db
+      -- Uses Unbounded_String (not fixed String like Bind_Address) because
+      -- filesystem paths vary widely in length; Bind_Address uses fixed
+      -- String because it comes from CLI parsing with known max length.
    end record;
 
    procedure Set_Bind_Address (Config : in out Controller_Config; Address : String);
@@ -75,12 +75,12 @@ package Podmander.Controller is
 
    function Get_DB_Path (Config : Controller_Config) return String;
 
-   --  The CURVE certificate and ZeroMQ socket live for the controller's
-   --  full lifetime, managed via the CZMQ Open/Close API. Default-initialized
-   --  fields are invalid until Make_Listening_Controller calls Generate and
-   --  Open_Router. Handler tests rely on that to drive logic without a
-   --  live socket; production code obtains a fully-built instance from
-   --  Make_Listening_Controller.
+   -- The CURVE certificate and ZeroMQ socket live for the controller's
+   -- full lifetime, managed via the CZMQ Open/Close API. Default-initialized
+   -- fields are invalid until Make_Listening_Controller calls Generate and
+   -- Open_Router. Handler tests rely on that to drive logic without a
+   -- live socket; production code obtains a fully-built instance from
+   -- Make_Listening_Controller.
    type Controller_Instance is tagged limited record
       Config      : Controller_Config;
       DB          : Database.DB_Handle;
@@ -89,10 +89,10 @@ package Podmander.Controller is
       Running     : Boolean := False;
    end record;
 
-   --  Build a fully-initialised, listening controller: generate the
-   --  CURVE certificate, open the ROUTER socket, enable CURVE server
-   --  mode, and bind to Config's Bind_Address. The returned instance
-   --  is in the Running state.
+   -- Build a fully-initialised, listening controller: generate the
+   -- CURVE certificate, open the ROUTER socket, enable CURVE server
+   -- mode, and bind to Config's Bind_Address. The returned instance
+   -- is in the Running state.
    function Make_Listening_Controller (Config : Controller_Config) return Controller_Instance;
 
    procedure Run (Self : in out Controller_Instance);
@@ -103,12 +103,12 @@ package Podmander.Controller is
 
    procedure Generate_Join_Token
      (Self : in out Controller_Instance; Token : out Ada.Strings.Unbounded.Unbounded_String);
-   --  Delegates to Podmander.Enrollment.Generate_Join_Token
-   --  using this controller's public key and enrollment config.
+   -- Delegates to Podmander.Enrollment.Generate_Join_Token
+   -- using this controller's public key and enrollment config.
 
    function Load_Test_Deploy (Self : in out Controller_Instance; Path : String) return Boolean;
-   --  Parse a TOML service config file, register the service and version,
-   --  and schedule it for deployment through the catalog pipeline.
-   --  Returns True on success, False on parse or registration failure.
+   -- Parse a TOML service config file, register the service and version,
+   -- and schedule it for deployment through the catalog pipeline.
+   -- Returns True on success, False on parse or registration failure.
 
 end Podmander.Controller;

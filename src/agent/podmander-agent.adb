@@ -15,11 +15,11 @@ package body Podmander.Agent is
       Self.Config := Config;
       Self.Running := True;
 
-      --  Parse the join token once at startup so a malformed token surfaces
-      --  before the run loop, and so Get_Server_Public_Key serves the
-      --  cached value rather than re-parsing on every call. Agents started
-      --  without a token (default config) defer the failure to the first
-      --  connection cycle to preserve the existing pre-cache behaviour.
+      -- Parse the join token once at startup so a malformed token surfaces
+      -- before the run loop, and so Get_Server_Public_Key serves the
+      -- cached value rather than re-parsing on every call. Agents started
+      -- without a token (default config) defer the failure to the first
+      -- connection cycle to preserve the existing pre-cache behaviour.
       if Config.Join_Token /= Null_Unbounded_String then
          declare
             Parsed : constant Podmander.Enrollment.Parsed_Token :=

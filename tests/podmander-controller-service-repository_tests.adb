@@ -36,7 +36,7 @@ package body Podmander.Controller.Service.Repository_Tests is
    My_Desc    : constant String := "Web server";
    My_Wanted  : constant String := "multi-user.target";
 
-   --  Helper: build a Service_Version with the given version number and service_id
+   -- Helper: build a Service_Version with the given version number and service_id
    function Make_Version (V : Positive; Service_Id : Integer) return Podmander.Controller.Service_Version is
       Result : Podmander.Controller.Service_Version;
    begin
@@ -47,20 +47,20 @@ package body Podmander.Controller.Service.Repository_Tests is
       Result.Description := To_Unbounded_String (My_Desc);
       Result.Wanted_By := To_Unbounded_String (My_Wanted);
       Result.Created_At := Ada.Calendar.Clock;
-      --  Add one env var
+      -- Add one env var
       Result.Env (1) := (Key => To_Unbounded_String ("FOO"), Value => To_Unbounded_String ("bar"));
       Result.Env_Count := 1;
-      --  Add one port mapping
+      -- Add one port mapping
       Result.Ports (1) := (Host => 8080, Container => 80);
       Result.Ports_Count := 1;
-      --  Add one volume mapping
+      -- Add one volume mapping
       Result.Volumes (1) :=
         (Host => To_Unbounded_String ("/host/data"), Container => To_Unbounded_String ("/container/data"));
       Result.Volumes_Count := 1;
       return Result;
    end Make_Version;
 
-   --  Format time as ISO 8601 for string comparison
+   -- Format time as ISO 8601 for string comparison
    function Format_Time (T : Ada.Calendar.Time) return String is
       Raw : constant String := Ada.Calendar.Formatting.Image (T);
    begin
@@ -204,7 +204,7 @@ package body Podmander.Controller.Service.Repository_Tests is
    end Test_Create_Version_With_Empty_Arrays;
 
    ------------------------------------
-   --  Service table repository tests --
+   -- Service table repository tests --
    ------------------------------------
 
    My_Service_Name : constant String := "my-service";

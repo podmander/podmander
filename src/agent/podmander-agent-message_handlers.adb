@@ -32,7 +32,7 @@ package body Podmander.Agent.Message_Handlers is
       Result : Podmander.Messages.Deploy_Results.Deploy_Result :=
         Podmander.Agent.Podman.Install_Quadlet (Service_Name => Name, Quadlet => To_String (Cmd.Quadlet));
    begin
-      --  Echo catalog_id back as opaque correlation token
+      -- Echo catalog_id back as opaque correlation token
       Result.Catalog_Id := Cmd.Catalog_Id;
       Send_Deploy_Result (H, Result);
    end Handle_Deploy_Command;

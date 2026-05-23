@@ -10,7 +10,7 @@ package Podmander.Messages.Deploy_Results is
    package SU renames Ada.Strings.Unbounded;
    package RC renames Podmander.Messages.Result_Codes;
 
-   --  Agent -> Controller: result of a deploy command
+   -- Agent -> Controller: result of a deploy command
    type Deploy_Result is new Deploy_Result_Type with record
       Catalog_Id    : Integer := 0;
       Code          : RC.Result_Code := RC.Ok;

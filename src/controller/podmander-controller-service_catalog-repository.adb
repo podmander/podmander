@@ -13,7 +13,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    use Podmander.Database.Time_Utils;
 
    ---------------
-   --  Row to entry
+   -- Row to entry
    ---------------
 
    function Row_To_Entry
@@ -40,7 +40,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Row_To_Entry;
 
    -----------------
-   --  Create_Entry
+   -- Create_Entry
    -----------------
 
    function Create_Entry
@@ -86,7 +86,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Create_Entry;
 
    ---------------
-   --  Get_By_Id
+   -- Get_By_Id
    ---------------
 
    function Get_By_Id (DB : in out DB_Handle; Id : Integer) return Podmander.Controller.Service_Catalog_Entry is
@@ -113,7 +113,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Get_By_Id;
 
    -----------------------
-   --  Get_By_Service_Id
+   -- Get_By_Service_Id
    -----------------------
 
    function Get_By_Service_Id
@@ -143,7 +143,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Get_By_Service_Id;
 
    --------------------
-   --  Get_Unscheduled
+   -- Get_Unscheduled
    --------------------
 
    function Get_Unscheduled (DB : in out DB_Handle) return Podmander.Controller.Catalog_Entry_Vectors.Vector is
@@ -162,7 +162,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Get_Unscheduled;
 
    ---------------
-   --  Get_Drift
+   -- Get_Drift
    ---------------
 
    function Get_Drift (DB : in out DB_Handle) return Podmander.Controller.Catalog_Entry_Vectors.Vector is
@@ -182,7 +182,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Get_Drift;
 
    ----------------------
-   --  Update_On_Success
+   -- Update_On_Success
    ----------------------
 
    function Update_On_Success (DB : in out DB_Handle; Id : Integer; Current_Version : Natural) return Boolean is
@@ -201,7 +201,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Update_On_Success;
 
    ----------------------
-   --  Update_On_Failure
+   -- Update_On_Failure
    ----------------------
 
    function Update_On_Failure (DB : in out DB_Handle; Id : Integer) return Boolean is
@@ -218,7 +218,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Update_On_Failure;
 
    ----------------
-   --  Assign_Node
+   -- Assign_Node
    ----------------
 
    function Assign_Node (DB : in out DB_Handle; Id : Integer; Node_Id : String) return Boolean is
@@ -240,7 +240,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Assign_Node;
 
    ---------------
-   --  Set_Target
+   -- Set_Target
    ---------------
 
    function Set_Target (DB : in out DB_Handle; Id : Integer; Target_Version : Positive) return Boolean is

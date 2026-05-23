@@ -33,8 +33,8 @@ package body Podmander.Controller.Scheduler_Tests is
    overriding
    procedure Register_Tests (T : in out Scheduler_Test);
 
-   --  Helper: create a service and at least one version so FK constraints
-   --  are satisfied. Returns the service id.
+   -- Helper: create a service and at least one version so FK constraints
+   -- are satisfied. Returns the service id.
    function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Integer is
       Svc_Rec : constant Podmander.Controller.Service.Service := Svc_Repo.Create (Handle, Name);
       SV      : Podmander.Controller.Service_Version;
@@ -51,7 +51,7 @@ package body Podmander.Controller.Scheduler_Tests is
    end Seed_Service;
 
    --------------------------
-   --  Test_Schedule_New_Entry
+   -- Test_Schedule_New_Entry
    --------------------------
 
    procedure Test_Schedule_New_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -72,7 +72,7 @@ package body Podmander.Controller.Scheduler_Tests is
    end Test_Schedule_New_Entry;
 
    ---------------------------------
-   --  Test_Schedule_New_Entry_No_Agent
+   -- Test_Schedule_New_Entry_No_Agent
    ---------------------------------
 
    procedure Test_Schedule_New_Entry_No_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -88,7 +88,7 @@ package body Podmander.Controller.Scheduler_Tests is
    end Test_Schedule_New_Entry_No_Agent;
 
    --------------------------------
-   --  Test_Schedule_Update_Existing
+   -- Test_Schedule_Update_Existing
    --------------------------------
 
    procedure Test_Schedule_Update_Existing (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -99,7 +99,7 @@ package body Podmander.Controller.Scheduler_Tests is
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
-      --  Mark as failed first to verify it gets cleared
+      -- Mark as failed first to verify it gets cleared
       declare
          Ignored : Boolean := Cat_Repo.Update_On_Failure (D, Created.Id);
          pragma Unreferenced (Ignored);
@@ -107,7 +107,7 @@ package body Podmander.Controller.Scheduler_Tests is
          null;
       end;
 
-      --  Schedule with a new target_version
+      -- Schedule with a new target_version
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 3, Node_Id => "node-1");
 
       Assert (Result.Ok, "Schedule should succeed for existing entry");
@@ -119,7 +119,7 @@ package body Podmander.Controller.Scheduler_Tests is
    end Test_Schedule_Update_Existing;
 
    ------------------------------------
-   --  Test_Schedule_Update_Assign_Node
+   -- Test_Schedule_Update_Assign_Node
    ------------------------------------
 
    procedure Test_Schedule_Update_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -130,7 +130,7 @@ package body Podmander.Controller.Scheduler_Tests is
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
-      --  Schedule with a node_id to assign it
+      -- Schedule with a node_id to assign it
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2, Node_Id => "assigned-node");
 
       Assert (Result.Ok, "Schedule should succeed");

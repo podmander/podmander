@@ -32,11 +32,11 @@ package Podmander.Agent.Host_Command is
 
    function "+" (Value : String) return SU.Unbounded_String renames SU.To_Unbounded_String;
 
-   --  Run_Command and Run_Command_Shell block until the spawned process exits
-   --  and capture its full stdout/stderr in memory. There is no timeout and
-   --  no output bound. Do not call with commands that may run indefinitely or
-   --  produce unbounded output (e.g., `podman logs -f`). See issue #19 for the
-   --  planned timeout / bounded-capture work.
+   -- Run_Command and Run_Command_Shell block until the spawned process exits
+   -- and capture its full stdout/stderr in memory. There is no timeout and
+   -- no output bound. Do not call with commands that may run indefinitely or
+   -- produce unbounded output (e.g., `podman logs -f`). See issue #19 for the
+   -- planned timeout / bounded-capture work.
 
    function Run_Command (Program : String; Args : Argument_List; Err_To_Out : Boolean := False) return Command_Result
    with Pre => Program'Length > 0;

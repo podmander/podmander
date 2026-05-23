@@ -29,13 +29,13 @@ package body Podmander.Controller.Registrar_Tests is
    overriding
    procedure Register_Tests (T : in out Registrar_Test);
 
-   --  Constants for test service definitions
+   -- Constants for test service definitions
    Service_Name   : constant String := "web-app";
    Service_Image  : constant String := "nginx:1.25";
    Service_Desc   : constant String := "Web server";
    Service_Wanted : constant String := "multi-user.target";
 
-   --  Helper: build a minimal Service_Definition
+   -- Helper: build a minimal Service_Definition
    function Make_Service_Definition
      (Name : String; Image : String; Desc : String; Wanted : String) return Podmander.Config.Service_Definition
    is
@@ -52,7 +52,7 @@ package body Podmander.Controller.Registrar_Tests is
    end Make_Service_Definition;
 
    ---------------------------------------
-   --  Test: Register a brand new service
+   -- Test: Register a brand new service
    ---------------------------------------
 
    procedure Test_Register_New_Service (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -67,17 +67,17 @@ package body Podmander.Controller.Registrar_Tests is
       Assert (Result.Ok, "Register should succeed for new service");
       Assert (Result.Error = Registrar.None, "Error should be None on success");
 
-      --  Verify service row exists
+      -- Verify service row exists
       Found := Repo.Get_By_Name (D, Service_Name);
       Assert (To_String (Found.Name) = Service_Name, "Service name should match");
       Assert (Found.Id = Result.Version.Service_Id, "Service id should match in version");
 
-      --  Verify version is 1
+      -- Verify version is 1
       Assert (Result.Version.Version = 1, "First version should be 1");
    end Test_Register_New_Service;
 
    ------------------------------------------------
-   --  Test: Register existing service increments version
+   -- Test: Register existing service increments version
    ------------------------------------------------
 
    procedure Test_Register_Existing_Service_Increment_Version (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -96,13 +96,13 @@ package body Podmander.Controller.Registrar_Tests is
       Assert (Result2.Ok, "Second register should succeed");
       Assert (Result2.Version.Version = 2, "Second version should be 2");
 
-      --  Both should have the same Service_Id
+      -- Both should have the same Service_Id
       Assert
         (Result1.Version.Service_Id = Result2.Version.Service_Id, "Both versions should reference the same service");
    end Test_Register_Existing_Service_Increment_Version;
 
    -------------------------------------------------
-   --  Test: Idempotent service creation
+   -- Test: Idempotent service creation
    -------------------------------------------------
 
    procedure Test_Register_Idempotent_Service_Creation (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -119,15 +119,15 @@ package body Podmander.Controller.Registrar_Tests is
       Result2 := Registrar.Register (D, ASD);
       Assert (Result2.Ok, "Second register should succeed");
 
-      --  Same service id both times
+      -- Same service id both times
       Assert (Result1.Version.Service_Id = Result2.Version.Service_Id, "Register twice should return same service id");
 
-      --  Only one services row exists
+      -- Only one services row exists
       Assert (Result1.Version.Service_Id > 0, "Service id should be positive");
    end Test_Register_Idempotent_Service_Creation;
 
    ------------------------------------
-   --  Register tests
+   -- Register tests
    ------------------------------------
 
    overriding

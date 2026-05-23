@@ -5,7 +5,7 @@ with CZMQ.Messages;
 
 package Podmander.Messages.Status_Queries is
 
-   --  Controller -> Agent: request running container status
+   -- Controller -> Agent: request running container status
    type Status_Query is new Status_Query_Type with null record;
 
    overriding

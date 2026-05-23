@@ -8,7 +8,7 @@ package Podmander.Messages.Deploy_Commands is
 
    use Ada.Strings.Unbounded;
 
-   --  Controller -> Agent: deploy a service Quadlet
+   -- Controller -> Agent: deploy a service Quadlet
    type Deploy_Command is new Deploy_Command_Type with record
       Catalog_Id   : Integer := 0;
       Service_Name : Unbounded_String;

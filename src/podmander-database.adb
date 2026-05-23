@@ -10,7 +10,7 @@ package body Podmander.Database is
 
    use Ada.Strings.Unbounded;
 
-   --  Format: "[Kind|code] message"
+   -- Format: "[Kind|code] message"
    function Format_Error (Info : Error_Info) return String is
       Result : Unbounded_String;
    begin
@@ -23,10 +23,10 @@ package body Podmander.Database is
       return To_String (Result);
    end Format_Error;
 
-   --  Reverse of Format_Error: parse "[Kind|code] message"
+   -- Reverse of Format_Error: parse "[Kind|code] message"
    function Parse_Error (E : Ada.Exceptions.Exception_Occurrence) return Error_Info is
       Msg           : constant String := Ada.Exceptions.Exception_Message (E);
-      --  Try to parse "[Kind|code] message" format
+      -- Try to parse "[Kind|code] message" format
       Bracket_Start : constant Natural := Ada.Strings.Fixed.Index (Msg, "[");
       Pipe_Pos      : constant Natural := Ada.Strings.Fixed.Index (Msg, "|");
       Bracket_End   : constant Natural := Ada.Strings.Fixed.Index (Msg, "]");
@@ -55,7 +55,7 @@ package body Podmander.Database is
       end;
    end Parse_Error;
 
-   --  Parse ada_sqlite3 format: "<description> (Error code: <n>)"
+   -- Parse ada_sqlite3 format: "<description> (Error code: <n>)"
    function Classify_Error (Message : String) return Error_Info is
       Prefix     : constant String := "(Error code: ";
       Code_Start : constant Natural := Ada.Strings.Fixed.Index (Message, Prefix);
@@ -68,7 +68,7 @@ package body Podmander.Database is
          Num_Start : constant Positive := Code_Start + Prefix'Length;
          Num_End   : Natural := Num_Start;
       begin
-         --  Find the closing paren
+         -- Find the closing paren
          while Num_End <= Message'Last and then Message (Num_End) /= ')' loop
             Num_End := Num_End + 1;
          end loop;
@@ -81,7 +81,7 @@ package body Podmander.Database is
             Code_Str : constant String := Message (Num_Start .. Num_End - 1);
             Code     : constant Integer := Integer'Value (Code_Str);
             Desc     : constant String :=
-            --  skip trailing space
+            -- skip trailing space
               Message (Message'First .. Code_Start - 2);
          begin
             case Code is
@@ -104,12 +104,12 @@ package body Podmander.Database is
       end;
    end Classify_Error;
 
-   --  Open (or create) the database at Path, create parent directories
-   --  if needed, enable WAL mode and foreign keys, and run pending
-   --  migrations. Returns a ready-to-use handle.
+   -- Open (or create) the database at Path, create parent directories
+   -- if needed, enable WAL mode and foreign keys, and run pending
+   -- migrations. Returns a ready-to-use handle.
    function Open (Path : String) return DB_Handle is
    begin
-      --  Create parent directories if they don't exist
+      -- Create parent directories if they don't exist
       declare
          Parent : constant String := Ada.Directories.Containing_Directory (Path);
       begin
@@ -126,12 +126,12 @@ package body Podmander.Database is
                     Code    => 0));
       end;
 
-      --  Open the SQLite connection, configure, and return handle
+      -- Open the SQLite connection, configure, and return handle
       return Handle : DB_Handle := (Ada.Finalization.Limited_Controlled with DB => Ada_Sqlite3.Open (Path)) do
-         --  Enable foreign keys
+         -- Enable foreign keys
          Handle.DB.Execute ("PRAGMA foreign_keys = ON");
 
-         --  Run pending migrations
+         -- Run pending migrations
          Migrations.Run_Pending (Handle);
 
          Podmander.Logging.Info ("database", "Opened database at " & Path);
@@ -141,7 +141,7 @@ package body Podmander.Database is
          raise Database_Error with Format_Error (Classify_Error (Ada.Exceptions.Exception_Message (E)));
    end Open;
 
-   --  Empty override: Ada auto-finalizes the Ada_Sqlite3.Database component
+   -- Empty override: Ada auto-finalizes the Ada_Sqlite3.Database component
    overriding
    procedure Finalize (Handle : in out DB_Handle) is
       pragma Unreferenced (Handle);
@@ -150,7 +150,7 @@ package body Podmander.Database is
    end Finalize;
 
    ---------------
-   --  Query API
+   -- Query API
    ---------------
 
    function Prepare (DB : in out DB_Handle; SQL : String) return Query_Handle is
@@ -180,8 +180,8 @@ package body Podmander.Database is
       elsif Result = Ada_Sqlite3.DONE then
          return False;
       else
-         --  Build a message in the format Classify_Error expects
-         --  so that SQLite error codes map to the correct Error_Kind.
+         -- Build a message in the format Classify_Error expects
+         -- so that SQLite error codes map to the correct Error_Kind.
          raise Database_Error
            with Format_Error (Classify_Error ("SQLite step error (Error code: " & Result'Image & ")"));
       end if;
@@ -211,7 +211,7 @@ package body Podmander.Database is
    end Execute;
 
    ---------------
-   --  Settings API
+   -- Settings API
    ---------------
 
    function Get_Setting (DB : in out DB_Handle; Key : String) return String is
@@ -234,8 +234,8 @@ package body Podmander.Database is
       Bind_Text (Q, 1, Key);
       Bind_Text (Q, 2, Value);
       if Step (Q) then
-         --  INSERT OR REPLACE returns ROW on replace, DONE on insert.
-         --  Both are valid outcomes; discard result.
+         -- INSERT OR REPLACE returns ROW on replace, DONE on insert.
+         -- Both are valid outcomes; discard result.
          null;
       end if;
    end Set_Setting;

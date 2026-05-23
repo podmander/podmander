@@ -9,7 +9,7 @@ package Podmander.Messages.Heartbeats is
 
    use Ada.Strings.Unbounded;
 
-   --  Agent -> Controller: periodic heartbeat
+   -- Agent -> Controller: periodic heartbeat
    type Heartbeat_Message is new Heartbeat_Message_Type with record
       Node_Id   : Unbounded_String;
       Timestamp : Ada.Calendar.Time;

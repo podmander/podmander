@@ -16,7 +16,7 @@ package body Podmander.Controller.Service.Repository is
    use Podmander.Controller.Service.Json_Utils;
 
    --------------
-   --  Query row
+   -- Query row
    --------------
 
    function Row_To_Service_Version
@@ -44,7 +44,7 @@ package body Podmander.Controller.Service.Repository is
    end Row_To_Service_Version;
 
    ------------
-   --  Create --
+   -- Create --
    ------------
 
    function Create (DB : in out DB_Handle; Name : String) return Service is
@@ -70,7 +70,7 @@ package body Podmander.Controller.Service.Repository is
    end Create;
 
    -----------------
-   --  Get_By_Name --
+   -- Get_By_Name --
    -----------------
 
    function Get_By_Name (DB : in out DB_Handle; Name : String) return Service is
@@ -88,7 +88,7 @@ package body Podmander.Controller.Service.Repository is
    end Get_By_Name;
 
    ---------------
-   --  Get_By_Id --
+   -- Get_By_Id --
    ---------------
 
    function Get_By_Id (DB : in out DB_Handle; Id : Integer) return Service is
@@ -110,7 +110,7 @@ package body Podmander.Controller.Service.Repository is
    end Get_By_Id;
 
    --------------------
-   --  Create_Version --
+   -- Create_Version --
    --------------------
 
    procedure Create_Version (DB : in out DB_Handle; Version : Podmander.Controller.Service_Version) is
@@ -137,7 +137,7 @@ package body Podmander.Controller.Service.Repository is
    end Create_Version;
 
    -----------------
-   --  Get_Version --
+   -- Get_Version --
    -----------------
 
    function Get_Version
@@ -171,7 +171,7 @@ package body Podmander.Controller.Service.Repository is
    end Get_Version;
 
    ------------------------
-   --  Get_Latest_Version --
+   -- Get_Latest_Version --
    ------------------------
 
    function Get_Latest_Version (DB : in out DB_Handle; Service_Id : Integer) return Podmander.Controller.Service_Version

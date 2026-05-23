@@ -8,8 +8,8 @@ package body Podmander.Controller.Agent.Repository is
 
    use Ada.Strings.Unbounded;
 
-   --  ISO 8601 conversion helpers
-   --  Ada.Calendar.Formatting.Image returns "YYYY-MM-DD HH:MM:SS"
+   -- ISO 8601 conversion helpers
+   -- Ada.Calendar.Formatting.Image returns "YYYY-MM-DD HH:MM:SS"
 
    function Time_To_ISO8601 (T : Ada.Calendar.Time) return String is
       Raw : constant String := Ada.Calendar.Formatting.Image (T);
@@ -24,7 +24,7 @@ package body Podmander.Controller.Agent.Repository is
       return Ada.Calendar.Formatting.Value (Fixed);
    end ISO8601_To_Time;
 
-   --  State conversion (DB uses lowercase, Ada uses Mixed_Case)
+   -- State conversion (DB uses lowercase, Ada uses Mixed_Case)
 
    function State_To_String (State : Agent_State) return String is
    begin
@@ -54,7 +54,7 @@ package body Podmander.Controller.Agent.Repository is
    end String_To_State;
 
    ---------------
-   --  Register --
+   -- Register --
    ---------------
 
    procedure Register (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
@@ -71,7 +71,7 @@ package body Podmander.Controller.Agent.Repository is
    end Register;
 
    -----------
-   --  Touch --
+   -- Touch --
    -----------
 
    procedure Touch (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
@@ -93,7 +93,7 @@ package body Podmander.Controller.Agent.Repository is
    end Touch;
 
    ---------------
-   --  Set_State --
+   -- Set_State --
    ---------------
 
    procedure Set_State (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
@@ -115,7 +115,7 @@ package body Podmander.Controller.Agent.Repository is
    end Set_State;
 
    --------------
-   --  Load_All --
+   -- Load_All --
    --------------
 
    function Load_All (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map is
@@ -134,7 +134,7 @@ package body Podmander.Controller.Agent.Repository is
    end Load_All;
 
    -------------
-   --  Remove --
+   -- Remove --
    -------------
 
    procedure Remove (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
@@ -144,7 +144,7 @@ package body Podmander.Controller.Agent.Repository is
       while Step (QH) loop
          null;  --  DELETE returns no rows
       end loop;
-   --  No-op if agent does not exist ÃÂÃÂ¢ÃÂÃÂÃÂÃÂ no error raised
+   -- No-op if agent does not exist  -- no error raised
    end Remove;
 
 end Podmander.Controller.Agent.Repository;

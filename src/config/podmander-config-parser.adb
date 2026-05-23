@@ -29,7 +29,7 @@ package body Podmander.Config.Parser is
       declare
          Root : constant TOML_Value := Load_Result.Value;
       begin
-         --  Check for service table
+         -- Check for service table
          if not Root.Has ("service") then
             return (Success => False, Message => To_Unbounded_String ("No [service] section found in config"));
          end if;
@@ -42,16 +42,16 @@ package body Podmander.Config.Parser is
                return (Success => False, Message => To_Unbounded_String ("No service definitions found"));
             end if;
 
-            --  Use the first service entry
+            -- Use the first service entry
             declare
                Service_Name  : constant String := To_String (Entries (Entries'First).Key);
                Service_Value : constant TOML_Value := Entries (Entries'First).Value;
                Config        : Service_Definition;
             begin
-               --  Service name from [service.<name>] section header
+               -- Service name from [service.<name>] section header
                Config.Name := To_Unbounded_String (Service_Name);
 
-               --  Required field: image
+               -- Required field: image
                if not Service_Value.Has ("image") then
                   return
                     (Success => False,
@@ -60,7 +60,7 @@ package body Podmander.Config.Parser is
 
                Config.Image := To_Unbounded_String (Service_Value.Get ("image").As_String);
 
-               --  Parse env table (optional)
+               -- Parse env table (optional)
                if Service_Value.Has ("env") then
                   declare
                      Env_Table   : constant TOML_Value := Service_Value.Get ("env");
@@ -76,7 +76,7 @@ package body Podmander.Config.Parser is
                   end;
                end if;
 
-               --  Parse ports array (optional)
+               -- Parse ports array (optional)
                if Service_Value.Has ("ports") then
                   declare
                      Ports_Array : constant TOML_Value := Service_Value.Get ("ports");
@@ -97,7 +97,7 @@ package body Podmander.Config.Parser is
                   end;
                end if;
 
-               --  Parse volumes array (optional)
+               -- Parse volumes array (optional)
                if Service_Value.Has ("volumes") then
                   declare
                      Volumes_Array : constant TOML_Value := Service_Value.Get ("volumes");
@@ -118,7 +118,7 @@ package body Podmander.Config.Parser is
                   end;
                end if;
 
-               --  Validate before returning
+               -- Validate before returning
                return Validate (Config);
             end;
          end;
@@ -135,12 +135,12 @@ package body Podmander.Config.Parser is
 
    function Validate (Config : Service_Definition) return Parse_Result is
    begin
-      --  Image must not be empty
+      -- Image must not be empty
       if Config.Image = Null_Unbounded_String then
          return (Success => False, Message => To_Unbounded_String ("Image must not be empty"));
       end if;
 
-      --  Port host/container must be in valid range
+      -- Port host/container must be in valid range
       for I in 1 .. Config.Ports_Count loop
          if Config.Ports (I).Host not in MIN_PORT .. MAX_PORT then
             return
@@ -159,7 +159,7 @@ package body Podmander.Config.Parser is
          end if;
       end loop;
 
-      --  Volume host/container paths must not be empty
+      -- Volume host/container paths must not be empty
       for I in 1 .. Config.Volumes_Count loop
          if Config.Volumes (I).Host = Null_Unbounded_String then
             return (Success => False, Message => To_Unbounded_String ("Volume host path must not be empty"));

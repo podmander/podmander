@@ -15,10 +15,10 @@ package body Podmander.Agent.Host_Command is
    package Argument_Vectors is new
      Ada.Containers.Vectors (Index_Type => Positive, Element_Type => Spoon.Argument_Access, "=" => Spoon."=");
 
-   --  Owns the heap-allocated Spoon.Argument values for a single Run_Command
-   --  invocation. Finalize releases them, so allocations are reclaimed even
-   --  when an exception unwinds the call. The type lives in a nested package
-   --  spec so its Finalize override is a dispatching primitive.
+   -- Owns the heap-allocated Spoon.Argument values for a single Run_Command
+   -- invocation. Finalize releases them, so allocations are reclaimed even
+   -- when an exception unwinds the call. The type lives in a nested package
+   -- spec so its Finalize override is a dispatching primitive.
    package Internals is
 
       type Argument_Owner is new Ada.Finalization.Limited_Controlled with private;

@@ -10,11 +10,11 @@ with Ada.Calendar;
 package Podmander.Database.Time_Utils is
 
    function Time_To_ISO8601 (T : Ada.Calendar.Time) return String;
-   --  Convert an Ada.Calendar.Time to ISO 8601 UTC string.
-   --  Format: YYYY-MM-DDTHH:MM:SSZ.
+   -- Convert an Ada.Calendar.Time to ISO 8601 UTC string.
+   -- Format: YYYY-MM-DDTHH:MM:SSZ.
 
    function ISO8601_To_Time (S : String) return Ada.Calendar.Time;
-   --  Parse ISO 8601 UTC string back to Ada.Calendar.Time.
-   --  Expects format YYYY-MM-DDTHH:MM:SSZ.
+   -- Parse ISO 8601 UTC string back to Ada.Calendar.Time.
+   -- Expects format YYYY-MM-DDTHH:MM:SSZ.
 
 end Podmander.Database.Time_Utils;

@@ -11,7 +11,7 @@ package body Podmander.Controller.Service.Json_Utils is
    use Podmander.Config;
 
    -----------------------
-   --  JSON serialization
+   -- JSON serialization
    -----------------------
 
    function Escape_JSON (S : String) return String is
@@ -99,12 +99,12 @@ package body Podmander.Controller.Service.Json_Utils is
    end Volume_Array_To_JSON;
 
    -------------------------
-   --  JSON deserialization
+   -- JSON deserialization
    -------------------------
 
-   --  Simple JSON value parser. Each function parses the first occurrence
-   --  of a named key from a JSON object and returns the value as a string.
-   --  Format: {"key1":"val1","key2":"val2"} or {"host":123,"container":456}
+   -- Simple JSON value parser. Each function parses the first occurrence
+   -- of a named key from a JSON object and returns the value as a string.
+   -- Format: {"key1":"val1","key2":"val2"} or {"host":123,"container":456}
 
    function Find_String_Value (S : String; Key : String) return String is
       Key_Pos : Natural;
@@ -166,9 +166,9 @@ package body Podmander.Controller.Service.Json_Utils is
       return Integer'Value (S (Start_N .. End_N - 1));
    end Find_Int_Value;
 
-   --  Parse a JSON array of objects and populate the Ada arrays.
-   --  The array format is: [{...},{...},...]
-   --  Count is set to the number of objects found.
+   -- Parse a JSON array of objects and populate the Ada arrays.
+   -- The array format is: [{...},{...},...]
+   -- Count is set to the number of objects found.
 
    procedure Parse_Env_Array (JSON_Str : String; Arr : in out Env_Array; Count : out Natural) is
       Pos : Natural := JSON_Str'First;

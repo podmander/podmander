@@ -10,25 +10,25 @@ package body Podmander.Generators.Quadlet is
    use Ada.Strings.Unbounded;
 
    ------------
-   --  Render  --
+   -- Render  --
    ------------
 
    function Render (Service : Service_Definition) return String is
       Buffer : Unbounded_String := Null_Unbounded_String;
    begin
-      --  [Unit] section (only if Description is non-empty)
+      -- [Unit] section (only if Description is non-empty)
       if Length (Service.Description) > 0 then
          Append (Buffer, "[Unit]" & ASCII.LF);
          Append (Buffer, "Description=" & Service.Description & ASCII.LF);
       end if;
 
-      --  [Container] section header
+      -- [Container] section header
       Append (Buffer, "[Container]" & ASCII.LF);
 
-      --  Image is always required
+      -- Image is always required
       Append (Buffer, "Image=" & Service.Image & ASCII.LF);
 
-      --  Environment variables
+      -- Environment variables
       for I in 1 .. Service.Env_Count loop
          Append (Buffer, "Environment=");
          Append (Buffer, Service.Env (I).Key);
@@ -37,13 +37,13 @@ package body Podmander.Generators.Quadlet is
          Append (Buffer, ASCII.LF);
       end loop;
 
-      --  Port mappings
+      -- Port mappings
       for I in 1 .. Service.Ports_Count loop
          declare
             Host_Port      : constant String := Positive'Image (Service.Ports (I).Host);
             Container_Port : constant String := Positive'Image (Service.Ports (I).Container);
          begin
-            --  Positive'Image includes a leading space; strip it
+            -- Positive'Image includes a leading space; strip it
             Append (Buffer, "PublishPort=");
             Append (Buffer, Host_Port (2 .. Host_Port'Last));
             Append (Buffer, ":");
@@ -52,7 +52,7 @@ package body Podmander.Generators.Quadlet is
          end;
       end loop;
 
-      --  Volume mappings
+      -- Volume mappings
       for I in 1 .. Service.Volumes_Count loop
          Append (Buffer, "Volume=");
          Append (Buffer, Service.Volumes (I).Host);
@@ -61,7 +61,7 @@ package body Podmander.Generators.Quadlet is
          Append (Buffer, ASCII.LF);
       end loop;
 
-      --  [Install] section
+      -- [Install] section
       Append (Buffer, "[Install]" & ASCII.LF);
       if Length (Service.WantedBy) > 0 then
          Append (Buffer, "WantedBy=" & Service.WantedBy & ASCII.LF);
@@ -73,7 +73,7 @@ package body Podmander.Generators.Quadlet is
    end Render;
 
    -----------------
-   --  Write_File  --
+   -- Write_File  --
    -----------------
 
    procedure Write_File (Service : Service_Definition; Output_Dir : String; Service_Name : String) is

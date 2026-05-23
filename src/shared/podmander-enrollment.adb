@@ -10,7 +10,7 @@ package body Podmander.Enrollment is
    subtype Hex_Range is Natural range 0 .. 15;
    package Hex_Rand is new Ada.Numerics.Discrete_Random (Hex_Range);
 
-   --  Total length of a well-formed join token.
+   -- Total length of a well-formed join token.
    Token_Length : constant Positive := Token_Prefix'Length + Public_Key_Length + 1 + Secret_Length;
 
    function Random_Hex (Length : Positive) return String is
@@ -45,7 +45,7 @@ package body Podmander.Enrollment is
    procedure Generate_Join_Token (Public_Key : String; Config : in out Enrollment_Config; Token : out Unbounded_String)
    is
    begin
-      --  Generate a new secret only if one isn't already set
+      -- Generate a new secret only if one isn't already set
       if Config.Secret = Null_Unbounded_String then
          Config.Secret := To_Unbounded_String (Random_Hex (Secret_Length));
       end if;

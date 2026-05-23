@@ -14,9 +14,9 @@ package Podmander.Config.Parser is
    end record;
 
    function Parse (Path : String) return Parse_Result;
-   --  Reads TOML file at Path, returns parsed config or error
+   -- Reads TOML file at Path, returns parsed config or error
 
    function Validate (Config : Service_Definition) return Parse_Result;
-   --  Returns Success with config if valid, or Failure with error message
+   -- Returns Success with config if valid, or Failure with error message
 
 end Podmander.Config.Parser;

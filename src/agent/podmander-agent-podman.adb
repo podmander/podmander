@@ -19,10 +19,10 @@ package body Podmander.Agent.Podman is
    package RM renames Podmander.Agent.Host_Command.Result_Mapping;
    package RC renames Podmander.Messages.Result_Codes;
 
-   --  Run a single systemctl step and return True on success.
-   --  On failure, returns False and populates Failure_Result with
-   --  a Deploy_Result carrying the step's Result_Code, Service_Name,
-   --  and Error_Message.
+   -- Run a single systemctl step and return True on success.
+   -- On failure, returns False and populates Failure_Result with
+   -- a Deploy_Result carrying the step's Result_Code, Service_Name,
+   -- and Error_Message.
    function Run_Systemctl_Step
      (Args : HC.Argument_List; Step_Label : String; Service_Name : String; Failure_Result : out Deploy_Result)
       return Boolean
