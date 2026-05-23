@@ -3,6 +3,7 @@
 
 with Ada.Calendar;
 with Ada.Containers.Indefinite_Hashed_Maps;
+with Ada.Containers.Vectors;
 with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 with CZMQ.Certificates;
@@ -45,6 +46,11 @@ package Podmander.Controller is
       Version      : Positive;
       Updated_At   : Ada.Calendar.Time;
    end record;
+
+   package Actual_State_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => Actual_State_Entry);
 
    Default_Agent_Timeout : constant Duration := 30.0;
 
