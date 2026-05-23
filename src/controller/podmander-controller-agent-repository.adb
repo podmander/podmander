@@ -132,10 +132,10 @@ package body Podmander.Controller.Agent.Repository is
    --  Load_All --
    --------------
 
-   function Load_All (DB : in out DB_Handle) return Agent_Maps.Map is
-      QH  : Query_Handle :=
-        Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
-      Map : Agent_Maps.Map;
+    function Load_All (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map is
+       QH  : Query_Handle :=
+         Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
+       Map : Podmander.Types.Agent_Maps.Map;
       Rec : Agent_Info;
    begin
       while Step (QH) loop

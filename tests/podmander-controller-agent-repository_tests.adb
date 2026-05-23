@@ -51,16 +51,16 @@ package body Podmander.Controller.Agent.Repository_Tests is
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
-      Map   : Agent_Maps.Map;
-      Cur   : Agent_Maps.Cursor;
+      Map   : Podmander.Types.Agent_Maps.Map;
+      Cur   : Podmander.Types.Agent_Maps.Cursor;
       Loaded : Agent_Info;
    begin
       Repo.Register (D, Info);
       Map := Repo.Load_All (D);
       Assert (Natural (Map.Length) = 1, "Should have one agent after register");
       Cur := Map.Find ("test-agent");
-      Assert (Agent_Maps.Has_Element (Cur), "Registered agent should be in map");
-      Loaded := Agent_Maps.Element (Cur);
+      Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Registered agent should be in map");
+      Loaded := Podmander.Types.Agent_Maps.Element (Cur);
       Assert (To_String (Loaded.Name) = "test-agent",
               "Agent name should match");
       Assert (To_String (Loaded.Node_Id) = "node-001",
@@ -121,8 +121,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
-      Map   : Agent_Maps.Map;
-      Cur   : Agent_Maps.Cursor;
+      Map   : Podmander.Types.Agent_Maps.Map;
+      Cur   : Podmander.Types.Agent_Maps.Cursor;
       Loaded : Agent_Info;
    begin
       Repo.Register (D, Info);
@@ -132,8 +132,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
                        Last_Seen => Later));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("touch-agent");
-      Assert (Agent_Maps.Has_Element (Cur), "Agent should be in map after touch");
-      Loaded := Agent_Maps.Element (Cur);
+      Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Agent should be in map after touch");
+      Loaded := Podmander.Types.Agent_Maps.Element (Cur);
       Assert (Format_Time (Loaded.Last_Seen) = Format_Time (Later),
               "Last_Seen should be updated to later time");
    end Test_Touch_Updates_Last_Seen;
@@ -184,8 +184,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
-      Map   : Agent_Maps.Map;
-      Cur   : Agent_Maps.Cursor;
+      Map   : Podmander.Types.Agent_Maps.Map;
+      Cur   : Podmander.Types.Agent_Maps.Cursor;
       Loaded : Agent_Info;
    begin
       Repo.Register (D, Info);
@@ -195,9 +195,9 @@ package body Podmander.Controller.Agent.Repository_Tests is
                            Last_Seen => Now));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("state-agent");
-      Assert (Agent_Maps.Has_Element (Cur),
+      Assert (Podmander.Types.Agent_Maps.Has_Element (Cur),
               "Agent should be in map after set_state");
-      Loaded := Agent_Maps.Element (Cur);
+      Loaded := Podmander.Types.Agent_Maps.Element (Cur);
       Assert (Loaded.State = Unresponsive,
               "Agent state should be Unresponsive");
    end Test_Set_State_Updates_State;
@@ -248,7 +248,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
-      Map  : Agent_Maps.Map;
+      Map  : Podmander.Types.Agent_Maps.Map;
    begin
       Repo.Register (D, Info);
       Repo.Remove (D, (Name      => To_Unbounded_String ("remove-agent"),
@@ -275,7 +275,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
-      Map  : Agent_Maps.Map;
+      Map  : Podmander.Types.Agent_Maps.Map;
    begin
       Repo.Register (D, Info);
       --  Remove a different (non-existent) agent

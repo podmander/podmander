@@ -2,9 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
-with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Containers.Vectors;
-with Ada.Strings.Hash;
 with Ada.Strings.Unbounded;
 with CZMQ.Certificates;
 with CZMQ.Sockets;
@@ -77,13 +75,6 @@ package Podmander.Controller is
 
    function Get_DB_Path (Config : Controller_Config) return String;
 
-   package Agent_Maps is new
-     Ada.Containers.Indefinite_Hashed_Maps
-       (Key_Type        => String,
-        Element_Type    => Podmander.Types.Agent_Info,
-        Hash            => Ada.Strings.Hash,
-        Equivalent_Keys => "=");
-
    --  A deploy that's been queued (via --test-config) but not yet sent.
    --  The controller stores one pending deploy at a time; Test_Deploy on
    --  Controller_Instance holds it until Send_Deploy_Command is called.
@@ -104,7 +95,6 @@ package Podmander.Controller is
       DB          : Database.DB_Handle;
       Certificate : CZMQ.Certificates.Certificate;
       Socket      : CZMQ.Sockets.Socket;
-      Agents      : Agent_Maps.Map;
       Running     : Boolean := False;
       Test_Deploy : Pending_Deploy;
    end record;

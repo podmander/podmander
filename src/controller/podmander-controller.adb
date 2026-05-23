@@ -60,36 +60,33 @@ package body Podmander.Controller is
          else Get_DB_Path (Config));
    begin
       return
-         C : Controller_Instance :=
-           (Config      => Config,
-            DB          => Database.Open (DB_Path),
-            Certificate => <>,
-            Socket      => <>,
-            Agents      => <>,
-            Running     => True,
-            Test_Deploy => <>)
+          C : Controller_Instance :=
+            (Config      => Config,
+             DB          => Database.Open (DB_Path),
+             Certificate => <>,
+             Socket      => <>,
+             Running     => True,
+             Test_Deploy => <>)
       do
-         --  Load persisted agents from DB
-         C.Agents := Agent.Repository.Load_All (C.DB);
-
-         --  Per ADR-0035: agents that were Registered or Unresponsive
-         --  start as Unresponsive â they must send a heartbeat to prove
-         --  they're still alive after the controller restart.
-         declare
-         begin
-            for Cursor in C.Agents.Iterate loop
-               declare
-                  Key  : constant String := Agent_Maps.Key (Cursor);
-                  Info : Podmander.Types.Agent_Info :=
-                    Agent_Maps.Element (Cursor);
-               begin
-                  if Info.State /= Podmander.Types.Lost then
-                     Info.State := Podmander.Types.Unresponsive;
-                     C.Agents.Replace (Key, Info);
-                  end if;
-               end;
-            end loop;
-         end;
+          --  Per ADR-0037: agents that were Registered or Unresponsive
+          --  start as Unresponsive â they must send a heartbeat to prove
+          --  they're still alive after the controller restart.
+          declare
+             All_Agents : constant Podmander.Types.Agent_Maps.Map :=
+               Agent.Repository.Load_All (C.DB);
+          begin
+             for Cursor in All_Agents.Iterate loop
+                declare
+                   Info : Podmander.Types.Agent_Info :=
+                     Podmander.Types.Agent_Maps.Element (Cursor);
+                begin
+                   if Info.State /= Podmander.Types.Lost then
+                      Info.State := Podmander.Types.Unresponsive;
+                      Agent.Repository.Set_State (C.DB, Info);
+                   end if;
+                end;
+             end loop;
+          end;
 
          --  Load or generate CURVE certificate
          declare
@@ -189,12 +186,15 @@ package body Podmander.Controller is
         Self.Config.Agent_Timeout * 2.0;
       Lost_Threshold         : constant Duration :=
         Self.Config.Agent_Timeout * 3.0;
+      All_Agents            : constant Podmander.Types.Agent_Maps.Map :=
+        Agent.Repository.Load_All (Self.DB);
    begin
-      for Cursor in Self.Agents.Iterate loop
+      for Cursor in All_Agents.Iterate loop
          declare
-            Key     : constant String := Agent_Maps.Key (Cursor);
             Info    : Podmander.Types.Agent_Info :=
-              Agent_Maps.Element (Cursor);
+              Podmander.Types.Agent_Maps.Element (Cursor);
+            Name    : constant String :=
+              To_String (Info.Name);
             Elapsed : constant Duration := Now - Info.Last_Seen;
          begin
             if Elapsed >= Lost_Threshold
@@ -202,17 +202,15 @@ package body Podmander.Controller is
             then
                Info.State := Podmander.Types.Lost;
                Agent.Repository.Set_State (Self.DB, Info);
-               Self.Agents.Replace (Key, Info);
                Podmander.Logging.Warning
-                 ("controller", "Agent " & Key & " disconnected");
+                 ("controller", "Agent " & Name & " disconnected");
             elsif Elapsed >= Unresponsive_Threshold
               and then Info.State = Podmander.Types.Registered
             then
                Info.State := Podmander.Types.Unresponsive;
                Agent.Repository.Set_State (Self.DB, Info);
-               Self.Agents.Replace (Key, Info);
                Podmander.Logging.Warning
-                 ("controller", "Agent " & Key & " unresponsive");
+                 ("controller", "Agent " & Name & " unresponsive");
             end if;
          end;
       end loop;
@@ -258,8 +256,20 @@ package body Podmander.Controller is
          declare
             Node_Id_Str  : constant String := To_String (M.Node_Id);
             Svc_Name_Str : constant String := To_String (M.Service_Name);
+            All_Agents   : constant Podmander.Types.Agent_Maps.Map :=
+              Agent.Repository.Load_All (Self.DB);
+            Found        : Boolean := False;
          begin
-            if Self.Agents.Contains (Node_Id_Str) then
+            for Cursor in All_Agents.Iterate loop
+               if To_String (Podmander.Types.Agent_Maps.Element (Cursor).Node_Id)
+                 = Node_Id_Str
+               then
+                  Found := True;
+                  exit;
+               end if;
+            end loop;
+
+            if Found then
                declare
                   SV     : constant Service_Version :=
                     Service.Repository.Get_Latest_Version
@@ -297,11 +307,13 @@ package body Podmander.Controller is
       declare
          Registered_Count : Natural := 0;
          Target_Node_Id   : Unbounded_String := Null_Unbounded_String;
+         All_Agents       : constant Podmander.Types.Agent_Maps.Map :=
+           Agent.Repository.Load_All (Self.DB);
       begin
-         for Cursor in Self.Agents.Iterate loop
+         for Cursor in All_Agents.Iterate loop
             declare
                Info : constant Podmander.Types.Agent_Info :=
-                 Agent_Maps.Element (Cursor);
+                 Podmander.Types.Agent_Maps.Element (Cursor);
             begin
                if Info.State = Podmander.Types.Registered then
                   Registered_Count := Registered_Count + 1;

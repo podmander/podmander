@@ -258,8 +258,8 @@ package body Podmander.Controller_Tests is
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Podmander.Types.Registered,
          Last_Seen => Now);
-      Loaded  : Podmander.Controller.Agent_Maps.Map;
-      Cur     : Podmander.Controller.Agent_Maps.Cursor;
+       Loaded  : Podmander.Types.Agent_Maps.Map;
+       Cur     : Podmander.Types.Agent_Maps.Cursor;
       Element : Podmander.Types.Agent_Info;
    begin
       --  Phase 1: Open DB, register an agent, close (handle auto-finalized)
@@ -285,10 +285,10 @@ package body Podmander.Controller_Tests is
 
       Cur := Loaded.Find ("persisted-agent");
       Assert
-        (Podmander.Controller.Agent_Maps.Has_Element (Cur),
+        (Podmander.Types.Agent_Maps.Has_Element (Cur),
          "Persisted agent should be in loaded map");
 
-      Element := Podmander.Controller.Agent_Maps.Element (Cur);
+      Element := Podmander.Types.Agent_Maps.Element (Cur);
       Assert
         (To_String (Element.Name) = "persisted-agent",
          "Agent name should match after reload");
@@ -361,14 +361,13 @@ package body Podmander.Controller_Tests is
 
      --  Helpers for Controller_Handler tests that work without a live socket.
      function Make_Ctrl
-      return Podmander.Controller.Controller_Instance is
+       return Podmander.Controller.Controller_Instance is
     begin
        return C : Podmander.Controller.Controller_Instance :=
          (Config      => <>,
           DB          => Podmander.Database.Open (":memory:"),
           Certificate => <>,
           Socket      => <>,
-          Agents      => <>,
           Running     => False,
           Test_Deploy => <>)
        do
@@ -476,9 +475,14 @@ package body Podmander.Controller_Tests is
           Enrollment_Secret => To_Unbounded_String ("secret"));
     begin
        H.Handle_Registration_Request (Req);
-       Assert
-         (Ctrl.Agents.Contains ("node-abc"),
-          "Expected agent node-abc in Agents map");
+       declare
+          All_Agents : constant Podmander.Types.Agent_Maps.Map :=
+            Podmander.Controller.Agent.Repository.Load_All (Ctrl.DB);
+       begin
+          Assert
+            (All_Agents.Contains ("web-1"),
+             "Expected agent web-1 in DB");
+       end;
     end Test_Handle_Registration_Request_Adds_Agent;
 
    --  Test: Handle_Heartbeat on a registered agent updates Last_Seen.
@@ -487,45 +491,58 @@ package body Podmander.Controller_Tests is
    is
       pragma Unreferenced (T);
       use type Ada.Calendar.Time;
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
-        Make_Handler (Ctrl'Access, "node-xyz");
-      Past : constant Ada.Calendar.Time := Ada.Calendar.Clock - 60.0;
-      Info : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("web-1"),
-         Node_Id   => To_Unbounded_String ("node-xyz"),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Past);
-      HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Node_Id  => To_Unbounded_String ("node-xyz"),
-         Timestamp => Ada.Calendar.Clock);
+       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+       H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
+         Make_Handler (Ctrl'Access, "node-xyz");
+       Past : constant Ada.Calendar.Time := Ada.Calendar.Clock - 60.0;
+       Info : constant Podmander.Types.Agent_Info :=
+         (Name      => To_Unbounded_String ("web-1"),
+          Node_Id   => To_Unbounded_String ("node-xyz"),
+          State     => Podmander.Types.Registered,
+          Last_Seen => Past);
+       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
+         (Node_Id  => To_Unbounded_String ("node-xyz"),
+          Timestamp => Ada.Calendar.Clock);
     begin
-       Ctrl.Agents.Insert ("node-xyz", Info);
-       --  Also register in DB for persistence (write-through pattern)
        Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
        H.Handle_Heartbeat (HB);
-       Assert
-         (Ctrl.Agents ("node-xyz").Last_Seen > Past,
-          "Last_Seen was not updated");
+       declare
+          Loaded : constant Podmander.Types.Agent_Maps.Map :=
+            Podmander.Controller.Agent.Repository.Load_All (Ctrl.DB);
+          Cur    : constant Podmander.Types.Agent_Maps.Cursor :=
+            Loaded.Find ("web-1");
+       begin
+          Assert
+            (Podmander.Types.Agent_Maps.Has_Element (Cur),
+             "Agent should be in DB after heartbeat");
+          Assert
+            (Podmander.Types.Agent_Maps.Element (Cur).Last_Seen > Past,
+             "Last_Seen was not updated");
+       end;
     end Test_Handle_Heartbeat_Updates_Last_Seen;
 
    --  Test: Handle_Heartbeat for unknown agent does not mutate Agents.
-   procedure Test_Handle_Heartbeat_Unknown_Agent
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
-        Make_Handler (Ctrl'Access, "unknown");
-      HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Node_Id  => To_Unbounded_String ("unknown"),
-         Timestamp => Ada.Calendar.Clock);
-   begin
-      H.Handle_Heartbeat (HB);
-      Assert
-        (Ctrl.Agents.Is_Empty,
-         "Agents map mutated for unknown heartbeat");
-   end Test_Handle_Heartbeat_Unknown_Agent;
+    procedure Test_Handle_Heartbeat_Unknown_Agent
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+       H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
+         Make_Handler (Ctrl'Access, "unknown");
+       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
+         (Node_Id  => To_Unbounded_String ("unknown"),
+          Timestamp => Ada.Calendar.Clock);
+    begin
+       H.Handle_Heartbeat (HB);
+       declare
+          Loaded : constant Podmander.Types.Agent_Maps.Map :=
+            Podmander.Controller.Agent.Repository.Load_All (Ctrl.DB);
+       begin
+          Assert
+            (Natural (Loaded.Length) = 0,
+             "No agent should be in DB after heartbeat from unknown agent");
+       end;
+    end Test_Handle_Heartbeat_Unknown_Agent;
 
    --  Test: Handle_Heartbeat transitions a non-Registered agent back
    --  to Registered.
@@ -535,25 +552,33 @@ package body Podmander.Controller_Tests is
       pragma Unreferenced (T);
       use type Podmander.Types.Agent_State;
       use type Ada.Calendar.Time;
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
-        Make_Handler (Ctrl'Access, "lost-node");
-      Info : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("web-1"),
-         Node_Id   => To_Unbounded_String ("lost-node"),
-         State     => Podmander.Types.Lost,
-         Last_Seen => Ada.Calendar.Clock - 300.0);
-      HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Node_Id  => To_Unbounded_String ("lost-node"),
-         Timestamp => Ada.Calendar.Clock);
+       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+       H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
+         Make_Handler (Ctrl'Access, "lost-node");
+       Info : constant Podmander.Types.Agent_Info :=
+         (Name      => To_Unbounded_String ("web-1"),
+          Node_Id   => To_Unbounded_String ("lost-node"),
+          State     => Podmander.Types.Lost,
+          Last_Seen => Ada.Calendar.Clock - 300.0);
+       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
+         (Node_Id  => To_Unbounded_String ("lost-node"),
+          Timestamp => Ada.Calendar.Clock);
     begin
-       Ctrl.Agents.Insert ("lost-node", Info);
-       --  Also register in DB for persistence (write-through pattern)
        Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
        H.Handle_Heartbeat (HB);
-       Assert
-         (Ctrl.Agents ("lost-node").State = Podmander.Types.Registered,
-          "Expected state to transition to Registered");
+       declare
+          Loaded : constant Podmander.Types.Agent_Maps.Map :=
+            Podmander.Controller.Agent.Repository.Load_All (Ctrl.DB);
+          Cur    : constant Podmander.Types.Agent_Maps.Cursor :=
+            Loaded.Find ("web-1");
+       begin
+          Assert
+            (Podmander.Types.Agent_Maps.Has_Element (Cur),
+             "Agent should be in DB after heartbeat");
+          Assert
+            (Podmander.Types.Agent_Maps.Element (Cur).State = Podmander.Types.Registered,
+             "Expected state to transition to Registered");
+       end;
     end Test_Handle_Heartbeat_Reconnect;
 
     --  Test: Make_Listening_Controller loads an existing secret from DB
@@ -648,12 +673,11 @@ package body Podmander.Controller_Tests is
          (Service_Name => To_Unbounded_String ("web"),
           Quadlet      => To_Unbounded_String ("[Container]\nContainerImage=nginx"),
           Deployed     => False);
-       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
-       Ctrl.Agents.Include ("node-1", Info);
-       Podmander.Controller.Check_Test_Deploy (Ctrl);
-       Assert
-         (Ctrl.Test_Deploy.Deployed,
-          "Check_Test_Deploy should mark Deployed True with one agent");
+        Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
+        Podmander.Controller.Check_Test_Deploy (Ctrl);
+        Assert
+          (Ctrl.Test_Deploy.Deployed,
+           "Check_Test_Deploy should mark Deployed True with one agent");
     end Test_Test_Deploy_Trigger_With_One_Agent;
 
     --  Test: Check_Test_Deploy waits when no agents are connected
@@ -694,11 +718,9 @@ package body Podmander.Controller_Tests is
          (Service_Name => To_Unbounded_String ("web"),
           Quadlet      => To_Unbounded_String ("[Container]\nContainerImage=nginx"),
           Deployed     => False);
-       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info1);
-       Ctrl.Agents.Include ("node-1", Info1);
-       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info2);
-       Ctrl.Agents.Include ("node-2", Info2);
-       Podmander.Controller.Check_Test_Deploy (Ctrl);
+        Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info1);
+        Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info2);
+        Podmander.Controller.Check_Test_Deploy (Ctrl);
        Assert
          (Ctrl.Test_Deploy.Deployed,
           "Check_Test_Deploy should mark Deployed True with multiple agents");
@@ -725,13 +747,12 @@ end Test_Test_Deploy_Trigger_With_Multiple_Agents;
         (Service_Name => To_Unbounded_String ("web"),
          Quadlet      => To_Unbounded_String ("[Container]\nImage=nginx"),
          Deployed     => False);
-      Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
-      Ctrl.Agents.Include ("node-1", Info);
-      Podmander.Controller.Check_Test_Deploy (Ctrl);
-      Assert
-        (not Ctrl.Test_Deploy.Deployed,
-         "Check_Test_Deploy should not deploy to Unresponsive agent");
-   end Test_Test_Deploy_Waits_For_Unresponsive_Agent;
+       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
+       Podmander.Controller.Check_Test_Deploy (Ctrl);
+       Assert
+         (not Ctrl.Test_Deploy.Deployed,
+          "Check_Test_Deploy should not deploy to Unresponsive agent");
+    end Test_Test_Deploy_Waits_For_Unresponsive_Agent;
 
    --  Test: Check_Test_Deploy does nothing when Service_Name is empty
     procedure Test_Find_State_Mismatches_Detects_Stale
@@ -887,13 +908,12 @@ end Test_Test_Deploy_Trigger_With_Multiple_Agents;
           Last_Seen => Ada.Calendar.Clock);
     begin
        --  Leave Test_Deploy at default (empty Service_Name)
-       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
-       Ctrl.Agents.Include ("node-1", Info);
-       Podmander.Controller.Check_Test_Deploy (Ctrl);
-       Assert
-         (not Ctrl.Test_Deploy.Deployed,
-          "Check_Test_Deploy should not trigger when Service_Name is empty");
-     end Test_Test_Deploy_No_Trigger_When_Empty;
+        Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
+        Podmander.Controller.Check_Test_Deploy (Ctrl);
+        Assert
+          (not Ctrl.Test_Deploy.Deployed,
+           "Check_Test_Deploy should not trigger when Service_Name is empty");
+    end Test_Test_Deploy_No_Trigger_When_Empty;
 
    procedure Test_Handle_Deploy_Result_Updates_Actual_State
      (T : in out AUnit.Test_Cases.Test_Case'Class)

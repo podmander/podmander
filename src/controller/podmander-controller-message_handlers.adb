@@ -61,23 +61,22 @@ package body Podmander.Controller.Message_Handlers is
             State     => Podmander.Types.Registered,
             Last_Seen => Ada.Calendar.Clock);
       begin
-         --  Persist to DB (write-through)
-         begin
-            Agent.Repository.Register (H.Ctrl.DB, Info);
-         exception
-            when E : Podmander.Database.Database_Error =>
-               if Podmander.Database.Parse_Error (E).Kind
-                 = Podmander.Database.Constraint_Violation
-               then
-                  --  Agent already in DB (re-registration after restart).
-                  --  Update instead of insert.
-                  Agent.Repository.Touch (H.Ctrl.DB, Info);
-                  Agent.Repository.Set_State (H.Ctrl.DB, Info);
-               else
-                  raise;
-               end if;
-         end;
-         H.Ctrl.Agents.Include (Node_Id, Info);
+          --  Persist to DB
+          begin
+             Agent.Repository.Register (H.Ctrl.DB, Info);
+          exception
+             when E : Podmander.Database.Database_Error =>
+                if Podmander.Database.Parse_Error (E).Kind
+                  = Podmander.Database.Constraint_Violation
+                then
+                   --  Agent already in DB (re-registration after restart).
+                   --  Update instead of insert.
+                   Agent.Repository.Touch (H.Ctrl.DB, Info);
+                   Agent.Repository.Set_State (H.Ctrl.DB, Info);
+                else
+                   raise;
+                end if;
+          end;
          Podmander.Logging.Info
            ("controller", "Registered agent """ & Name & """ as " & Node_Id);
       end;
@@ -99,30 +98,39 @@ package body Podmander.Controller.Message_Handlers is
 
    overriding
    procedure Handle_Heartbeat
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Heartbeat_Message_Type'Class)
+      (H : in out Controller_Handler;
+       M : Podmander.Messages.Heartbeat_Message_Type'Class)
    is
       use Podmander.Messages.Heartbeats;
-      HB       : constant Heartbeat_Message := Heartbeat_Message (M);
-      Node_Id : constant String := To_String (HB.Node_Id);
+      HB        : constant Heartbeat_Message := Heartbeat_Message (M);
+      Node_Id   : constant String := To_String (HB.Node_Id);
+      Found     : Boolean := False;
+      All_Agents : constant Podmander.Types.Agent_Maps.Map :=
+        Agent.Repository.Load_All (H.Ctrl.DB);
    begin
-      if H.Ctrl.Agents.Contains (Node_Id) then
+      for Cur in All_Agents.Iterate loop
          declare
-            Info : Podmander.Types.Agent_Info := H.Ctrl.Agents (Node_Id);
+            Info : Podmander.Types.Agent_Info :=
+              Podmander.Types.Agent_Maps.Element (Cur);
          begin
-            Info.Last_Seen := Ada.Calendar.Clock;
-            if Info.State /= Podmander.Types.Registered then
-               Info.State := Podmander.Types.Registered;
-               Agent.Repository.Set_State (H.Ctrl.DB, Info);
-                Podmander.Logging.Info
-                  ("controller", "Agent " & Node_Id & " reconnected");
+            if To_String (Info.Node_Id) = Node_Id then
+               Found := True;
+               Info.Last_Seen := Ada.Calendar.Clock;
+               if Info.State /= Podmander.Types.Registered then
+                  Info.State := Podmander.Types.Registered;
+                  Agent.Repository.Set_State (H.Ctrl.DB, Info);
+                  Podmander.Logging.Info
+                    ("controller", "Agent " & Node_Id & " reconnected");
+               end if;
+               Agent.Repository.Touch (H.Ctrl.DB, Info);
+               Podmander.Logging.Debug
+                 ("controller", "Heartbeat from " & Node_Id);
+               exit;
             end if;
-            Agent.Repository.Touch (H.Ctrl.DB, Info);
-            H.Ctrl.Agents.Replace (Node_Id, Info);
-            Podmander.Logging.Debug
-              ("controller", "Heartbeat from " & Node_Id);
          end;
-      else
+      end loop;
+
+      if not Found then
          Podmander.Logging.Warning
            ("controller",
             "Heartbeat from unregistered agent "
