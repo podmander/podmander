@@ -113,22 +113,15 @@ erDiagram
     Service ||--|{ Service-Version : "has ordered"
     Service }o--o{ Volume : "mounts"
     Service }o--o{ Secret : "references"
-    Service ||--|| Placement : "has"
+    Service ||--|| Placement-Rule : "has"
 
     %% === Operator interface ===
     CLI ||--|| Controller : "sends commands to"
 
     %% === Scheduling & state flow ===
-    Scheduler ||--o{ Placement : "produces"
-    Scheduler ||--|| Desired-State : "reads"
-    Scheduler ||--|| Expected-State : "writes"
-    Placement }o--|| Node : "targets"
-    Placement }o--|| Service : "assigns"
-
-    %% === Reconciliation ===
-    Supervisor-Loop ||--|| Desired-State : "reads"
-    Supervisor-Loop ||--|| Actual-State : "compares"
-    Agent ||--|| Actual-State : "reports"
+    Scheduler ||--o{ Placement-Rule : "produces"
+    Placement-Rule }o--|| Node : "targets"
+    Placement-Rule }o--|| Service : "assigns"
 
     %% === Agent execution boundary ===
     Agent ||--o{ Quadlet : "writes"
@@ -136,7 +129,6 @@ erDiagram
     Quadlet ||--|| Podman : "interpreted by"
 
     %% === State storage ===
-    Controller ||--|| Desired-State : "stores"
     Controller ||--o{ Secret : "stores encrypted"
 
     %% === Pipeline & protocol ===
@@ -200,10 +192,11 @@ referenced again unless the operator re-deploys.
 
 ### Service
 
-A workload belonging to exactly one stack. A service specifies an image,
-placement rules, resource limits, health checks, and dependencies on other
-services within the same stack. Services are the unit of scaling and rollback.
-Examples: a replicated API, a singleton database, a daemonset-style exporter.
+A workload. A service specifies an image, placement rules, resource limits,
+health checks, and dependencies on other services. Services are the unit of
+scaling and rollback. Examples: a replicated API, a singleton database, a
+daemonset-style exporter. (Stacks are deferred for MVP; a Service Version can
+exist without a Stack reference.)
 
 ### Abstract Service Definition (ASD)
 
@@ -220,7 +213,8 @@ An immutable snapshot of a service's ASD at a point in time. Every `podctl
 deploy` that changes a service creates a new version. The controller retains N
 versions per service (default 10). Rollback creates a new version with content
 from a previous version (like `git revert`), so version numbers always increase.
-Expected State and Actual State reference a specific Service Version.
+Service Catalog entries reference a specific Service Version as their target
+and current version.
 
 ### Service Catalog
 
@@ -315,10 +309,10 @@ be snapshotted on deploy and rolled back alongside service versions.
 ### Desired State
 
 What the operator wants: the latest Service Version for each service, plus
-placement rules and other deployment intent. Stored in SQLite by the
-controller. The supervisor loop compares desired state against actual state to
-detect drift. For MVP, desired state is simply the latest Service Version per
-service; placement rules are added when the scheduler is implemented.
+placement rules and other deployment intent. For MVP, desired state collapses
+into the Service Catalog's `target_version` column. The supervisor loop
+compares `current_version` against `target_version` to detect drift. Placement
+rules are added when the scheduler is implemented.
 
 ### Expected State
 
@@ -327,25 +321,26 @@ derived from desired state and current node topology. Each entry specifies
 one service version on one node (e.g., "api v3 on worker-01"). Expected state
 is regenerable — when conditions change (node loses a label, node goes down),
 the scheduler re-runs and produces new expected state. **For MVP, expected
-state collapses into desired state because placement is trivial (deploy to
-the connected agent). Expected State becomes a separate layer when the
-scheduler is implemented.**
+state collapses into the Service Catalog's `target_version` because placement
+is trivial (deploy to the connected agent). Expected State becomes a separate
+layer when the scheduler is implemented.**
 
 ### Actual State
 
-What is actually running on each node, as reported by agents. Each entry
-specifies one service version on one node. For MVP, actual state tracks only
-which version is deployed where; runtime status (RUNNING, STOPPED,
-DEPLOY_FAILED, etc.) is added when agents report service-level status. The
-supervisor loop compares actual state against desired state (MVP) or expected
-state (full model) to detect drift.
+What is actually running on each node, as reported by agents. For MVP, actual
+state is the Service Catalog's `current_version` column — `0` means "not
+deployed." Runtime status (RUNNING, STOPPED, DEPLOY_FAILED, etc.) is added when
+agents report service-level status. The supervisor loop compares
+`current_version` against `target_version` (MVP) or against expected state
+(full model) to detect drift.
 
 ### Supervisor Loop
 
-The controller's continuous reconciliation cycle: receive agent status, update
-actual state, compare against expected state, and act on divergences (alert or
-auto-remediate). There is no separate "recovery mode" — startup, steady state,
-and failure recovery all use the same loop.
+The controller's continuous reconciliation cycle: receive Deploy_Results,
+update Service Catalog entries, compare `current_version` against
+`target_version`, and act on divergences (deploy or alert). There is no
+separate "recovery mode" — startup, steady state, and failure recovery all use
+the same loop.
 
 ### Infrastructure Component
 
