@@ -108,6 +108,8 @@ package body Podmander.Controller.Message_Handlers is
       All_Agents : constant Podmander.Types.Agent_Maps.Map :=
         Agent.Repository.Load_All (H.Ctrl.DB);
    begin
+      --  The map is keyed by agent name, not by Node_Id, so we must
+      --  scan linearly to find the agent with the matching Node_Id.
       for Cur in All_Agents.Iterate loop
          declare
             Info : Podmander.Types.Agent_Info :=
