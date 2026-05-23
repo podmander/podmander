@@ -176,7 +176,10 @@ package body Podmander.Controller.Message_Handlers is
               (H.Ctrl.DB, Entry_To_Upsert);
          exception
             when Podmander.Database.Database_Error =>
-               null;
+               Podmander.Logging.Warning
+                 ("controller",
+                  "Failed to update actual_state for "
+                  & To_String (Result.Service_Name));
          end;
          Podmander.Logging.Info
            ("controller",
