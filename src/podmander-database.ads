@@ -6,7 +6,7 @@
 --
 --  This package owns the DB_Handle (wrapping Ada_Sqlite3.Database) and
 --  exposes it to the Repository packages. Each Repository child package
---  provides domain-driven operations â not generic CRUD â named after the
+--  provides domain-driven operations ÃÂ¢ÃÂÃÂ not generic CRUD ÃÂ¢ÃÂÃÂ named after the
 --  business events that trigger them.
 
 with Ada.Exceptions;
@@ -21,8 +21,7 @@ package Podmander.Database is
    --  The exception message carries a structured error description
    --  (see Error_Kind and Format_Error below).
 
-   type Error_Kind is
-     (Constraint_Violation, Not_Found, Device_Full, Schema_Error, Unknown);
+   type Error_Kind is (Constraint_Violation, Not_Found, Device_Full, Schema_Error, Unknown);
    --  Classification of SQLite error conditions. Used by callers that
    --  need to distinguish failure modes (e.g., UNIQUE violation vs I/O).
 
@@ -39,8 +38,7 @@ package Podmander.Database is
    --  Format Error_Info into a human-readable string for the
    --  Database_Error exception message. Format: "[Kind|code] message"
 
-   function Parse_Error
-     (E : Ada.Exceptions.Exception_Occurrence) return Error_Info;
+   function Parse_Error (E : Ada.Exceptions.Exception_Occurrence) return Error_Info;
    --  Extract Error_Info from a Database_Error exception occurrence.
    --  Returns Kind => Unknown if the message cannot be parsed.
 
@@ -69,12 +67,10 @@ package Podmander.Database is
    --  to the connection. Auto-finalized when it goes out of scope.
    --  Raises Database_Error on failure.
 
-   procedure Bind_Text
-      (QH : in out Query_Handle; Index : Positive; Value : String);
+   procedure Bind_Text (QH : in out Query_Handle; Index : Positive; Value : String);
    --  Bind a text value to a parameter by position.
 
-   procedure Bind_Null
-      (QH : in out Query_Handle; Index : Positive);
+   procedure Bind_Null (QH : in out Query_Handle; Index : Positive);
    --  Bind NULL to a parameter by position.
 
    function Step (QH : in out Query_Handle) return Boolean;
@@ -112,7 +108,7 @@ private
    overriding
    procedure Finalize (Handle : in out DB_Handle);
    --  Empty override. Ada auto-finalizes the DB component after this.
-   --  Do NOT call Handle.DB.Finalize explicitly â that would cause
+   --  Do NOT call Handle.DB.Finalize explicitly ÃÂ¢ÃÂÃÂ that would cause
    --  double-finalization.
 
    type Query_Handle is limited record

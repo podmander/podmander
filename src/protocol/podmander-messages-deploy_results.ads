@@ -22,7 +22,6 @@ package Podmander.Messages.Deploy_Results is
    procedure Encode (Self : Deploy_Result; Msg : in out CZMQ.Messages.Message);
 
    overriding
-   procedure Dispatch_To
-     (Self : Deploy_Result; H : in out Message_Handler'Class);
+   procedure Dispatch_To (Self : Deploy_Result; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Deploy_Results;

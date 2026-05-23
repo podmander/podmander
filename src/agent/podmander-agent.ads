@@ -19,13 +19,12 @@ package Podmander.Agent is
 
    --  Certificate and Socket are long-lived fields managed via the
    --  CZMQ Open/Close API. On each reconnect cycle, Close is called
-   --  first (idempotent â no-op if already closed), then Open_Dealer
+   --  first (idempotent ÃÂ¢ÃÂÃÂ no-op if already closed), then Open_Dealer
    --  and Generate re-establish the connection. Finalize releases
    --  resources when the agent shuts down.
    type Agent_Instance is tagged limited record
       Config            : Agent_Config;
-      State             : Podmander.Types.Connection_State :=
-        Podmander.Types.Disconnected;
+      State             : Podmander.Types.Connection_State := Podmander.Types.Disconnected;
       Node_Id           : Ada.Strings.Unbounded.Unbounded_String;
       Running           : Boolean := False;
       Backoff           : Duration := 1.0;

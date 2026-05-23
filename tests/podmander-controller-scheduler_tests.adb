@@ -35,12 +35,8 @@ package body Podmander.Controller.Scheduler_Tests is
 
    --  Helper: create a service and at least one version so FK constraints
    --  are satisfied. Returns the service id.
-   function Seed_Service
-     (Handle : in out DB.DB_Handle; Name : String; Versions : Positive)
-      return Integer
-   is
-      Svc_Rec : constant Podmander.Controller.Service.Service :=
-        Svc_Repo.Create (Handle, Name);
+   function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Integer is
+      Svc_Rec : constant Podmander.Controller.Service.Service := Svc_Repo.Create (Handle, Name);
       SV      : Podmander.Controller.Service_Version;
    begin
       for V in 1 .. Versions loop
@@ -58,76 +54,50 @@ package body Podmander.Controller.Scheduler_Tests is
    --  Test_Schedule_New_Entry
    --------------------------
 
-   procedure Test_Schedule_New_Entry
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Schedule_New_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 2);
-      Result  : Scheduler.Schedule_Result :=
-        Scheduler.Schedule
-          (D, Service_Id => Svc, Target_Version => 2, Node_Id => "node-1");
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      Svc    : Integer := Seed_Service (D, "web", 2);
+      Result : Scheduler.Schedule_Result :=
+        Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2, Node_Id => "node-1");
    begin
       Assert (Result.Ok, "Schedule should succeed for new entry");
-      Assert
-        (Result.Catalog_Entry.Id > 0,
-         "Id should be positive after create");
-      Assert
-        (Result.Catalog_Entry.Service_Id = Svc,
-         "Service_Id should match");
-      Assert
-        (To_String (Result.Catalog_Entry.Node_Id) = "node-1",
-         "Node_Id should be 'node-1'");
-      Assert
-        (Result.Catalog_Entry.Current_Version = 0,
-         "Current_Version should be 0");
-      Assert
-        (Result.Catalog_Entry.Target_Version = 2,
-         "Target_Version should be 2");
-      Assert
-        (not Result.Catalog_Entry.Failed,
-         "Failed should be False");
-      Assert
-        (Result.Error = Scheduler.None, "Error should be None");
+      Assert (Result.Catalog_Entry.Id > 0, "Id should be positive after create");
+      Assert (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
+      Assert (To_String (Result.Catalog_Entry.Node_Id) = "node-1", "Node_Id should be 'node-1'");
+      Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should be 0");
+      Assert (Result.Catalog_Entry.Target_Version = 2, "Target_Version should be 2");
+      Assert (not Result.Catalog_Entry.Failed, "Failed should be False");
+      Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_New_Entry;
 
    ---------------------------------
    --  Test_Schedule_New_Entry_No_Agent
    ---------------------------------
 
-   procedure Test_Schedule_New_Entry_No_Agent
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Schedule_New_Entry_No_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "db", 1);
-      Result  : Scheduler.Schedule_Result :=
-        Scheduler.Schedule
-          (D, Service_Id => Svc, Target_Version => 1, Node_Id => "");
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      Svc    : Integer := Seed_Service (D, "db", 1);
+      Result : Scheduler.Schedule_Result :=
+        Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1, Node_Id => "");
    begin
       Assert (Result.Ok, "Schedule should succeed with no agent");
-      Assert
-        (To_String (Result.Catalog_Entry.Node_Id) = "",
-         "Node_Id should be empty when no agent is connected");
-      Assert
-        (Result.Error = Scheduler.None, "Error should be None");
+      Assert (To_String (Result.Catalog_Entry.Node_Id) = "", "Node_Id should be empty when no agent is connected");
+      Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_New_Entry_No_Agent;
 
    --------------------------------
    --  Test_Schedule_Update_Existing
    --------------------------------
 
-   procedure Test_Schedule_Update_Existing
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Schedule_Update_Existing (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D        : DB.DB_Handle := DB.Open (":memory:");
-      Svc      : Integer := Seed_Service (D, "web", 3);
-      Created  : Podmander.Controller.Service_Catalog_Entry :=
-        Cat_Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => "node-1",
-           Target_Version => 1);
-      Result   : Scheduler.Schedule_Result;
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : Integer := Seed_Service (D, "web", 3);
+      Created : Podmander.Controller.Service_Catalog_Entry :=
+        Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 1);
+      Result  : Scheduler.Schedule_Result;
    begin
       --  Mark as failed first to verify it gets cleared
       declare
@@ -138,78 +108,50 @@ package body Podmander.Controller.Scheduler_Tests is
       end;
 
       --  Schedule with a new target_version
-      Result := Scheduler.Schedule
-        (D, Service_Id => Svc, Target_Version => 3,
-         Node_Id => "node-1");
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 3, Node_Id => "node-1");
 
       Assert (Result.Ok, "Schedule should succeed for existing entry");
-      Assert
-        (Result.Catalog_Entry.Id = Created.Id,
-         "Entry id should remain the same");
-      Assert
-        (Result.Catalog_Entry.Target_Version = 3,
-         "Target_Version should be updated to 3");
-      Assert
-        (Result.Catalog_Entry.Current_Version = 0,
-         "Current_Version should remain 0");
-      Assert
-        (not Result.Catalog_Entry.Failed,
-         "Failed should be cleared after schedule");
-      Assert
-        (Result.Error = Scheduler.None, "Error should be None");
+      Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
+      Assert (Result.Catalog_Entry.Target_Version = 3, "Target_Version should be updated to 3");
+      Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should remain 0");
+      Assert (not Result.Catalog_Entry.Failed, "Failed should be cleared after schedule");
+      Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Update_Existing;
 
    ------------------------------------
    --  Test_Schedule_Update_Assign_Node
    ------------------------------------
 
-   procedure Test_Schedule_Update_Assign_Node
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Schedule_Update_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D        : DB.DB_Handle := DB.Open (":memory:");
-      Svc      : Integer := Seed_Service (D, "web", 2);
-      Created  : Podmander.Controller.Service_Catalog_Entry :=
-        Cat_Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => "",
-           Target_Version => 1);
-      Result   : Scheduler.Schedule_Result;
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : Integer := Seed_Service (D, "web", 2);
+      Created : Podmander.Controller.Service_Catalog_Entry :=
+        Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
+      Result  : Scheduler.Schedule_Result;
    begin
       --  Schedule with a node_id to assign it
-      Result := Scheduler.Schedule
-        (D, Service_Id => Svc, Target_Version => 2,
-         Node_Id => "assigned-node");
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2, Node_Id => "assigned-node");
 
       Assert (Result.Ok, "Schedule should succeed");
+      Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
       Assert
-        (Result.Catalog_Entry.Id = Created.Id,
-         "Entry id should remain the same");
-      Assert
-        (To_String (Result.Catalog_Entry.Node_Id) = "assigned-node",
-         "Node_Id should be 'assigned-node' after assign");
-      Assert
-        (Result.Catalog_Entry.Target_Version = 2,
-         "Target_Version should be updated");
-      Assert
-        (Result.Error = Scheduler.None, "Error should be None");
+        (To_String (Result.Catalog_Entry.Node_Id) = "assigned-node", "Node_Id should be 'assigned-node' after assign");
+      Assert (Result.Catalog_Entry.Target_Version = 2, "Target_Version should be updated");
+      Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Update_Assign_Node;
 
    overriding
    procedure Register_Tests (T : in out Scheduler_Test) is
       use AUnit.Test_Cases.Registration;
    begin
+      Register_Routine (T, Test_Schedule_New_Entry'Access, "Schedule creates a new catalog entry");
       Register_Routine
-        (T, Test_Schedule_New_Entry'Access,
-         "Schedule creates a new catalog entry");
+        (T, Test_Schedule_New_Entry_No_Agent'Access, "Schedule creates entry with empty Node_Id when no agent");
       Register_Routine
-        (T, Test_Schedule_New_Entry_No_Agent'Access,
-         "Schedule creates entry with empty Node_Id when no agent");
+        (T, Test_Schedule_Update_Existing'Access, "Schedule updates target and clears failed on existing");
       Register_Routine
-        (T, Test_Schedule_Update_Existing'Access,
-         "Schedule updates target and clears failed on existing");
-      Register_Routine
-        (T, Test_Schedule_Update_Assign_Node'Access,
-         "Schedule assigns node when updating existing entry");
+        (T, Test_Schedule_Update_Assign_Node'Access, "Schedule assigns node when updating existing entry");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

@@ -14,7 +14,8 @@ project Podmander_Tests is
 
    package Compiler is
       for Default_Switches ("Ada") use
-        Podmander_Config.Ada_Compiler_Switches;
+        Podmander_Config.Ada_Compiler_Switches &
+         ("-gnatyM120"); --  max line length 120
    end Compiler;
 
    package Binder is

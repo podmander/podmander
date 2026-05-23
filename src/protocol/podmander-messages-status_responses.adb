@@ -4,8 +4,7 @@
 package body Podmander.Messages.Status_Responses is
 
    overriding
-   procedure Encode
-     (Self : Status_Response; Msg : in out CZMQ.Messages.Message) is
+   procedure Encode (Self : Status_Response; Msg : in out CZMQ.Messages.Message) is
    begin
       Msg.Add_String (Status_Ack_Kind);
       Msg.Add_String (RC.Encode_Code (Self.Code));
@@ -14,21 +13,18 @@ package body Podmander.Messages.Status_Responses is
    end Encode;
 
    overriding
-   procedure Dispatch_To
-     (Self : Status_Response; H : in out Message_Handler'Class) is
+   procedure Dispatch_To (Self : Status_Response; H : in out Message_Handler'Class) is
    begin
       H.Handle_Status_Response (Self);
    end Dispatch_To;
 
-   function Decode_Impl
-     (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
+   function Decode_Impl (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
    begin
       if Msg.Size < 3 then
          raise Decode_Error with "status_ack: missing payload frames";
       end if;
       declare
-         Code          : constant RC.Result_Code :=
-           RC.Decode_Code (Msg.Pop_String);
+         Code          : constant RC.Result_Code := RC.Decode_Code (Msg.Pop_String);
          Containers    : constant String := Msg.Pop_String;
          Error_Message : constant String := Msg.Pop_String;
       begin

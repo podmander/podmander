@@ -12,7 +12,6 @@ package Podmander.Messages.Status_Queries is
    procedure Encode (Self : Status_Query; Msg : in out CZMQ.Messages.Message);
 
    overriding
-   procedure Dispatch_To
-     (Self : Status_Query; H : in out Message_Handler'Class);
+   procedure Dispatch_To (Self : Status_Query; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Status_Queries;

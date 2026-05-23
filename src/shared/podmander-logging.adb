@@ -12,11 +12,7 @@ package body Podmander.Logging is
      [Debug => 7, Info => 6, Warning => 4, Error => 3, Critical => 2];
 
    Level_Labels : constant array (Log_Level) of String (1 .. 8) :=
-     [Debug    => "DEBUG   ",
-      Info     => "INFO    ",
-      Warning  => "WARNING ",
-      Error    => "ERROR   ",
-      Critical => "CRITICAL"];
+     [Debug => "DEBUG   ", Info => "INFO    ", Warning => "WARNING ", Error => "ERROR   ", Critical => "CRITICAL"];
 
    Is_Terminal : Boolean := False;
    TTY_Checked : Boolean := False;
@@ -53,14 +49,7 @@ package body Podmander.Logging is
       end if;
 
       if Running_In_Terminal then
-         Ada.Text_IO.Put_Line
-           ("["
-            & Level_Labels (Level)
-            & "] "
-            & "["
-            & Component
-            & "] "
-            & Message);
+         Ada.Text_IO.Put_Line ("[" & Level_Labels (Level) & "] " & "[" & Component & "] " & Message);
       else
          Ada.Text_IO.Put_Line ("<" & Pri_Tr & ">" & Message);
       end if;

@@ -21,11 +21,9 @@ package Podmander.Messages.Status_Responses is
    end record;
 
    overriding
-   procedure Encode
-     (Self : Status_Response; Msg : in out CZMQ.Messages.Message);
+   procedure Encode (Self : Status_Response; Msg : in out CZMQ.Messages.Message);
 
    overriding
-   procedure Dispatch_To
-     (Self : Status_Response; H : in out Message_Handler'Class);
+   procedure Dispatch_To (Self : Status_Response; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Status_Responses;

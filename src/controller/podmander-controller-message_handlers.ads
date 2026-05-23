@@ -10,43 +10,30 @@ package Podmander.Controller.Message_Handlers is
 
    --  Concrete Message_Handler that mutates a Controller_Instance.
    --  Exposed as a public child so tests can drive it without a live socket.
-   type Controller_Handler is limited new Podmander.Messages.Message_Handler
-   with record
+   type Controller_Handler is limited new Podmander.Messages.Message_Handler with record
       Ctrl     : access Controller_Instance;
       Identity : Unbounded_String;
    end record;
 
    overriding
    procedure Handle_Registration_Request
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Registration_Request_Type'Class);
+     (H : in out Controller_Handler; M : Podmander.Messages.Registration_Request_Type'Class);
 
    overriding
-   procedure Handle_Heartbeat
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Heartbeat_Message_Type'Class);
+   procedure Handle_Heartbeat (H : in out Controller_Handler; M : Podmander.Messages.Heartbeat_Message_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Command
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Deploy_Command_Type'Class);
+   procedure Handle_Deploy_Command (H : in out Controller_Handler; M : Podmander.Messages.Deploy_Command_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Result
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Deploy_Result_Type'Class);
+   procedure Handle_Deploy_Result (H : in out Controller_Handler; M : Podmander.Messages.Deploy_Result_Type'Class);
 
    overriding
-   procedure Handle_Status_Query
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Status_Query_Type'Class);
+   procedure Handle_Status_Query (H : in out Controller_Handler; M : Podmander.Messages.Status_Query_Type'Class);
 
    overriding
-   procedure Handle_Status_Response
-     (H : in out Controller_Handler;
-      M : Podmander.Messages.Status_Response_Type'Class);
+   procedure Handle_Status_Response (H : in out Controller_Handler; M : Podmander.Messages.Status_Response_Type'Class);
 
-   procedure Send_Status_Query
-     (H : in out Controller_Handler; Node_Id : String);
+   procedure Send_Status_Query (H : in out Controller_Handler; Node_Id : String);
 
 end Podmander.Controller.Message_Handlers;

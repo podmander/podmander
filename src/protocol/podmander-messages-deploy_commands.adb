@@ -4,8 +4,7 @@
 package body Podmander.Messages.Deploy_Commands is
 
    overriding
-   procedure Encode (Self : Deploy_Command; Msg : in out CZMQ.Messages.Message)
-   is
+   procedure Encode (Self : Deploy_Command; Msg : in out CZMQ.Messages.Message) is
    begin
       Msg.Add_String (Deploy_Kind);
       Msg.Add_String (Integer'Image (Self.Catalog_Id));
@@ -14,14 +13,12 @@ package body Podmander.Messages.Deploy_Commands is
    end Encode;
 
    overriding
-   procedure Dispatch_To
-     (Self : Deploy_Command; H : in out Message_Handler'Class) is
+   procedure Dispatch_To (Self : Deploy_Command; H : in out Message_Handler'Class) is
    begin
       H.Handle_Deploy_Command (Self);
    end Dispatch_To;
 
-   function Decode_Impl
-     (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
+   function Decode_Impl (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
    begin
       if Msg.Size < 3 then
          raise Decode_Error with "deploy: missing payload frames";

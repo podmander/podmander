@@ -26,20 +26,15 @@ package body Podmander.Controller.Scheduler is
    ---------------
 
    function Schedule
-     (DB             : in out DB_Handle;
-      Service_Id     : Integer;
-      Target_Version : Positive;
-      Node_Id        : String)
-      return Schedule_Result
+     (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive; Node_Id : String) return Schedule_Result
    is
    begin
       declare
-         Existing : constant Podmander.Controller.Service_Catalog_Entry :=
-           Get_By_Service_Id (DB, Service_Id);
+         Existing : constant Podmander.Controller.Service_Catalog_Entry := Get_By_Service_Id (DB, Service_Id);
          Updated  : Boolean;
          pragma Unreferenced (Updated);
       begin
-         --  Entry exists — update target and clear failed
+         --  Entry exists Ã¢ÂÂ update target and clear failed
          Updated := Set_Target (DB, Existing.Id, Target_Version);
 
          --  Assign node if one is provided
@@ -47,10 +42,7 @@ package body Podmander.Controller.Scheduler is
             Updated := Assign_Node (DB, Existing.Id, Node_Id);
          end if;
 
-         return
-           (Ok            => True,
-            Catalog_Entry => Get_By_Id (DB, Existing.Id),
-            Error         => None);
+         return (Ok => True, Catalog_Entry => Get_By_Id (DB, Existing.Id), Error => None);
       end;
    exception
       when E : Podmander.Database.Database_Error =>
@@ -58,21 +50,15 @@ package body Podmander.Controller.Scheduler is
             Info : constant Error_Info := Parse_Error (E);
          begin
             if Info.Kind = Not_Found then
-               --  No existing entry — create a new one
+               --  No existing entry Ã¢ÂÂ create a new one
                return
                  (Ok            => True,
-                  Catalog_Entry => Create_Entry
-                    (DB,
-                     Service_Id     => Service_Id,
-                     Node_Id        => Node_Id,
-                     Target_Version => Target_Version),
+                  Catalog_Entry =>
+                    Create_Entry (DB, Service_Id => Service_Id, Node_Id => Node_Id, Target_Version => Target_Version),
                   Error         => None);
             end if;
          end;
-         return
-           (Ok            => False,
-            Catalog_Entry => Dummy_Entry,
-            Error         => Database_Error);
+         return (Ok => False, Catalog_Entry => Dummy_Entry, Error => Database_Error);
    end Schedule;
 
 end Podmander.Controller.Scheduler;

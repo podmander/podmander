@@ -37,11 +37,7 @@ package body Podmander.Controller.Registrar_Tests is
 
    --  Helper: build a minimal Service_Definition
    function Make_Service_Definition
-     (Name   : String;
-      Image  : String;
-      Desc   : String;
-      Wanted : String)
-      return Podmander.Config.Service_Definition
+     (Name : String; Image : String; Desc : String; Wanted : String) return Podmander.Config.Service_Definition
    is
       Result : Podmander.Config.Service_Definition;
    begin
@@ -59,50 +55,36 @@ package body Podmander.Controller.Registrar_Tests is
    --  Test: Register a brand new service
    ---------------------------------------
 
-   procedure Test_Register_New_Service
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Register_New_Service (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
       ASD    : constant Podmander.Config.Service_Definition :=
-        Make_Service_Definition
-          (Service_Name, Service_Image, Service_Desc, Service_Wanted);
+        Make_Service_Definition (Service_Name, Service_Image, Service_Desc, Service_Wanted);
       Result : Registrar.Register_Result;
       Found  : Podmander.Controller.Service.Service;
    begin
       Result := Registrar.Register (D, ASD);
       Assert (Result.Ok, "Register should succeed for new service");
-      Assert
-        (Result.Error = Registrar.None,
-         "Error should be None on success");
+      Assert (Result.Error = Registrar.None, "Error should be None on success");
 
       --  Verify service row exists
       Found := Repo.Get_By_Name (D, Service_Name);
-      Assert
-        (To_String (Found.Name) = Service_Name,
-         "Service name should match");
-      Assert
-        (Found.Id = Result.Version.Service_Id,
-         "Service id should match in version");
+      Assert (To_String (Found.Name) = Service_Name, "Service name should match");
+      Assert (Found.Id = Result.Version.Service_Id, "Service id should match in version");
 
       --  Verify version is 1
-      Assert
-        (Result.Version.Version = 1,
-         "First version should be 1");
+      Assert (Result.Version.Version = 1, "First version should be 1");
    end Test_Register_New_Service;
 
    ------------------------------------------------
    --  Test: Register existing service increments version
    ------------------------------------------------
 
-   procedure Test_Register_Existing_Service_Increment_Version
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Register_Existing_Service_Increment_Version (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       ASD     : constant Podmander.Config.Service_Definition :=
-        Make_Service_Definition
-          (Service_Name, Service_Image, Service_Desc, Service_Wanted);
+        Make_Service_Definition (Service_Name, Service_Image, Service_Desc, Service_Wanted);
       Result1 : Registrar.Register_Result;
       Result2 : Registrar.Register_Result;
    begin
@@ -116,22 +98,18 @@ package body Podmander.Controller.Registrar_Tests is
 
       --  Both should have the same Service_Id
       Assert
-        (Result1.Version.Service_Id = Result2.Version.Service_Id,
-         "Both versions should reference the same service");
+        (Result1.Version.Service_Id = Result2.Version.Service_Id, "Both versions should reference the same service");
    end Test_Register_Existing_Service_Increment_Version;
 
    -------------------------------------------------
    --  Test: Idempotent service creation
    -------------------------------------------------
 
-   procedure Test_Register_Idempotent_Service_Creation
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Register_Idempotent_Service_Creation (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       ASD     : constant Podmander.Config.Service_Definition :=
-        Make_Service_Definition
-          (Service_Name, Service_Image, Service_Desc, Service_Wanted);
+        Make_Service_Definition (Service_Name, Service_Image, Service_Desc, Service_Wanted);
       Result1 : Registrar.Register_Result;
       Result2 : Registrar.Register_Result;
    begin
@@ -142,14 +120,10 @@ package body Podmander.Controller.Registrar_Tests is
       Assert (Result2.Ok, "Second register should succeed");
 
       --  Same service id both times
-      Assert
-        (Result1.Version.Service_Id = Result2.Version.Service_Id,
-         "Register twice should return same service id");
+      Assert (Result1.Version.Service_Id = Result2.Version.Service_Id, "Register twice should return same service id");
 
       --  Only one services row exists
-      Assert
-        (Result1.Version.Service_Id > 0,
-         "Service id should be positive");
+      Assert (Result1.Version.Service_Id > 0, "Service id should be positive");
    end Test_Register_Idempotent_Service_Creation;
 
    ------------------------------------
@@ -161,17 +135,13 @@ package body Podmander.Controller.Registrar_Tests is
       use AUnit.Test_Cases.Registration;
    begin
       Register_Routine
-        (T,
-         Test_Register_New_Service'Access,
-         "Register a new service creates services row and version 1");
+        (T, Test_Register_New_Service'Access, "Register a new service creates services row and version 1");
       Register_Routine
         (T,
          Test_Register_Existing_Service_Increment_Version'Access,
          "Register same service twice increments version to 2");
       Register_Routine
-        (T,
-         Test_Register_Idempotent_Service_Creation'Access,
-         "Register same service twice returns same service id");
+        (T, Test_Register_Idempotent_Service_Creation'Access, "Register same service twice returns same service id");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

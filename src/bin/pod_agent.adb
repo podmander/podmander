@@ -12,13 +12,11 @@ begin
    declare
       Level_Str : constant String := Podmander.CLI.Get ("log-level", "info");
    begin
-      Podmander.Logging.Set_Level
-        (Podmander.Logging.Log_Level'Value (Level_Str));
+      Podmander.Logging.Set_Level (Podmander.Logging.Log_Level'Value (Level_Str));
    exception
       when Constraint_Error =>
          Podmander.Logging.Set_Level (Podmander.Logging.Info);
-         Podmander.Logging.Warning
-           ("agent", "Invalid log level '" & Level_Str & "', using Info");
+         Podmander.Logging.Warning ("agent", "Invalid log level '" & Level_Str & "', using Info");
    end;
 
    declare
@@ -34,13 +32,9 @@ begin
 
    declare
       Config : constant Podmander.Agent.Agent_Config :=
-        (Controller_Address   =>
-           To_Unbounded_String
-             (Podmander.CLI.Get ("connect", "tcp://localhost:5555")),
-         Agent_Name           =>
-           To_Unbounded_String (Podmander.CLI.Get ("name", "agent-1")),
-         Join_Token           =>
-           To_Unbounded_String (Podmander.CLI.Get ("token", "")),
+        (Controller_Address   => To_Unbounded_String (Podmander.CLI.Get ("connect", "tcp://localhost:5555")),
+         Agent_Name           => To_Unbounded_String (Podmander.CLI.Get ("name", "agent-1")),
+         Join_Token           => To_Unbounded_String (Podmander.CLI.Get ("token", "")),
          Heartbeat_Interval   => Podmander.CLI.Get_Duration ("interval", 30.0),
          Registration_Timeout => 5.0,
          Max_Backoff          => 60.0);

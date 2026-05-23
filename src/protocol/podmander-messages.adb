@@ -23,9 +23,7 @@ package body Podmander.Messages is
       Decoders.Insert (Kind, Decoder);
    end Register;
 
-   function Decode
-     (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class
-   is
+   function Decode (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
       Kind : constant String := Msg.Pop_String;
    begin
       if Decoders.Contains (Kind) then

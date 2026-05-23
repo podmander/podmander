@@ -33,12 +33,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    --  Helper: create a service and at least one version so FK constraints
    --  are satisfied. Returns the service id.
-   function Seed_Service
-     (Handle : in out DB.DB_Handle; Name : String; Versions : Positive)
-      return Integer
-   is
-      Svc_Rec : constant Podmander.Controller.Service.Service :=
-        Svc_Repo.Create (Handle, Name);
+   function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Integer is
+      Svc_Rec : constant Podmander.Controller.Service.Service := Svc_Repo.Create (Handle, Name);
       SV      : Podmander.Controller.Service_Version;
    begin
       for V in 1 .. Versions loop
@@ -56,20 +52,16 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    --  Test_Create_Entry
    ---------------------
 
-   procedure Test_Create_Entry
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Create_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "web", 2);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
-      Assert
-        (To_String (Cat_Ent.Node_Id) = "node-1", "Node_Id should be 'node-1'");
+      Assert (To_String (Cat_Ent.Node_Id) = "node-1", "Node_Id should be 'node-1'");
       Assert (Cat_Ent.Current_Version = 0, "Current_Version should be 0");
       Assert (Cat_Ent.Target_Version = 2, "Target_Version should be 2");
       Assert (not Cat_Ent.Failed, "Failed should be False");
@@ -79,42 +71,32 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    --  Test_Create_Entry_Unscheduled
    -------------------------------
 
-   procedure Test_Create_Entry_Unscheduled
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Create_Entry_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "db", 1);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
-      Assert
-        (To_String (Cat_Ent.Node_Id) = "",
-         "Node_Id should be empty for unscheduled entry");
+      Assert (To_String (Cat_Ent.Node_Id) = "", "Node_Id should be empty for unscheduled entry");
    end Test_Create_Entry_Unscheduled;
 
    -----------------
    --  Test_Get_By_Id
    -----------------
 
-   procedure Test_Get_By_Id
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Get_By_Id (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "web", 2);
       Created : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 2);
-      Loaded  : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Get_By_Id (D, Created.Id);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
+      Loaded  : Podmander.Controller.Service_Catalog_Entry := Repo.Get_By_Id (D, Created.Id);
    begin
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
-      Assert
-        (To_String (Loaded.Node_Id) = "node-1", "Node_Id should match");
+      Assert (To_String (Loaded.Node_Id) = "node-1", "Node_Id should match");
       Assert (Loaded.Target_Version = 2, "Target_Version should match");
    end Test_Get_By_Id;
 
@@ -122,17 +104,14 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    --  Test_Get_By_Id_Not_Found
    ---------------------------
 
-   procedure Test_Get_By_Id_Not_Found
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Get_By_Id_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D         : DB.DB_Handle := DB.Open (":memory:");
       Got_Error : Boolean := False;
    begin
       begin
          declare
-            Ignored : Podmander.Controller.Service_Catalog_Entry :=
-              Repo.Get_By_Id (D, 999);
+            Ignored : Podmander.Controller.Service_Catalog_Entry := Repo.Get_By_Id (D, 999);
          begin
             null;
             pragma Unreferenced (Ignored);
@@ -142,44 +121,31 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
             declare
                Err : constant DB.Error_Info := DB.Parse_Error (E);
             begin
-               Assert
-                 (Err.Kind = DB.Not_Found,
-                  "Get_By_Id on unknown should raise Not_Found");
+               Assert (Err.Kind = DB.Not_Found, "Get_By_Id on unknown should raise Not_Found");
                Got_Error := True;
             end;
       end;
-      Assert
-        (Got_Error,
-         "Get_By_Id on unknown should have raised Database_Error");
+      Assert (Got_Error, "Get_By_Id on unknown should have raised Database_Error");
    end Test_Get_By_Id_Not_Found;
 
    -----------------------
    --  Test_Get_Unscheduled
    -----------------------
 
-   procedure Test_Get_Unscheduled
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Get_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D             : DB.DB_Handle := DB.Open (":memory:");
-      Svc           : Integer := Seed_Service (D, "web", 1);
-      Ignored1      : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 1);
-      Ignored2      : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "",
-                          Target_Version => 1);
-      Unscheduled   : Podmander.Controller.Catalog_Entry_Vectors.Vector :=
-        Repo.Get_Unscheduled (D);
+      D           : DB.DB_Handle := DB.Open (":memory:");
+      Svc         : Integer := Seed_Service (D, "web", 1);
+      Ignored1    : Podmander.Controller.Service_Catalog_Entry :=
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 1);
+      Ignored2    : Podmander.Controller.Service_Catalog_Entry :=
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
+      Unscheduled : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Unscheduled (D);
    begin
       pragma Unreferenced (Ignored1);
-      Assert
-        (Natural (Unscheduled.Length) = 1,
-         "Should find 1 unscheduled entry");
+      Assert (Natural (Unscheduled.Length) = 1, "Should find 1 unscheduled entry");
       if not Unscheduled.Is_Empty then
-         Assert
-           (To_String (Unscheduled.First_Element.Node_Id) = "",
-            "Unscheduled entry should have empty Node_Id");
+         Assert (To_String (Unscheduled.First_Element.Node_Id) = "", "Unscheduled entry should have empty Node_Id");
       end if;
    end Test_Get_Unscheduled;
 
@@ -187,63 +153,48 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    --  Test_Get_Drift
    ----------------
 
-   procedure Test_Get_Drift
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Get_Drift (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D     : DB.DB_Handle := DB.Open (":memory:");
       Svc   : Integer := Seed_Service (D, "web", 3);
       --  Entry with matching versions (no drift)
       E1    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 3);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 3);
       --  Entry with drift: current 0 != target 2
       E2    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-2",
-                          Target_Version => 2);
-      Drift : Podmander.Controller.Catalog_Entry_Vectors.Vector :=
-        Repo.Get_Drift (D);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-2", Target_Version => 2);
+      Drift : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Drift (D);
    begin
       pragma Unreferenced (E1);
-      Assert
-        (Natural (Drift.Length) = 2,
-         "Should find 2 drift entries (both are current 0 != target)");
+      Assert (Natural (Drift.Length) = 2, "Should find 2 drift entries (both are current 0 != target)");
    end Test_Get_Drift;
 
-   procedure Test_Get_Drift_Excludes_Failed
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Get_Drift_Excludes_Failed (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D     : DB.DB_Handle := DB.Open (":memory:");
-      Svc   : Integer := Seed_Service (D, "web", 2);
-      E1    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 2);
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : Integer := Seed_Service (D, "web", 2);
+      E1      : Podmander.Controller.Service_Catalog_Entry :=
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Ignored : Boolean;
-      Drift : Podmander.Controller.Catalog_Entry_Vectors.Vector;
+      Drift   : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
       --  Mark entry as failed
       Ignored := Repo.Update_On_Failure (D, E1.Id);
       pragma Unreferenced (Ignored);
       Drift := Repo.Get_Drift (D);
-      Assert
-        (Natural (Drift.Length) = 0,
-         "Should find 0 drift entries when the only one has failed");
+      Assert (Natural (Drift.Length) = 0, "Should find 0 drift entries when the only one has failed");
    end Test_Get_Drift_Excludes_Failed;
 
    --------------------------
    --  Test_Update_On_Success
    --------------------------
 
-   procedure Test_Update_On_Success
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Update_On_Success (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "web", 2);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -260,32 +211,25 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (not Loaded.Failed, "Failed should be False after success");
    end Test_Update_On_Success;
 
-   procedure Test_Update_On_Success_Not_Found
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Update_On_Success_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Updated : Boolean;
    begin
       Updated := Repo.Update_On_Success (D, 999, Current_Version => 1);
-      Assert
-        (not Updated,
-         "Update_On_Success should return False for unknown id");
+      Assert (not Updated, "Update_On_Success should return False for unknown id");
    end Test_Update_On_Success_Not_Found;
 
    --------------------------
    --  Test_Update_On_Failure
    --------------------------
 
-   procedure Test_Update_On_Failure
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Update_On_Failure (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "web", 2);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -296,32 +240,25 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Loaded.Failed, "Failed should be True after failure");
    end Test_Update_On_Failure;
 
-   procedure Test_Update_On_Failure_Not_Found
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Update_On_Failure_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Updated : Boolean;
    begin
       Updated := Repo.Update_On_Failure (D, 999);
-      Assert
-        (not Updated,
-         "Update_On_Failure should return False for unknown id");
+      Assert (not Updated, "Update_On_Failure should return False for unknown id");
    end Test_Update_On_Failure_Not_Found;
 
    --------------------
    --  Test_Assign_Node
    --------------------
 
-   procedure Test_Assign_Node
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "web", 1);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "",
-                          Target_Version => 1);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -329,37 +266,28 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Updated, "Assign_Node should return True");
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
-      Assert
-        (To_String (Loaded.Node_Id) = "assigned-node",
-         "Node_Id should be 'assigned-node' after assign");
+      Assert (To_String (Loaded.Node_Id) = "assigned-node", "Node_Id should be 'assigned-node' after assign");
    end Test_Assign_Node;
 
-   procedure Test_Assign_Node_Not_Found
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Assign_Node_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Updated : Boolean;
    begin
       Updated := Repo.Assign_Node (D, 999, "node-x");
-      Assert
-        (not Updated,
-         "Assign_Node should return False for unknown id");
+      Assert (not Updated, "Assign_Node should return False for unknown id");
    end Test_Assign_Node_Not_Found;
 
    -------------------
    --  Test_Set_Target
    -------------------
 
-   procedure Test_Set_Target
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Set_Target (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "web", 3);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1",
-                          Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -373,73 +301,38 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
       Assert (Loaded.Target_Version = 3, "Target_Version should be 3");
-      Assert
-        (not Loaded.Failed,
-         "Failed should be cleared after Set_Target");
+      Assert (not Loaded.Failed, "Failed should be cleared after Set_Target");
    end Test_Set_Target;
 
-   procedure Test_Set_Target_Not_Found
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
+   procedure Test_Set_Target_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Updated : Boolean;
    begin
       Updated := Repo.Set_Target (D, 999, Target_Version => 1);
-      Assert
-        (not Updated,
-         "Set_Target should return False for unknown id");
+      Assert (not Updated, "Set_Target should return False for unknown id");
    end Test_Set_Target_Not_Found;
 
    overriding
    procedure Register_Tests (T : in out Repository_Test) is
       use AUnit.Test_Cases.Registration;
    begin
+      Register_Routine (T, Test_Create_Entry'Access, "Create a catalog entry and verify fields");
       Register_Routine
-        (T, Test_Create_Entry'Access,
-         "Create a catalog entry and verify fields");
-      Register_Routine
-        (T, Test_Create_Entry_Unscheduled'Access,
-         "Create a catalog entry with empty Node_Id (unscheduled)");
-      Register_Routine
-        (T, Test_Get_By_Id'Access,
-         "Get a catalog entry by id");
-      Register_Routine
-        (T, Test_Get_By_Id_Not_Found'Access,
-         "Get by unknown id raises Not_Found");
-      Register_Routine
-        (T, Test_Get_Unscheduled'Access,
-         "Get_Unscheduled returns only entries without a node");
-      Register_Routine
-        (T, Test_Get_Drift'Access,
-         "Get_Drift returns entries where versions differ");
-      Register_Routine
-        (T, Test_Get_Drift_Excludes_Failed'Access,
-         "Get_Drift excludes entries with failed=1");
-      Register_Routine
-        (T, Test_Update_On_Success'Access,
-         "Update_On_Success sets current_version and clears failed");
-      Register_Routine
-        (T, Test_Update_On_Success_Not_Found'Access,
-         "Update_On_Success returns False for unknown id");
-      Register_Routine
-        (T, Test_Update_On_Failure'Access,
-         "Update_On_Failure sets failed flag");
-      Register_Routine
-        (T, Test_Update_On_Failure_Not_Found'Access,
-         "Update_On_Failure returns False for unknown id");
-      Register_Routine
-        (T, Test_Assign_Node'Access,
-         "Assign_Node sets node_id on an unscheduled entry");
-      Register_Routine
-        (T, Test_Assign_Node_Not_Found'Access,
-         "Assign_Node returns False for unknown id");
-      Register_Routine
-        (T, Test_Set_Target'Access,
-         "Set_Target updates target_version and clears failed");
-      Register_Routine
-        (T, Test_Set_Target_Not_Found'Access,
-         "Set_Target returns False for unknown id");
+        (T, Test_Create_Entry_Unscheduled'Access, "Create a catalog entry with empty Node_Id (unscheduled)");
+      Register_Routine (T, Test_Get_By_Id'Access, "Get a catalog entry by id");
+      Register_Routine (T, Test_Get_By_Id_Not_Found'Access, "Get by unknown id raises Not_Found");
+      Register_Routine (T, Test_Get_Unscheduled'Access, "Get_Unscheduled returns only entries without a node");
+      Register_Routine (T, Test_Get_Drift'Access, "Get_Drift returns entries where versions differ");
+      Register_Routine (T, Test_Get_Drift_Excludes_Failed'Access, "Get_Drift excludes entries with failed=1");
+      Register_Routine (T, Test_Update_On_Success'Access, "Update_On_Success sets current_version and clears failed");
+      Register_Routine (T, Test_Update_On_Success_Not_Found'Access, "Update_On_Success returns False for unknown id");
+      Register_Routine (T, Test_Update_On_Failure'Access, "Update_On_Failure sets failed flag");
+      Register_Routine (T, Test_Update_On_Failure_Not_Found'Access, "Update_On_Failure returns False for unknown id");
+      Register_Routine (T, Test_Assign_Node'Access, "Assign_Node sets node_id on an unscheduled entry");
+      Register_Routine (T, Test_Assign_Node_Not_Found'Access, "Assign_Node returns False for unknown id");
+      Register_Routine (T, Test_Set_Target'Access, "Set_Target updates target_version and clears failed");
+      Register_Routine (T, Test_Set_Target_Not_Found'Access, "Set_Target returns False for unknown id");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

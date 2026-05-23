@@ -17,39 +17,33 @@ package body Podmander.Controller.Registrar is
    use Podmander.Database;
 
    function To_Service_Version
-     (ASD : Service_Definition; Service_Id : Integer; Version : Positive)
-      return Podmander.Controller.Service_Version
-   is
+     (ASD : Service_Definition; Service_Id : Integer; Version : Positive) return Podmander.Controller.Service_Version is
    begin
       return
-        (Id             => 0,
+        (Id            => 0,
          Service_Id    => Service_Id,
-         Version        => Version,
-         Image          => ASD.Image,
-         Env            => ASD.Env,
-         Env_Count      => ASD.Env_Count,
-         Ports          => ASD.Ports,
-         Ports_Count    => ASD.Ports_Count,
-         Volumes        => ASD.Volumes,
-         Volumes_Count  => ASD.Volumes_Count,
-         Description    => ASD.Description,
-         Wanted_By      => ASD.WantedBy,
-         Created_At     => Clock);
+         Version       => Version,
+         Image         => ASD.Image,
+         Env           => ASD.Env,
+         Env_Count     => ASD.Env_Count,
+         Ports         => ASD.Ports,
+         Ports_Count   => ASD.Ports_Count,
+         Volumes       => ASD.Volumes,
+         Volumes_Count => ASD.Volumes_Count,
+         Description   => ASD.Description,
+         Wanted_By     => ASD.WantedBy,
+         Created_At    => Clock);
    end To_Service_Version;
 
    --------------
    --  Register --
    --------------
 
-   function Register
-     (DB   : in out DB_Handle;
-      ASD  : Podmander.Config.Service_Definition)
-      return Register_Result
-   is
-      Name         : constant String := To_String (ASD.Name);
-      Svc          : Podmander.Controller.Service.Service;
-      Version_Num  : Positive := 1;
-      SV           : Podmander.Controller.Service_Version;
+   function Register (DB : in out DB_Handle; ASD : Podmander.Config.Service_Definition) return Register_Result is
+      Name        : constant String := To_String (ASD.Name);
+      Svc         : Podmander.Controller.Service.Service;
+      Version_Num : Positive := 1;
+      SV          : Podmander.Controller.Service_Version;
    begin
       --  Step 1: Create or get existing service row
       Svc := Podmander.Controller.Service.Repository.Create (DB, Name);
@@ -58,8 +52,7 @@ package body Podmander.Controller.Registrar is
       begin
          declare
             Latest : constant Podmander.Controller.Service_Version :=
-              Podmander.Controller.Service.Repository.Get_Latest_Version
-                (DB, Svc.Id);
+              Podmander.Controller.Service.Repository.Get_Latest_Version (DB, Svc.Id);
          begin
             Version_Num := Latest.Version + 1;
          end;
@@ -72,10 +65,7 @@ package body Podmander.Controller.Registrar is
                   --  No existing version for this service; start at 1
                   null;
                else
-                  return
-                    (Ok      => False,
-                     Version => SV,
-                     Error   => Database_Error);
+                  return (Ok => False, Version => SV, Error => Database_Error);
                end if;
             end;
       end;
@@ -88,17 +78,11 @@ package body Podmander.Controller.Registrar is
          Podmander.Controller.Service.Repository.Create_Version (DB, SV);
       exception
          when Podmander.Database.Database_Error =>
-            return
-              (Ok      => False,
-               Version => SV,
-               Error   => Database_Error);
+            return (Ok => False, Version => SV, Error => Database_Error);
       end;
 
       --  Step 5: Return success
-      return
-        (Ok      => True,
-         Version => SV,
-         Error   => None);
+      return (Ok => True, Version => SV, Error => None);
    end Register;
 
 end Podmander.Controller.Registrar;

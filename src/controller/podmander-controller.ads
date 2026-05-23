@@ -50,9 +50,7 @@ package Podmander.Controller is
    end record;
 
    package Catalog_Entry_Vectors is new
-     Ada.Containers.Vectors
-       (Index_Type   => Positive,
-        Element_Type => Service_Catalog_Entry);
+     Ada.Containers.Vectors (Index_Type => Positive, Element_Type => Service_Catalog_Entry);
 
    Default_Agent_Timeout : constant Duration := 30.0;
 
@@ -61,8 +59,7 @@ package Podmander.Controller is
       Bind_Address_Last : Natural := 0;
       Agent_Timeout     : Duration := Default_Agent_Timeout;
       Enrollment        : Podmander.Enrollment.Enrollment_Config;
-      DB_Path           : Ada.Strings.Unbounded.Unbounded_String :=
-        Ada.Strings.Unbounded.To_Unbounded_String ("");
+      DB_Path           : Ada.Strings.Unbounded.Unbounded_String := Ada.Strings.Unbounded.To_Unbounded_String ("");
       --  Path to the SQLite state database.
       --  Empty string means use default: ~/.local/share/podmander/state.db
       --  Uses Unbounded_String (not fixed String like Bind_Address) because
@@ -70,8 +67,7 @@ package Podmander.Controller is
       --  String because it comes from CLI parsing with known max length.
    end record;
 
-   procedure Set_Bind_Address
-     (Config : in out Controller_Config; Address : String);
+   procedure Set_Bind_Address (Config : in out Controller_Config; Address : String);
 
    function Get_Bind_Address (Config : Controller_Config) return String;
 
@@ -97,8 +93,7 @@ package Podmander.Controller is
    --  CURVE certificate, open the ROUTER socket, enable CURVE server
    --  mode, and bind to Config's Bind_Address. The returned instance
    --  is in the Running state.
-   function Make_Listening_Controller
-     (Config : Controller_Config) return Controller_Instance;
+   function Make_Listening_Controller (Config : Controller_Config) return Controller_Instance;
 
    procedure Run (Self : in out Controller_Instance);
 
@@ -107,13 +102,11 @@ package Podmander.Controller is
    function Get_Public_Key (Self : Controller_Instance) return String;
 
    procedure Generate_Join_Token
-      (Self  : in out Controller_Instance;
-       Token : out Ada.Strings.Unbounded.Unbounded_String);
+     (Self : in out Controller_Instance; Token : out Ada.Strings.Unbounded.Unbounded_String);
    --  Delegates to Podmander.Enrollment.Generate_Join_Token
    --  using this controller's public key and enrollment config.
 
-   function Load_Test_Deploy
-      (Self : in out Controller_Instance; Path : String) return Boolean;
+   function Load_Test_Deploy (Self : in out Controller_Instance; Path : String) return Boolean;
    --  Parse a TOML service config file, register the service and version,
    --  and schedule it for deployment through the catalog pipeline.
    --  Returns True on success, False on parse or registration failure.
