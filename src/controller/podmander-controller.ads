@@ -134,6 +134,26 @@ package Podmander.Controller is
    --  Delegates to Podmander.Enrollment.Generate_Join_Token
    --  using this controller's public key and enrollment config.
 
+   --  Version comparison types
+   type State_Mismatch is record
+      Service_Name    : Ada.Strings.Unbounded.Unbounded_String;
+      Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
+      Desired_Version : Positive;
+      Current_Version : Positive;
+   end record;
+
+   package State_Mismatch_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => State_Mismatch);
+
+   function Find_State_Mismatches
+     (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector;
+   --  Compare actual state against desired state (latest service version)
+   --  for every service currently deployed. Returns a vector of mismatches
+   --  where the deployed version is older than the desired version.
+   --  Services with no service_versions entry are silently skipped.
+
    procedure Send_Deploy_Command
      (Self         : in out Controller_Instance;
       Node_Id      : String;

@@ -9,6 +9,8 @@ with CZMQ.Pollers;
 with Podmander.Config.Parser;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
+with Podmander.Controller.Actual_State.Repository;
+with Podmander.Controller.Service.Repository;
 with Podmander.Generators.Quadlet;
 with Podmander.Logging;
 with Podmander.Messages;
@@ -340,6 +342,39 @@ package body Podmander.Controller is
          return True;
       end;
    end Load_Test_Deploy;
+
+   function Find_State_Mismatches
+     (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector
+   is
+      Actual : Actual_State_Vectors.Vector :=
+        Actual_State.Repository.Get_All (DB);
+      Result : State_Mismatch_Vectors.Vector;
+   begin
+      for E of Actual loop
+         declare
+            Svc_Name : constant String :=
+              To_String (E.Service_Name);
+         begin
+            declare
+               Latest : constant Service_Version :=
+                 Service.Repository.Get_Latest_Version (DB, Svc_Name);
+            begin
+               if E.Version < Latest.Version then
+                  Result.Append
+                    (State_Mismatch'
+                       (Service_Name    => E.Service_Name,
+                        Node_Id         => E.Node_Id,
+                        Desired_Version => Latest.Version,
+                        Current_Version => E.Version));
+               end if;
+            end;
+         exception
+            when Podmander.Database.Database_Error =>
+               null;
+         end;
+      end loop;
+      return Result;
+   end Find_State_Mismatches;
 
    procedure Send_Deploy_Command
      (Self         : in out Controller_Instance;
