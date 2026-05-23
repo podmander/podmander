@@ -6,6 +6,7 @@ with Ada.Directories;
 with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
+with Podmander.Config;
 with Podmander.Config.Parser;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
@@ -230,23 +231,41 @@ package body Podmander.Controller is
       CZMQ.Pollers.Close (Poller);
    end Run;
 
-   function To_Service_Definition
-     (SV : Service_Version) return Service_Definition is
-   begin
-      return
-        (Name          => SV.Service_Name,
-         Image         => SV.Image,
-         Env           => SV.Env,
-         Env_Count     => SV.Env_Count,
-         Ports         => SV.Ports,
-         Ports_Count   => SV.Ports_Count,
-         Volumes       => SV.Volumes,
-         Volumes_Count => SV.Volumes_Count,
-         Description   => SV.Description,
-         WantedBy      => SV.Wanted_By);
-   end To_Service_Definition;
+    function To_Service_Definition
+      (SV : Service_Version) return Service_Definition is
+    begin
+       return
+         (Name          => SV.Service_Name,
+          Image         => SV.Image,
+          Env           => SV.Env,
+          Env_Count     => SV.Env_Count,
+          Ports         => SV.Ports,
+          Ports_Count   => SV.Ports_Count,
+          Volumes       => SV.Volumes,
+          Volumes_Count => SV.Volumes_Count,
+          Description   => SV.Description,
+          WantedBy      => SV.Wanted_By);
+    end To_Service_Definition;
 
-   procedure Reconcile_State (Self : in out Controller_Instance) is
+    function To_Service_Version
+      (SD : Service_Definition; Version_Num : Positive) return Service_Version is
+    begin
+       return
+         (Service_Name   => SD.Name,
+          Version        => Version_Num,
+          Image          => SD.Image,
+          Env            => SD.Env,
+          Env_Count      => SD.Env_Count,
+          Ports          => SD.Ports,
+          Ports_Count    => SD.Ports_Count,
+          Volumes        => SD.Volumes,
+          Volumes_Count  => SD.Volumes_Count,
+          Description    => SD.Description,
+          Wanted_By      => SD.WantedBy,
+          Created_At     => Ada.Calendar.Clock);
+    end To_Service_Version;
+
+    procedure Reconcile_State (Self : in out Controller_Instance) is
       Mismatches : constant State_Mismatch_Vectors.Vector :=
         Find_State_Mismatches (Self.DB);
       All_Agents : constant Podmander.Types.Agent_Maps.Map :=
@@ -373,33 +392,57 @@ package body Podmander.Controller is
          Token      => Token);
    end Generate_Join_Token;
 
-   function Load_Test_Deploy
-     (Self : in out Controller_Instance; Path : String) return Boolean
-   is
-      Result : constant Podmander.Config.Parser.Parse_Result :=
-        Podmander.Config.Parser.Parse (Path);
-   begin
-      if not Result.Success then
-         Podmander.Logging.Error
-           ("controller",
-            "Failed to parse " & Path & ": " & To_String (Result.Message));
-         return False;
-      end if;
+    function Load_Test_Deploy
+      (Self : in out Controller_Instance; Path : String) return Boolean
+    is
+       Result : constant Podmander.Config.Parser.Parse_Result :=
+         Podmander.Config.Parser.Parse (Path);
+    begin
+       if not Result.Success then
+          Podmander.Logging.Error
+            ("controller",
+             "Failed to parse " & Path & ": " & To_String (Result.Message));
+          return False;
+       end if;
 
-      declare
-         Quadlet_Content : constant String :=
-           Podmander.Generators.Quadlet.Render (Result.Config);
-      begin
-         Self.Test_Deploy :=
-           (Service_Name => Result.Config.Name,
-            Quadlet      => To_Unbounded_String (Quadlet_Content),
-            Deployed     => False);
-         Podmander.Logging.Info
-           ("controller",
-            "Will deploy " & To_String (Result.Config.Name) & " from " & Path);
-         return True;
-      end;
-   end Load_Test_Deploy;
+       declare
+          Quadlet_Content : constant String :=
+            Podmander.Generators.Quadlet.Render (Result.Config);
+          Version_Num     : Positive := 1;
+       begin
+          --  Determine the next version number for this service.
+          --  If a version already exists, increment; otherwise start at 1.
+          begin
+             declare
+                Latest : constant Service_Version :=
+                  Service.Repository.Get_Latest_Version
+                    (Self.DB, To_String (Result.Config.Name));
+             begin
+                Version_Num := Latest.Version + 1;
+             end;
+          exception
+             when Podmander.Database.Database_Error =>
+                --  No existing version for this service; start at 1
+                null;
+          end;
+
+          declare
+             SV : constant Service_Version :=
+               To_Service_Version (Result.Config, Version_Num);
+          begin
+             Service.Repository.Create_Version (Self.DB, SV);
+          end;
+
+          Self.Test_Deploy :=
+            (Service_Name => Result.Config.Name,
+             Quadlet      => To_Unbounded_String (Quadlet_Content),
+             Deployed     => False);
+          Podmander.Logging.Info
+            ("controller",
+             "Will deploy " & To_String (Result.Config.Name) & " from " & Path);
+          return True;
+       end;
+    end Load_Test_Deploy;
 
    function Find_State_Mismatches
      (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector

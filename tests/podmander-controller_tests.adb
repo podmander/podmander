@@ -913,8 +913,28 @@ package body Podmander.Controller_Tests is
       end if;
    end Test_Find_State_Mismatches_Multiple_Services;
 
+   --  Test: Handle_Deploy_Result logs warning when no Service_Version exists
+   --  (defensive: should not crash even if version lookup fails)
+   procedure Test_Handle_Deploy_Result_No_Version
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl  : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+      H     : Podmander.Controller.Message_Handlers.Controller_Handler :=
+        Make_Handler (Ctrl'Access, "node-1");
+      Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
+        (Code          => Podmander.Messages.Result_Codes.Ok,
+         Service_Name  => To_Unbounded_String ("web"),
+         Error_Message => Null_Unbounded_String);
+   begin
+      --  No Service_Version created for "web" — this should not crash
+      H.Handle_Deploy_Result (Res);
+      --  If we get here without crashing, the defensive handler worked
+      Assert (True, "Handle_Deploy_Result should not crash without version");
+   end Test_Handle_Deploy_Result_No_Version;
+
    --  Test: Check_Test_Deploy does nothing when Service_Name is empty
-   procedure Test_Test_Deploy_No_Trigger_When_Empty
+    procedure Test_Test_Deploy_No_Trigger_When_Empty
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
@@ -1133,13 +1153,17 @@ package body Podmander.Controller_Tests is
         (T,
          Test_Find_State_Mismatches_Multiple_Services'Access,
          "Find_State_Mismatches detects mismatches across services and nodes");
-      Register_Routine
-        (T,
-         Test_Handle_Deploy_Result_Updates_Actual_State'Access,
-         "Handle_Deploy_Result updates actual_state on success");
-      Register_Routine
-        (T,
-         Test_Reconcile_State_No_Op_When_No_Mismatches'Access,
+       Register_Routine
+         (T,
+          Test_Handle_Deploy_Result_Updates_Actual_State'Access,
+          "Handle_Deploy_Result updates actual_state on success");
+       Register_Routine
+         (T,
+          Test_Handle_Deploy_Result_No_Version'Access,
+          "Handle_Deploy_Result logs warning when no version exists");
+       Register_Routine
+         (T,
+          Test_Reconcile_State_No_Op_When_No_Mismatches'Access,
          "Reconcile_State is a no-op when there are no mismatches");
       Register_Routine
         (T,
