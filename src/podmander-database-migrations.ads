@@ -74,36 +74,45 @@ private
      & "created_at    TEXT NOT NULL,"
      & "PRIMARY KEY (service_name, version));";
 
-   Migration_005_SQL : constant String :=
-     "CREATE TABLE IF NOT EXISTS actual_state ("
-     & "service_name  TEXT NOT NULL,"
-     & "node_id       TEXT NOT NULL,"
-     & "version       INTEGER NOT NULL,"
-     & "updated_at    TEXT NOT NULL,"
-     & "PRIMARY KEY (service_name, node_id),"
-     & "FOREIGN KEY (service_name, version)"
-     & "  REFERENCES service_versions(service_name, version));";
+    Migration_005_SQL : constant String :=
+      "CREATE TABLE IF NOT EXISTS actual_state ("
+      & "service_name  TEXT NOT NULL,"
+      & "node_id       TEXT NOT NULL,"
+      & "version       INTEGER NOT NULL,"
+      & "updated_at    TEXT NOT NULL,"
+      & "PRIMARY KEY (service_name, node_id),"
+      & "FOREIGN KEY (service_name, version)"
+      & "  REFERENCES service_versions(service_name, version));";
 
-   Migration_History : constant Migration_Array :=
-     [1 =>
-        (Version => 1,
-         SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
-      2 =>
-        (Version => 2,
-         SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
-      3 =>
-        (Version => 3,
-         SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL)),
-      4 =>
-        (Version => 4,
-         SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_004_SQL)),
-      5 =>
-        (Version => 5,
-         SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_005_SQL))];
+    Migration_006_SQL : constant String :=
+      "CREATE TABLE IF NOT EXISTS services ("
+      & "id   INTEGER PRIMARY KEY AUTOINCREMENT,"
+      & "name TEXT NOT NULL UNIQUE);";
+
+    Migration_History : constant Migration_Array :=
+      [1 =>
+         (Version => 1,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
+       2 =>
+         (Version => 2,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
+       3 =>
+         (Version => 3,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL)),
+       4 =>
+         (Version => 4,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_004_SQL)),
+       5 =>
+         (Version => 5,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_005_SQL)),
+       6 =>
+         (Version => 6,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_006_SQL))];
 
 end Podmander.Database.Migrations;

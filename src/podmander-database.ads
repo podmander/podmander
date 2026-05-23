@@ -80,6 +80,9 @@ package Podmander.Database is
    function Column_Text (QH : Query_Handle; Index : Natural) return String;
    --  Read a text column from the current row.
 
+   function Column_Int (QH : Query_Handle; Index : Natural) return Integer;
+   --  Read an integer column from the current row.
+
    function Changes (DB : in out DB_Handle) return Integer;
    --  Rows modified by most recent INSERT/UPDATE/DELETE.
 

@@ -47,6 +47,94 @@ package body Podmander.Controller.Service.Repository is
                  Code    => 0));
    end Row_To_Service_Version;
 
+   ------------
+   --  Create --
+   ------------
+
+   function Create
+     (DB : in out DB_Handle; Name : String) return Service
+   is
+      QH : Query_Handle :=
+        Prepare (DB, "INSERT OR IGNORE INTO services (name) VALUES (?)");
+      SEL : Query_Handle :=
+        Prepare (DB, "SELECT id, name FROM services WHERE name = ?");
+   begin
+      Bind_Text (QH, 1, Name);
+      while Step (QH) loop
+         null;
+      end loop;
+
+      Bind_Text (SEL, 1, Name);
+      if Step (SEL) then
+         return
+           (Id   => Column_Int (SEL, 0),
+            Name => To_Unbounded_String (Column_Text (SEL, 1)));
+      else
+         raise Database_Error
+           with
+             Format_Error
+               ((Kind    => Unknown,
+                 Message =>
+                   To_Unbounded_String
+                     ("Failed to retrieve service after insert: " & Name),
+                 Code    => 0));
+      end if;
+   end Create;
+
+   -----------------
+   --  Get_By_Name --
+   -----------------
+
+   function Get_By_Name
+     (DB : in out DB_Handle; Name : String) return Service
+   is
+      QH : Query_Handle :=
+        Prepare (DB, "SELECT id, name FROM services WHERE name = ?");
+   begin
+      Bind_Text (QH, 1, Name);
+      if Step (QH) then
+         return
+           (Id   => Column_Int (QH, 0),
+            Name => To_Unbounded_String (Column_Text (QH, 1)));
+      else
+         raise Database_Error
+           with
+             Format_Error
+               ((Kind    => Not_Found,
+                 Message =>
+                   To_Unbounded_String ("Service not found: " & Name),
+                 Code    => 0));
+      end if;
+   end Get_By_Name;
+
+   ---------------
+   --  Get_By_Id --
+   ---------------
+
+   function Get_By_Id
+     (DB : in out DB_Handle; Id : Integer) return Service
+   is
+      QH : Query_Handle :=
+        Prepare (DB, "SELECT id, name FROM services WHERE id = ?");
+   begin
+      Bind_Text (QH, 1, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      if Step (QH) then
+         return
+           (Id   => Column_Int (QH, 0),
+            Name => To_Unbounded_String (Column_Text (QH, 1)));
+      else
+         raise Database_Error
+           with
+             Format_Error
+               ((Kind    => Not_Found,
+                 Message =>
+                   To_Unbounded_String
+                     ("Service not found by id: "
+                      & Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left)),
+                 Code    => 0));
+      end if;
+   end Get_By_Id;
+
    --------------------
    --  Create_Version --
    --------------------

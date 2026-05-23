@@ -221,7 +221,7 @@ package body Podmander.Controller.Service.Repository_Tests is
    end Test_Get_Latest_Version_Not_Found;
 
    procedure Test_Create_Version_With_Empty_Arrays
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
@@ -238,6 +238,136 @@ package body Podmander.Controller.Service.Repository_Tests is
       Assert (Loaded.Ports_Count = 0, "Ports_Count should be 0");
       Assert (Loaded.Volumes_Count = 0, "Volumes_Count should be 0");
    end Test_Create_Version_With_Empty_Arrays;
+
+   ------------------------------------
+   --  Service table repository tests --
+   ------------------------------------
+
+   My_Service_Name : constant String := "my-service";
+
+   procedure Test_Service_Create
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Created : Podmander.Controller.Service.Service;
+   begin
+      Created := Repo.Create (D, My_Service_Name);
+      Assert (Created.Id > 0, "Service id should be positive");
+      Assert
+        (To_String (Created.Name) = My_Service_Name,
+         "Service name should match");
+   end Test_Service_Create;
+
+   procedure Test_Service_Create_Idempotent
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D        : DB.DB_Handle := DB.Open (":memory:");
+      First    : Podmander.Controller.Service.Service;
+      Second   : Podmander.Controller.Service.Service;
+   begin
+      First := Repo.Create (D, My_Service_Name);
+      Second := Repo.Create (D, My_Service_Name);
+      Assert (First.Id = Second.Id, "Same name should return same id");
+      Assert
+        (To_String (Second.Name) = My_Service_Name,
+         "Service name should match on second create");
+   end Test_Service_Create_Idempotent;
+
+   procedure Test_Service_Get_By_Name
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Created : Podmander.Controller.Service.Service;
+      Found   : Podmander.Controller.Service.Service;
+   begin
+      Created := Repo.Create (D, My_Service_Name);
+      Found := Repo.Get_By_Name (D, My_Service_Name);
+      Assert (Found.Id = Created.Id, "Get_By_Name should return same id");
+      Assert
+        (To_String (Found.Name) = My_Service_Name,
+         "Get_By_Name should return same name");
+   end Test_Service_Get_By_Name;
+
+   procedure Test_Service_Get_By_Name_Not_Found
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D         : DB.DB_Handle := DB.Open (":memory:");
+      Got_Error : Boolean := False;
+   begin
+      begin
+         declare
+            Ignored : Podmander.Controller.Service.Service :=
+              Repo.Get_By_Name (D, "nonexistent");
+         begin
+            null;
+            pragma Unreferenced (Ignored);
+         end;
+      exception
+         when E : DB.Database_Error =>
+            declare
+               Err : constant DB.Error_Info := DB.Parse_Error (E);
+            begin
+               Assert
+                 (Err.Kind = DB.Not_Found,
+                  "Get_By_Name on unknown should raise Not_Found");
+               Got_Error := True;
+            end;
+      end;
+      Assert
+        (Got_Error,
+         "Get_By_Name on unknown should have raised Database_Error");
+   end Test_Service_Get_By_Name_Not_Found;
+
+   procedure Test_Service_Get_By_Id
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Created : Podmander.Controller.Service.Service;
+      Found   : Podmander.Controller.Service.Service;
+   begin
+      Created := Repo.Create (D, My_Service_Name);
+      Found := Repo.Get_By_Id (D, Created.Id);
+      Assert (Found.Id = Created.Id, "Get_By_Id should return same id");
+      Assert
+        (To_String (Found.Name) = My_Service_Name,
+         "Get_By_Id should return same name");
+   end Test_Service_Get_By_Id;
+
+   procedure Test_Service_Get_By_Id_Not_Found
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D         : DB.DB_Handle := DB.Open (":memory:");
+      Got_Error : Boolean := False;
+   begin
+      begin
+         declare
+            Ignored : Podmander.Controller.Service.Service :=
+              Repo.Get_By_Id (D, 999);
+         begin
+            null;
+            pragma Unreferenced (Ignored);
+         end;
+      exception
+         when E : DB.Database_Error =>
+            declare
+               Err : constant DB.Error_Info := DB.Parse_Error (E);
+            begin
+               Assert
+                 (Err.Kind = DB.Not_Found,
+                  "Get_By_Id on unknown should raise Not_Found");
+               Got_Error := True;
+            end;
+      end;
+      Assert
+        (Got_Error,
+         "Get_By_Id on unknown should have raised Database_Error");
+   end Test_Service_Get_By_Id_Not_Found;
 
    overriding
    procedure Register_Tests (T : in out Repository_Test) is
@@ -267,6 +397,30 @@ package body Podmander.Controller.Service.Repository_Tests is
         (T,
          Test_Create_Version_With_Empty_Arrays'Access,
          "Create version with empty env/ports/volumes arrays");
+      Register_Routine
+        (T,
+         Test_Service_Create'Access,
+         "Create a new service and verify id and name");
+      Register_Routine
+        (T,
+         Test_Service_Create_Idempotent'Access,
+         "Create same service twice returns same id");
+      Register_Routine
+        (T,
+         Test_Service_Get_By_Name'Access,
+         "Get service by name returns correct fields");
+      Register_Routine
+        (T,
+         Test_Service_Get_By_Name_Not_Found'Access,
+         "Get service by unknown name raises Not_Found");
+      Register_Routine
+        (T,
+         Test_Service_Get_By_Id'Access,
+         "Get service by id returns correct fields");
+      Register_Routine
+        (T,
+         Test_Service_Get_By_Id_Not_Found'Access,
+         "Get service by unknown id raises Not_Found");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
