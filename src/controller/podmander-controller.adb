@@ -484,9 +484,10 @@ package body Podmander.Controller is
       Quadlet      : String)
    is
       use Podmander.Messages.Deploy_Commands;
-      Cmd : constant Deploy_Command :=
-        (Service_Name => To_Unbounded_String (Service_Name),
-         Quadlet      => To_Unbounded_String (Quadlet));
+Cmd : constant Deploy_Command :=
+         (Catalog_Id   => 0,
+          Service_Name => To_Unbounded_String (Service_Name),
+          Quadlet      => To_Unbounded_String (Quadlet));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       if not Self.Socket.Is_Valid then

@@ -30,18 +30,20 @@ package body Podmander.Agent.Message_Handlers is
         ("agent", "Heartbeat is agent-to-controller only");
    end Handle_Heartbeat;
 
-   overriding
+overriding
    procedure Handle_Deploy_Command
-     (H : in out Agent_Handler;
-      M : Podmander.Messages.Deploy_Command_Type'Class)
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Deploy_Command_Type'Class)
    is
       use Podmander.Messages.Deploy_Commands;
       Cmd    : constant Deploy_Command := Deploy_Command (M);
       Name   : constant String := To_String (Cmd.Service_Name);
-      Result : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
+      Result : Podmander.Messages.Deploy_Results.Deploy_Result :=
         Podmander.Agent.Podman.Install_Quadlet
           (Service_Name => Name, Quadlet => To_String (Cmd.Quadlet));
    begin
+      --  Echo catalog_id back as opaque correlation token
+      Result.Catalog_Id := Cmd.Catalog_Id;
       Send_Deploy_Result (H, Result);
    end Handle_Deploy_Command;
 

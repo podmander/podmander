@@ -128,32 +128,36 @@ package body Podmander.Messages_Tests is
    is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Commands;
-      Original : constant Deploy_Command :=
-         (Service_Name => To_Unbounded_String ("api"),
+Original : constant Deploy_Command :=
+         (Catalog_Id   => 42,
+          Service_Name => To_Unbounded_String ("api"),
           Quadlet      => To_Unbounded_String ("[Unit]"
                             & Character'Val (10)
                             & "Name=api"
                             & Character'Val (10)));
-      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-   begin
-      Original.Encode (Msg);
-      Assert (Msg.Size = 3, "Expected 3 frames, got" & Msg.Size'Image);
+       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+    begin
+       Original.Encode (Msg);
+       Assert (Msg.Size = 4, "Expected 4 frames, got" & Msg.Size'Image);
 
-      declare
-         use Podmander.Messages;
-         Decoded : constant Protocol_Message'Class := Decode (Msg);
-      begin
-         Assert
-           (Decoded in Deploy_Command,
-            "Expected Deploy_Command");
-         Assert
-           (To_String (Deploy_Command (Decoded).Service_Name) = "api",
-            "Service name mismatch");
-         Assert
-           (To_String (Deploy_Command (Decoded).Quadlet) =
-              To_String (Original.Quadlet),
-            "Quadlet content mismatch");
-      end;
+       declare
+          use Podmander.Messages;
+          Decoded : constant Protocol_Message'Class := Decode (Msg);
+       begin
+          Assert
+            (Decoded in Deploy_Command,
+             "Expected Deploy_Command");
+          Assert
+            (Deploy_Command (Decoded).Catalog_Id = 42,
+             "Catalog_Id mismatch");
+          Assert
+            (To_String (Deploy_Command (Decoded).Service_Name) = "api",
+             "Service name mismatch");
+          Assert
+            (To_String (Deploy_Command (Decoded).Quadlet) =
+               To_String (Original.Quadlet),
+             "Quadlet content mismatch");
+       end;
    end Test_Deploy_Command_Round_Trip;
 
    --  Test: Deploy_Result round-trip encode/decode (Ok)
@@ -162,32 +166,36 @@ package body Podmander.Messages_Tests is
    is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
-      Original : constant Deploy_Result :=
-        (Code          => Podmander.Messages.Result_Codes.Ok,
-         Service_Name  => To_Unbounded_String ("api"),
-         Error_Message => To_Unbounded_String (""));
-      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-   begin
-      Original.Encode (Msg);
+Original : constant Deploy_Result :=
+         (Catalog_Id    => 42,
+          Code          => Podmander.Messages.Result_Codes.Ok,
+          Service_Name  => To_Unbounded_String ("api"),
+          Error_Message => To_Unbounded_String (""));
+       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+    begin
+       Original.Encode (Msg);
 
-      declare
-         use Podmander.Messages;
-         Decoded : constant Protocol_Message'Class := Decode (Msg);
-      begin
-         Assert
-           (Decoded in Deploy_Result,
-            "Expected Deploy_Result");
-         Assert
-           (Deploy_Result (Decoded).Code =
-              Podmander.Messages.Result_Codes.Ok,
-            "Expected Code = Ok");
-         Assert
-           (To_String (Deploy_Result (Decoded).Service_Name) = "api",
-            "Service name mismatch");
-         Assert
-           (To_String (Deploy_Result (Decoded).Error_Message) = "",
-            "Expected empty error message");
-      end;
+       declare
+          use Podmander.Messages;
+          Decoded : constant Protocol_Message'Class := Decode (Msg);
+       begin
+          Assert
+            (Decoded in Deploy_Result,
+             "Expected Deploy_Result");
+          Assert
+            (Deploy_Result (Decoded).Catalog_Id = 42,
+             "Catalog_Id mismatch");
+          Assert
+            (Deploy_Result (Decoded).Code =
+               Podmander.Messages.Result_Codes.Ok,
+             "Expected Code = Ok");
+          Assert
+            (To_String (Deploy_Result (Decoded).Service_Name) = "api",
+             "Service name mismatch");
+          Assert
+            (To_String (Deploy_Result (Decoded).Error_Message) = "",
+             "Expected empty error message");
+       end;
    end Test_Deploy_Result_Ok_Round_Trip;
 
    --  Test: Deploy_Result round-trip encode/decode (Failed)
@@ -196,10 +204,11 @@ package body Podmander.Messages_Tests is
    is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
-      Original : constant Deploy_Result :=
-        (Code          => Podmander.Messages.Result_Codes.Failed,
-         Service_Name  => To_Unbounded_String ("db"),
-         Error_Message => To_Unbounded_String ("image pull failed"));
+Original : constant Deploy_Result :=
+         (Catalog_Id    => 7,
+          Code          => Podmander.Messages.Result_Codes.Failed,
+          Service_Name  => To_Unbounded_String ("db"),
+          Error_Message => To_Unbounded_String ("image pull failed"));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
@@ -225,10 +234,11 @@ package body Podmander.Messages_Tests is
    is
       pragma Unreferenced (T);
       use Podmander.Messages.Deploy_Results;
-      Original : constant Deploy_Result :=
-        (Code          => Podmander.Messages.Result_Codes.Unavailable,
-         Service_Name  => To_Unbounded_String ("svc"),
-         Error_Message => To_Unbounded_String ("systemctl not found"));
+Original : constant Deploy_Result :=
+         (Catalog_Id    => 99,
+          Code          => Podmander.Messages.Result_Codes.Unavailable,
+          Service_Name  => To_Unbounded_String ("svc"),
+          Error_Message => To_Unbounded_String ("systemctl not found"));
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);

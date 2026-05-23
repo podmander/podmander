@@ -37,11 +37,12 @@ package body Podmander.Agent.Podman is
       if Code = RC.Ok then
          return True;
       else
-         Failure_Result :=
-           Deploy_Result'
-             (Code          => Code,
-              Service_Name  => To_Unbounded_String (Service_Name),
-              Error_Message => To_Unbounded_String (Step_Label & " failed"));
+Failure_Result :=
+            Deploy_Result'
+              (Catalog_Id    => 0,
+               Code          => Code,
+               Service_Name  => To_Unbounded_String (Service_Name),
+               Error_Message => To_Unbounded_String (Step_Label & " failed"));
          return False;
       end if;
    end Run_Systemctl_Step;
@@ -95,11 +96,12 @@ package body Podmander.Agent.Podman is
 
       Podmander.Logging.Info
         ("agent", "Deployed " & Service_Name & " successfully");
-      return
-        Deploy_Result'
-          (Code          => RC.Ok,
-           Service_Name  => To_Unbounded_String (Service_Name),
-           Error_Message => To_Unbounded_String (""));
+return
+         Deploy_Result'
+           (Catalog_Id    => 0,
+            Code          => RC.Ok,
+            Service_Name  => To_Unbounded_String (Service_Name),
+            Error_Message => To_Unbounded_String (""));
    exception
       when E : others =>
          Podmander.Logging.Error
@@ -110,15 +112,16 @@ package body Podmander.Agent.Podman is
             & Ada.Exceptions.Exception_Name (E)
             & "]: "
             & Ada.Exceptions.Exception_Message (E));
-         return
-           Deploy_Result'
-             (Code          => RC.Internal,
-              Service_Name  => To_Unbounded_String (Service_Name),
-              Error_Message =>
-                To_Unbounded_String
-                  (Ada.Exceptions.Exception_Name (E)
-                   & ": "
-                   & Ada.Exceptions.Exception_Message (E)));
+return
+            Deploy_Result'
+              (Catalog_Id    => 0,
+               Code          => RC.Internal,
+               Service_Name  => To_Unbounded_String (Service_Name),
+               Error_Message =>
+                 To_Unbounded_String
+                   (Ada.Exceptions.Exception_Name (E)
+                    & ": "
+                    & Ada.Exceptions.Exception_Message (E)));
    end Install_Quadlet;
 
    function List_Containers

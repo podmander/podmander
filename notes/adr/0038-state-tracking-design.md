@@ -1,6 +1,7 @@
 # ADR-0038: State Tracking Design for MVP
 
 **Date**: 2026-05-23
+**Amended**: 2026-05-23 — Replaced actual_state with service_catalog; added services table and pipeline objects.
 
 ## Context
 
@@ -14,124 +15,133 @@ Key forces:
 - Placement is trivial for MVP (deploy to the connected agent). No scheduler needed yet.
 - The controller is a single-writer, single-threaded process. No concurrent access risk.
 - ADR-0037 establishes database-only state access (no in-memory caches).
+- The original design used separate `actual_state` and `service_versions` tables, but this created a gap: the supervisor loop could detect version mismatches for deployed services but could not discover brand-new services that had no `actual_state` entry. A unified Service Catalog solves this by making "not deployed" an explicit state (`current_version = 0`) rather than an absent row.
 
 ## Decision
 
-### 1. Three-state model simplified for MVP
+### 1. Service Catalog replaces separate desired/actual state
 
-The full three-state model (Desired, Expected, Actual) collapses for MVP:
+The full three-state model (Desired, Expected, Actual) collapses for MVP into a single Service Catalog:
 
 | Concept | MVP | Full model |
 |---|---|---|
-| Desired State | Implicit: latest Service Version per service | Same + placement rules |
-| Expected State | Collapsed into Desired State | Scheduler output: (service, version, node) |
-| Actual State | (service, version, node) — version only | (service, version, node, runtime status) |
+| Desired State | Service Catalog `target_version` | Same + placement rules |
+| Expected State | Collapsed into target_version | Scheduler output: (service, version, node) |
+| Actual State | Service Catalog `current_version` | (service, version, node, runtime status) |
 
-The fundamental comparison is always Desired vs Actual. Expected State becomes a separate layer when the scheduler is implemented. For MVP, since placement is trivial (deploy to the connected agent), there is nothing for the scheduler to decide — Desired State directly determines what should be on each node.
+The Service Catalog is the single source of truth for both "what should be" and "what is." Each entry tracks a service's deployment intent and status on a specific node. The supervisor loop's comparison is trivial: `current_version ≠ target_version` means action is needed.
 
-### 2. Service Version as immutable ASD snapshot
+### 2. Pipeline: Parser → Registrar → Scheduler → Supervisor
 
-A Service Version is an immutable snapshot of the Abstract Service Definition (ASD) — the structured representation of a service's configuration (image, environment variables, ports, volumes). Each `podctl deploy` that changes a service creates a new version with a monotonic version number. Rollback creates a new version with content from a previous version (like `git revert`).
+The deploy flow is a pipeline of single-responsibility objects:
+
+```
+TOML → [Parser] → Service_Definition (ASD)
+                         ↓
+               [Registrar] → services row (if new) + service_versions row
+                         ↓
+               [Scheduler] → service_catalog row (node_id or NULL)
+                         ↓
+               [Supervisor] → schedule unscheduled entries
+                            → reconcile current ≠ target, not failed
+                            → send Deploy_Command with catalog_id
+                         ↓
+               [Deploy_Result handler] → update catalog by catalog_id
+```
+
+- **Parser**: Converts TOML to a Service_Definition (ASD). Unchanged from current implementation.
+- **Registrar**: Creates a `services` row (if the service is new) and a `service_versions` row. Implicit service creation on first deploy — no separate "register service" command needed.
+- **Scheduler**: Creates or updates a `service_catalog` entry, assigning a node. For MVP, always assigns the single connected node or leaves `node_id = NULL` if no agent is connected.
+- **Supervisor**: Two jobs per iteration: (1) schedule any catalog entries with `node_id IS NULL`, (2) deploy any entries where `current_version ≠ target_version AND failed = 0`.
+
+### 3. Service Version as immutable ASD snapshot
+
+A Service Version is an immutable snapshot of the Abstract Service Definition (ASD) — the structured representation of a service's configuration (image, environment variables, ports, volumes). Each deploy that changes a service creates a new version with a monotonic version number. Rollback creates a new version with content from a previous version (like `git revert`).
 
 The quadlet is a derived artifact rendered on demand from the ASD. It is not stored in the Service Version.
 
-Service Versions are stored as full snapshots (not diffs). The ASD is small (a few hundred bytes); at 10 versions per service and 50 services, storage is negligible. Full snapshots make comparison and debugging simple.
+Service Versions are stored as full snapshots (not diffs). The ASD is small (a few hundred bytes); at 10 versions per service and 50 services, storage is negligible.
 
-### 3. Desired State is implicit
+### 4. Services table
 
-For MVP, "desired state" for a service is simply "the latest Service Version." There is no separate Desired State table. When the operator deploys a new TOML, a new Service Version is created, and it becomes the desired state by virtue of being the latest.
-
-This means the supervisor loop's comparison is: "Is the actual version on this node the same as the latest Service Version for this service? If not, catch up."
-
-### 4. Actual State is sparse
-
-Actual State stores only entries for services that exist on a node. There are no NOT_PRESENT rows — absence of an entry means the service is not deployed on that node. The supervisor detects drift by comparing Expected State keys against Actual State keys.
-
-### 5. Actual State updated on Deploy_Result
-
-For MVP, Actual State is updated when the agent sends back a `Deploy_Result` confirming that a deployment landed. This is the ACK signal that confirms the desired state has been reached.
-
-Heartbeat-based status reporting (RUNNING, STOPPED, DEPLOY_FAILED, etc.) is a later feature. When agents report service-level status, Actual State gains a runtime status column.
-
-### 6. Database schema
+A `services` table provides a canonical entity for each named service. The Registrar creates a row implicitly on first deploy. The table uses a surrogate primary key; `name` has a unique index for lookups.
 
 ```sql
-CREATE TABLE IF NOT EXISTS service_versions (
-    service_name  TEXT NOT NULL,
-    version       INTEGER NOT NULL,
-    image         TEXT NOT NULL,
-    env           TEXT NOT NULL,      -- JSON-serialized Env_Array
-    ports         TEXT NOT NULL,      -- JSON-serialized Port_Array
-    volumes       TEXT NOT NULL,      -- JSON-serialized Volume_Array
-    description   TEXT NOT NULL DEFAULT '',
-    wanted_by     TEXT NOT NULL DEFAULT '',
-    created_at    TEXT NOT NULL,      -- ISO 8601 UTC
-    PRIMARY KEY (service_name, version)
-);
-
-CREATE TABLE IF NOT EXISTS actual_state (
-    service_name  TEXT NOT NULL,
-    node_id       TEXT NOT NULL,
-    version       INTEGER NOT NULL,
-    updated_at    TEXT NOT NULL,      -- ISO 8601 UTC
-    PRIMARY KEY (service_name, node_id),
-    FOREIGN KEY (service_name, version) REFERENCES service_versions(service_name, version)
+CREATE TABLE IF NOT EXISTS services (
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
 );
 ```
+
+### 5. Database schema
+
+```sql
+CREATE TABLE IF NOT EXISTS services (
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS service_versions (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    service_id   INTEGER NOT NULL,
+    version      INTEGER NOT NULL,
+    image        TEXT NOT NULL,
+    env          TEXT NOT NULL,      -- JSON-serialized Env_Array
+    ports        TEXT NOT NULL,      -- JSON-serialized Port_Array
+    volumes      TEXT NOT NULL,      -- JSON-serialized Volume_Array
+    description  TEXT NOT NULL DEFAULT '',
+    wanted_by    TEXT NOT NULL DEFAULT '',
+    created_at   TEXT NOT NULL,      -- ISO 8601 UTC
+    FOREIGN KEY (service_id) REFERENCES services(id),
+    UNIQUE (service_id, version)
+);
+
+CREATE TABLE IF NOT EXISTS service_catalog (
+    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    service_id      INTEGER NOT NULL,
+    node_id         TEXT,           -- NULL = not yet scheduled
+    current_version INTEGER NOT NULL DEFAULT 0,  -- 0 = not deployed
+    target_version  INTEGER NOT NULL,
+    failed          INTEGER NOT NULL DEFAULT 0,   -- boolean: 0 = ok, 1 = failed attempt
+    updated_at      TEXT NOT NULL,  -- ISO 8601 UTC
+    FOREIGN KEY (service_id) REFERENCES services(id),
+    FOREIGN KEY (service_id, target_version)
+        REFERENCES service_versions(service_id, version)
+);
+CREATE UNIQUE INDEX idx_catalog_scheduled
+    ON service_catalog(service_id, node_id)
+    WHERE node_id IS NOT NULL;
+```
+
+Key design points:
+
+- `current_version = 0` means "not deployed." No foreign key constraint on this column (0 doesn't exist in `service_versions`).
+- `target_version` always references a real `service_versions` row. The scheduler sets it when creating or updating the catalog entry.
+- `failed` is a boolean flag. Set to 1 when a deploy fails. Cleared when `target_version` changes (new deploy intent). The supervisor skips entries where `failed = 1`.
+- `node_id = NULL` means "not yet scheduled." The supervisor calls the scheduler to assign a node when it finds unscheduled entries.
+- The unique index on `(service_id, node_id)` only applies when `node_id IS NOT NULL`. Multiple NULL rows for the same service are prevented at the application level.
+- `node_id` is TEXT for MVP (referencing `agents.name`). Issue #79 tracks replacing it with an integer FK to `agents.id`.
 
 Complex ASD fields (env, ports, volumes) are stored as JSON strings. They are small and rarely queried independently. Normalization can be added later if query patterns demand it.
 
-### 7. Ada types
+### 6. catalog_id as opaque correlation token
 
-```ada
---  Service Version: an immutable snapshot of a service's ASD
-type Service_Version is record
-   Service_Name : Unbounded_String;
-   Version      : Positive;
-   Image        : Unbounded_String;
-   Env          : Env_Array (1 .. MAX_ENV_ENTRIES);
-   Env_Count    : Natural := 0;
-   Ports        : Port_Array (1 .. MAX_PORTS_ENTRIES);
-   Ports_Count  : Natural := 0;
-   Volumes      : Volume_Array (1 .. MAX_VOLUMES_ENTRIES);
-   Volumes_Count : Natural := 0;
-   Description  : Unbounded_String;
-   Wanted_By    : Unbounded_String;
-   Created_At   : Ada.Calendar.Time;
-end record;
+Every `Deploy_Command` carries a `catalog_id` — the primary key of the Service Catalog entry. The agent treats it as opaque and echoes it back in the `Deploy_Result`. The controller uses it to look up the catalog entry directly, avoiding (service_name, node_id) lookups.
 
---  Key for actual state lookups: (service_name, node_id)
-type Service_Node_Key is record
-   Service_Name : Unbounded_String;
-   Node_Id      : Unbounded_String;
-end record;
+### 7. Supervisor loop behavior
 
---  Actual state entry: what version is deployed on which node
-type Actual_State_Entry is record
-   Service_Name : Unbounded_String;
-   Node_Id      : Unbounded_String;
-   Version      : Positive;
-   Updated_At   : Ada.Calendar.Time;
-end record;
-```
+The supervisor loop runs on each iteration:
 
-`Service_Version` is a separate type from `Service_Definition` (the parser output). They share fields now but will diverge — `Service_Version` is a storage type with versioning metadata; `Service_Definition` is an input type from TOML parsing.
+1. **Schedule**: Find catalog entries where `node_id IS NULL`. Call the scheduler to assign a node (or leave NULL if no agent is connected).
+2. **Reconcile**: Find catalog entries where `current_version ≠ target_version AND failed = 0`. Render the quadlet from the ASD and send a `Deploy_Command` with the entry's `catalog_id`.
 
-### 8. MVP flow
+On `Deploy_Result`:
+- **Success**: Set `current_version = target_version`, `failed = 0`, update `updated_at`.
+- **Failure**: Set `failed = 1`, update `updated_at`. `current_version` stays unchanged.
 
-```
-TOML → parser → Service_Definition (ASD)
-                        ↓
-              Service_Version (persisted to service_versions table)
-                        ↓
-Supervisor loop: latest version per service vs. actual_state
-                        ↓
-        version mismatch → render quadlet from ASD → Deploy_Command → Agent
-                        ↓
-        Deploy_Result → update actual_state
-```
+### 8. --test-config is temporary
 
-The `Pending_Deploy` mechanism is replaced entirely. The supervisor loop determines what needs deploying by comparing desired state (latest Service Version) against actual state (what's on each node).
+The `--test-config` CLI flag triggers the Parser → Registrar → Scheduler pipeline at startup. It will be removed when `podctl deploy` is implemented. The controller no longer exits after a test deploy — it runs until interrupted, and the supervisor loop handles convergence.
 
 ### 9. Stacks deferred
 
@@ -141,24 +151,48 @@ The Stack concept (grouping related services) is deferred for MVP. A Service Ver
 
 ### Positive
 
-- Clear state pipeline replaces the one-shot `Pending_Deploy` mechanism.
-- Service Versions provide immutable history and enable rollback.
+- Service Catalog is the single source of truth for both intent and reality. No separate desired-state and actual-state tables to keep consistent.
+- New services are visible by construction: `current_version = 0` in the catalog. No extra query needed to discover "services that exist but aren't deployed."
+- The supervisor loop is trivial: compare two integers, act on mismatch. No complex state derivation.
+- The pipeline (Parser → Registrar → Scheduler → Supervisor) has clear single-responsibility boundaries.
+- `Pending_Deploy` mechanism is eliminated entirely. The catalog and supervisor handle everything uniformly.
+- `--test-config` one-shot exit behavior is eliminated. The controller always runs until interrupted.
 - Database as single source of truth (ADR-0037) — no cache synchronization issues.
-- The MVP flow is simple: version comparison determines what needs deploying.
 - The full three-state model (ADR-0005) is the target architecture; MVP is a proper subset, not a detour.
 
 ### Negative
 
-- No runtime status in Actual State yet — the supervisor can only detect version mismatches, not service crashes. This is acceptable for MVP (a "Podman remote") but must be added before production use.
+- No runtime status in Service Catalog yet — the supervisor can only detect version mismatches, not service crashes. This is acceptable for MVP (a "Podman remote") but must be added before production use.
 - JSON serialization of ASD fields (env, ports, volumes) is not queryable in SQL. Acceptable at MVP scale; normalize later if needed.
 - No placement logic — all services deploy to the connected agent. The scheduler is a prerequisite for multi-node deployments.
+- `node_id` is TEXT for MVP, not an integer FK. Issue #79 tracks this normalization.
+- Application-level enforcement is needed for "only one NULL row per service" in the catalog (the unique index only covers non-NULL node_ids).
 
 ### Neutral
 
-- The `Pending_Deploy` type and `Check_Test_Deploy` procedure will be removed from `Controller_Instance`.
+- The `Pending_Deploy` type, `Check_Test_Deploy` procedure, and `Test_Deploy` field on `Controller_Instance` will be removed.
+- The `actual_state` table and repository will be removed, replaced by `service_catalog`.
 - The `Agent_Maps.Map` on `Controller_Instance` will be removed (ADR-0037).
 
 ## Alternatives Considered
+
+### Separate actual_state table (original design)
+
+- Pros: Matches the three-state model directly. Each state has its own table.
+- Cons: The supervisor loop cannot discover new services — services with no `actual_state` entry are invisible. Requires an additional query to find "services that exist but aren't deployed." The catalog model makes this case explicit (`current_version = 0`).
+- Why rejected: The catalog model is simpler and solves the "new service discovery" problem by construction.
+
+### Separate Desired State table for MVP
+
+- Pros: Explicit representation of "which version should be active."
+- Cons: For MVP, desired state is simply "the latest version." A separate table would be a pointer to the latest version with no additional information. The catalog's `target_version` column serves this purpose.
+- Why rejected: The catalog's `target_version` is the desired state. A separate table can be added when placement rules or version pinning are needed.
+
+### Include runtime status in Service Catalog for MVP
+
+- Pros: Full visibility from day one.
+- Cons: Requires agents to report service-level status in heartbeats, which is not implemented yet. Would block the state pipeline on the agent reporting feature.
+- Why rejected: MVP scope is the state pipeline. Runtime status is added when agents report it.
 
 ### Store quadlet content in Service Version
 
@@ -166,21 +200,11 @@ The Stack concept (grouping related services) is deferred for MVP. A Service Ver
 - Cons: Quadlet is a derived artifact that loses information (placement rules, environment context). Cannot re-render for different nodes. Cannot diff versions at the definition level.
 - Why rejected: The ASD is the source of truth; the quadlet is rendered on demand.
 
-### Separate Desired State table for MVP
-
-- Pros: Explicit representation of "which version should be active."
-- Cons: For MVP, desired state is simply "the latest version." A separate table would be a pointer to the latest version with no additional information. Adds complexity without value.
-- Why rejected: The latest Service Version per service is the desired state. A separate table can be added when placement rules or version pinning are needed.
-
-### Include runtime status in Actual State for MVP
-
-- Pros: Full visibility from day one.
-- Cons: Requires agents to report service-level status in heartbeats, which is not implemented yet. Would block the state pipeline on the agent reporting feature.
-- Why rejected: MVP scope is the state pipeline. Runtime status is added when agents report it.
-
 ## References
 
 - [ADR-0003: SQLite for Controller State Storage](0003-sqlite-for-controller-state.md)
 - [ADR-0005: Three-State Model](0005-three-state-model.md)
 - [ADR-0006: Continuous Supervisor Loop](0006-continuous-supervisor-loop.md)
+- [ADR-0023: Per-Service Monotonic Versioning](0023-per-service-monotonic-versioning.md)
 - [ADR-0037: Database-Only State Access](0037-database-only-state-access.md)
+- [Issue #79: Replace node_id TEXT with integer FK](https://code.monospacementor.com/podmander/podmander/issues/79)

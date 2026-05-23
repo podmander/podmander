@@ -922,10 +922,11 @@ package body Podmander.Controller_Tests is
       Ctrl  : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
       H     : Podmander.Controller.Message_Handlers.Controller_Handler :=
         Make_Handler (Ctrl'Access, "node-1");
-      Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
-        (Code          => Podmander.Messages.Result_Codes.Ok,
-         Service_Name  => To_Unbounded_String ("web"),
-         Error_Message => Null_Unbounded_String);
+Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
+         (Catalog_Id    => 0,
+          Code          => Podmander.Messages.Result_Codes.Ok,
+          Service_Name  => To_Unbounded_String ("web"),
+          Error_Message => Null_Unbounded_String);
    begin
       --  No Service_Version created for "web" — this should not crash
       H.Handle_Deploy_Result (Res);
@@ -961,10 +962,11 @@ package body Podmander.Controller_Tests is
       H     : Podmander.Controller.Message_Handlers.Controller_Handler :=
         Make_Handler (Ctrl'Access, "node-1");
       SV    : Podmander.Controller.Service_Version;
-      Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
-        (Code          => Podmander.Messages.Result_Codes.Ok,
-         Service_Name  => To_Unbounded_String ("web"),
-         Error_Message => Null_Unbounded_String);
+Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
+         (Catalog_Id    => 0,
+          Code          => Podmander.Messages.Result_Codes.Ok,
+          Service_Name  => To_Unbounded_String ("web"),
+          Error_Message => Null_Unbounded_String);
       All_E : Podmander.Controller.Actual_State_Vectors.Vector;
    begin
       SV.Service_Name := To_Unbounded_String ("web");

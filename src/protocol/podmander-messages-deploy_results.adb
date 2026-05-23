@@ -8,6 +8,7 @@ package body Podmander.Messages.Deploy_Results is
    is
    begin
       Msg.Add_String (Deploy_Ack_Kind);
+      Msg.Add_String (Integer'Image (Self.Catalog_Id));
       Msg.Add_String (RC.Encode_Code (Self.Code));
       Msg.Add_String (SU.To_String (Self.Service_Name));
       Msg.Add_String (SU.To_String (Self.Error_Message));
@@ -23,10 +24,11 @@ package body Podmander.Messages.Deploy_Results is
    function Decode_Impl
      (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
    begin
-      if Msg.Size < 3 then
+      if Msg.Size < 4 then
          raise Decode_Error with "deploy_ack: missing payload frames";
       end if;
       declare
+         Catalog_Id   : constant Integer := Integer'Value (Msg.Pop_String);
          Code         : constant RC.Result_Code :=
            RC.Decode_Code (Msg.Pop_String);
          Service_Name : constant String := Msg.Pop_String;
@@ -34,7 +36,8 @@ package body Podmander.Messages.Deploy_Results is
       begin
          return
            Deploy_Result'
-             (Code          => Code,
+             (Catalog_Id    => Catalog_Id,
+              Code          => Code,
               Service_Name  => SU.To_Unbounded_String (Service_Name),
               Error_Message => SU.To_Unbounded_String (Error_Msg));
       end;

@@ -12,6 +12,7 @@ package Podmander.Messages.Deploy_Results is
 
    --  Agent -> Controller: result of a deploy command
    type Deploy_Result is new Deploy_Result_Type with record
+      Catalog_Id    : Integer := 0;
       Code          : RC.Result_Code := RC.Ok;
       Service_Name  : SU.Unbounded_String;
       Error_Message : SU.Unbounded_String;
