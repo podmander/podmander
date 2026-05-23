@@ -429,7 +429,9 @@ package body Podmander.Controller is
             end;
          exception
             when Podmander.Database.Database_Error =>
-               null;
+               Podmander.Logging.Warning
+                 ("controller",
+                  "No service_versions entry for " & Svc_Name);
          end;
       end loop;
       return Result;
