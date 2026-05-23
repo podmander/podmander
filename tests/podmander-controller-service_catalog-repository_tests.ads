@@ -3,8 +3,8 @@
 
 with AUnit.Test_Suites;
 
-package Podmander.Controller.Actual_State.Repository_Tests is
+package Podmander.Controller.Service_Catalog.Repository_Tests is
 
    function Suite return AUnit.Test_Suites.Access_Test_Suite;
 
-end Podmander.Controller.Actual_State.Repository_Tests;
+end Podmander.Controller.Service_Catalog.Repository_Tests;

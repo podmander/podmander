@@ -112,34 +112,56 @@ private
        & "updated_at    TEXT NOT NULL,"
        & "PRIMARY KEY (service_name, node_id));";
 
-     Migration_History : constant Migration_Array :=
-       [1 =>
-          (Version => 1,
-           SQL     =>
-             Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
-        2 =>
-          (Version => 2,
-           SQL     =>
-             Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
-        3 =>
-          (Version => 3,
-           SQL     =>
-             Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL)),
-        4 =>
-          (Version => 4,
-           SQL     =>
-             Ada.Strings.Unbounded.To_Unbounded_String (Migration_004_SQL)),
-        5 =>
-          (Version => 5,
-           SQL     =>
-             Ada.Strings.Unbounded.To_Unbounded_String (Migration_005_SQL)),
-        6 =>
-          (Version => 6,
-           SQL     =>
-             Ada.Strings.Unbounded.To_Unbounded_String (Migration_006_SQL)),
-        7 =>
-          (Version => 7,
-           SQL     =>
-             Ada.Strings.Unbounded.To_Unbounded_String (Migration_007_SQL))];
+      Migration_008_SQL : constant String :=
+        "DROP TABLE IF EXISTS actual_state;"
+        & "CREATE TABLE IF NOT EXISTS service_catalog ("
+        & "id              INTEGER PRIMARY KEY AUTOINCREMENT,"
+        & "service_id      INTEGER NOT NULL,"
+        & "node_id         TEXT,"
+        & "current_version INTEGER NOT NULL DEFAULT 0,"
+        & "target_version  INTEGER NOT NULL,"
+        & "failed          INTEGER NOT NULL DEFAULT 0,"
+        & "updated_at      TEXT NOT NULL,"
+        & "FOREIGN KEY (service_id) REFERENCES services(id),"
+        & "FOREIGN KEY (service_id, target_version)"
+        & "    REFERENCES service_versions(service_id, version)"
+        & ");"
+        & "CREATE UNIQUE INDEX idx_catalog_scheduled"
+        & "    ON service_catalog(service_id, node_id)"
+        & "    WHERE node_id IS NOT NULL;";
+
+      Migration_History : constant Migration_Array :=
+        [1 =>
+           (Version => 1,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
+         2 =>
+           (Version => 2,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
+         3 =>
+           (Version => 3,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL)),
+         4 =>
+           (Version => 4,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_004_SQL)),
+         5 =>
+           (Version => 5,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_005_SQL)),
+         6 =>
+           (Version => 6,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_006_SQL)),
+         7 =>
+           (Version => 7,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_007_SQL)),
+         8 =>
+           (Version => 8,
+            SQL     =>
+              Ada.Strings.Unbounded.To_Unbounded_String (Migration_008_SQL))];
 
 end Podmander.Database.Migrations;

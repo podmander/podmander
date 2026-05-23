@@ -411,38 +411,40 @@ package body Podmander.Database_Tests is
          raise;
    end Test_Migration_Service_Versions_Table;
 
-   --  Test: Migration 005 creates the actual_state table
-   procedure Test_Migration_Actual_State_Table
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Path : constant String := Unique_Temp_Path;
-   begin
-      --  Open should not raise and should create actual_state table
-      declare
-         Handle : DB.DB_Handle := DB.Open (Path);
-         pragma Unreferenced (Handle);
-      begin
-         null;
-      end;
-      --  Verify actual_state table exists through a second connection
-      declare
-         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
-         Stmt : Ada_Sqlite3.Statement :=
-           Ada_Sqlite3.Prepare
-             (Conn,
-              "SELECT service_name, node_id, version, updated_at "
-              & "FROM actual_state");
-      begin
-         --  Preparing the query should not raise â table exists with correct columns
-         null;
-      end;
-      Cleanup_DB (Path);
-   exception
-      when others =>
-         Cleanup_DB (Path);
-         raise;
-   end Test_Migration_Actual_State_Table;
+    --  Test: Migration 008 creates the service_catalog table
+    procedure Test_Migration_Service_Catalog_Table
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
+    is
+       pragma Unreferenced (T);
+       Path : constant String := Unique_Temp_Path;
+    begin
+       --  Open should not raise and should create service_catalog table
+       declare
+          Handle : DB.DB_Handle := DB.Open (Path);
+          pragma Unreferenced (Handle);
+       begin
+          null;
+       end;
+       --  Verify service_catalog table exists through a second connection
+       declare
+          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+          Stmt : Ada_Sqlite3.Statement :=
+            Ada_Sqlite3.Prepare
+              (Conn,
+               "SELECT id, service_id, node_id, current_version, "
+               & "target_version, failed, updated_at "
+               & "FROM service_catalog");
+       begin
+          --  Preparing the query should not raise â€" table exists with correct columns
+          null;
+          pragma Unreferenced (Stmt);
+       end;
+       Cleanup_DB (Path);
+    exception
+       when others =>
+          Cleanup_DB (Path);
+          raise;
+    end Test_Migration_Service_Catalog_Table;
 
    --  Test: Migration 002 creates the agents table
    procedure Test_Migration_Agents_Table
@@ -738,8 +740,8 @@ package body Podmander.Database_Tests is
          "Migration 004 creates service_versions table");
       Register_Routine
         (T,
-         Test_Migration_Actual_State_Table'Access,
-         "Migration 005 creates actual_state table");
+         Test_Migration_Service_Catalog_Table'Access,
+         "Migration 008 creates service_catalog table");
       Register_Routine
         (T,
          Test_Open_Error_Path'Access,

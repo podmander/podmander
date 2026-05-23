@@ -208,10 +208,16 @@ package body Podmander.Database is
    end Prepare;
 
    procedure Bind_Text
-     (QH : in out Query_Handle; Index : Positive; Value : String) is
+      (QH : in out Query_Handle; Index : Positive; Value : String) is
    begin
       Ada_Sqlite3.Bind_Text (QH.Stmt, Index, Value);
    end Bind_Text;
+
+   procedure Bind_Null
+      (QH : in out Query_Handle; Index : Positive) is
+   begin
+      Ada_Sqlite3.Bind_Null (QH.Stmt, Index);
+   end Bind_Null;
 
    function Step (QH : in out Query_Handle) return Boolean is
       use type Ada_Sqlite3.Result_Code;

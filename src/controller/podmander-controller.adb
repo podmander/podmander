@@ -10,7 +10,6 @@ with Podmander.Config;
 with Podmander.Config.Parser;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
-with Podmander.Controller.Actual_State.Repository;
 with Podmander.Controller.Service.Repository;
 with Podmander.Generators.Quadlet;
 with Podmander.Logging;
@@ -25,6 +24,23 @@ package body Podmander.Controller is
    use Ada.Strings.Unbounded;
    use type CZMQ.Messages.Receive_Status;
    use type Podmander.Database.Error_Kind;
+
+   --  Body-private types for state reconciliation (to be replaced in #86)
+   type State_Mismatch is record
+      Service_Name    : Ada.Strings.Unbounded.Unbounded_String;
+      Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
+      Desired_Version : Positive;
+      Current_Version : Positive;
+   end record;
+
+   package State_Mismatch_Vectors is new
+     Ada.Containers.Vectors
+       (Index_Type   => Positive,
+        Element_Type => State_Mismatch);
+
+   procedure Reconcile_State (Self : in out Controller_Instance);
+   function Find_State_Mismatches
+     (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector;
 
    Poll_Interval_Ms : constant := 1000;
 
@@ -267,49 +283,11 @@ package body Podmander.Controller is
            Created_At     => Ada.Calendar.Clock);
      end To_Service_Version;
 
-    procedure Reconcile_State (Self : in out Controller_Instance) is
-      Mismatches : constant State_Mismatch_Vectors.Vector :=
-        Find_State_Mismatches (Self.DB);
-      All_Agents : constant Podmander.Types.Agent_Maps.Map :=
-        Agent.Repository.Load_All (Self.DB);
-   begin
-      for M of Mismatches loop
-         declare
-            Node_Id_Str  : constant String := To_String (M.Node_Id);
-            Svc_Name_Str : constant String := To_String (M.Service_Name);
-            Found        : Boolean := False;
-         begin
-            for Cursor in All_Agents.Iterate loop
-               if To_String
-                    (Podmander.Types.Agent_Maps.Element (Cursor).Node_Id)
-                 = Node_Id_Str
-               then
-                  Found := True;
-                  exit;
-               end if;
-            end loop;
-
-             if Found then
-                declare
-                   Svc     : constant Service.Service :=
-                     Service.Repository.Get_By_Name (Self.DB, Svc_Name_Str);
-                   SV      : constant Service_Version :=
-                     Service.Repository.Get_Latest_Version
-                       (Self.DB, Svc.Id);
-                   Config  : constant Service_Definition :=
-                     To_Service_Definition (SV, Svc_Name_Str);
-                   Quadlet : constant String :=
-                     Podmander.Generators.Quadlet.Render (Config);
-                begin
-                   Self.Send_Deploy_Command
-                     (Node_Id      => Node_Id_Str,
-                      Service_Name => Svc_Name_Str,
-                      Quadlet      => Quadlet);
-                end;
-            end if;
-         end;
-      end loop;
-   end Reconcile_State;
+     procedure Reconcile_State (Self : in out Controller_Instance) is
+        pragma Unreferenced (Self);
+     begin
+        null;
+     end Reconcile_State;
 
    procedure Check_Test_Deploy (Self : in out Controller_Instance) is
    begin
@@ -452,40 +430,13 @@ package body Podmander.Controller is
        end;
     end Load_Test_Deploy;
 
-   function Find_State_Mismatches
-      (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector
-    is
-       Actual : Actual_State_Vectors.Vector :=
-         Actual_State.Repository.Get_All (DB);
-       Result : State_Mismatch_Vectors.Vector;
-    begin
-       for E of Actual loop
-          declare
-             Svc_Name : constant String := To_String (E.Service_Name);
-          begin
-             declare
-                Svc    : constant Service.Service :=
-                  Service.Repository.Get_By_Name (DB, Svc_Name);
-                Latest : constant Service_Version :=
-                  Service.Repository.Get_Latest_Version (DB, Svc.Id);
-             begin
-                if E.Version < Latest.Version then
-                   Result.Append
-                     (State_Mismatch'
-                        (Service_Name    => E.Service_Name,
-                         Node_Id         => E.Node_Id,
-                         Desired_Version => Latest.Version,
-                         Current_Version => E.Version));
-                end if;
-             end;
-          exception
-             when Podmander.Database.Database_Error =>
-                Podmander.Logging.Warning
-                  ("controller", "No service_versions entry for " & Svc_Name);
-          end;
-       end loop;
-       return Result;
-    end Find_State_Mismatches;
+    function Find_State_Mismatches
+       (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector
+     is
+        pragma Unreferenced (DB);
+     begin
+        return State_Mismatch_Vectors.Empty_Vector;
+     end Find_State_Mismatches;
 
    procedure Send_Deploy_Command
      (Self         : in out Controller_Instance;

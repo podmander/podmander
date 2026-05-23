@@ -8,7 +8,6 @@ with Ada.Strings.Unbounded;
 with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Podmander.Controller;
-with Podmander.Controller.Actual_State.Repository;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Controller.Service;
@@ -34,7 +33,6 @@ package body Podmander.Controller_Tests is
    use AUnit.Assertions;
 
    package Svc_Repo renames Podmander.Controller.Service.Repository;
-   package AS_Repo renames Podmander.Controller.Actual_State.Repository;
 
    type Controller_Test is new AUnit.Test_Cases.Test_Case with null record;
 
@@ -773,160 +771,7 @@ package body Podmander.Controller_Tests is
          "Check_Test_Deploy should not deploy to Unresponsive agent");
    end Test_Test_Deploy_Waits_For_Unresponsive_Agent;
 
-   --  Test: Check_Test_Deploy does nothing when Service_Name is empty
-    procedure Test_Find_State_Mismatches_Detects_Stale
-      (T : in out AUnit.Test_Cases.Test_Case'Class)
-    is
-       pragma Unreferenced (T);
-       D          : Podmander.Database.DB_Handle :=
-         Podmander.Database.Open (":memory:");
-       Svc        : constant Podmander.Controller.Service.Service :=
-         Svc_Repo.Create (D, "web");
-       SV_1       : Podmander.Controller.Service_Version;
-       SV_2       : Podmander.Controller.Service_Version;
-       AS_Entry   : Podmander.Controller.Actual_State_Entry;
-       Mismatches : Podmander.Controller.State_Mismatch_Vectors.Vector;
-    begin
-       SV_1.Id := 0;
-       SV_1.Service_Id := Svc.Id;
-       SV_1.Version := 1;
-       SV_1.Image := To_Unbounded_String ("web:1");
-       SV_1.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (D, SV_1);
-
-       SV_2.Id := 0;
-       SV_2.Service_Id := Svc.Id;
-       SV_2.Version := 2;
-       SV_2.Image := To_Unbounded_String ("web:2");
-       SV_2.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (D, SV_2);
-
-       AS_Entry.Service_Name := To_Unbounded_String ("web");
-       AS_Entry.Node_Id := To_Unbounded_String ("node-1");
-       AS_Entry.Version := 1;
-       AS_Entry.Updated_At := Ada.Calendar.Clock;
-       AS_Repo.Upsert (D, AS_Entry);
-
-       Mismatches := Podmander.Controller.Find_State_Mismatches (D);
-       Assert
-         (Natural (Mismatches.Length) = 1,
-          "Should find 1 mismatch when version is stale");
-    end Test_Find_State_Mismatches_Detects_Stale;
-
-    procedure Test_Find_State_Mismatches_None_When_Current
-      (T : in out AUnit.Test_Cases.Test_Case'Class)
-    is
-       pragma Unreferenced (T);
-       D          : Podmander.Database.DB_Handle :=
-         Podmander.Database.Open (":memory:");
-       Svc        : constant Podmander.Controller.Service.Service :=
-         Svc_Repo.Create (D, "web");
-       SV         : Podmander.Controller.Service_Version;
-       AS_Entry   : Podmander.Controller.Actual_State_Entry;
-       Mismatches : Podmander.Controller.State_Mismatch_Vectors.Vector;
-    begin
-       SV.Id := 0;
-       SV.Service_Id := Svc.Id;
-       SV.Version := 1;
-       SV.Image := To_Unbounded_String ("web:1");
-       SV.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (D, SV);
-
-       AS_Entry.Service_Name := To_Unbounded_String ("web");
-       AS_Entry.Node_Id := To_Unbounded_String ("node-1");
-       AS_Entry.Version := 1;
-       AS_Entry.Updated_At := Ada.Calendar.Clock;
-       AS_Repo.Upsert (D, AS_Entry);
-
-       Mismatches := Podmander.Controller.Find_State_Mismatches (D);
-       Assert
-         (Natural (Mismatches.Length) = 0,
-          "Should find 0 mismatches when version is current");
-    end Test_Find_State_Mismatches_None_When_Current;
-
-   procedure Test_Find_State_Mismatches_Empty_Actual
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      D          : Podmander.Database.DB_Handle :=
-        Podmander.Database.Open (":memory:");
-      Mismatches : Podmander.Controller.State_Mismatch_Vectors.Vector;
-   begin
-      Mismatches := Podmander.Controller.Find_State_Mismatches (D);
-      Assert
-        (Natural (Mismatches.Length) = 0,
-         "Should find 0 mismatches when no actual state entries exist");
-   end Test_Find_State_Mismatches_Empty_Actual;
-
-    procedure Test_Find_State_Mismatches_Multiple_Services
-      (T : in out AUnit.Test_Cases.Test_Case'Class)
-    is
-       pragma Unreferenced (T);
-       D          : Podmander.Database.DB_Handle :=
-         Podmander.Database.Open (":memory:");
-       Svc_Web    : constant Podmander.Controller.Service.Service :=
-         Svc_Repo.Create (D, "web");
-       Svc_Db     : constant Podmander.Controller.Service.Service :=
-         Svc_Repo.Create (D, "db");
-       SV_1       : Podmander.Controller.Service_Version;
-       SV_2       : Podmander.Controller.Service_Version;
-       SV_3       : Podmander.Controller.Service_Version;
-       AS_1       : Podmander.Controller.Actual_State_Entry;
-       AS_2       : Podmander.Controller.Actual_State_Entry;
-       Mismatches : Podmander.Controller.State_Mismatch_Vectors.Vector;
-    begin
-       SV_1.Id := 0;
-       SV_1.Service_Id := Svc_Web.Id;
-       SV_1.Version := 1;
-       SV_1.Image := To_Unbounded_String ("web:1");
-       SV_1.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (D, SV_1);
-
-       SV_2.Id := 0;
-       SV_2.Service_Id := Svc_Web.Id;
-       SV_2.Version := 2;
-       SV_2.Image := To_Unbounded_String ("web:2");
-       SV_2.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (D, SV_2);
-
-       SV_3.Id := 0;
-       SV_3.Service_Id := Svc_Db.Id;
-       SV_3.Version := 1;
-       SV_3.Image := To_Unbounded_String ("db:1");
-       SV_3.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (D, SV_3);
-
-       AS_1.Service_Name := To_Unbounded_String ("web");
-       AS_1.Node_Id := To_Unbounded_String ("node-1");
-       AS_1.Version := 1;
-       AS_1.Updated_At := Ada.Calendar.Clock;
-       AS_Repo.Upsert (D, AS_1);
-
-       AS_2.Service_Name := To_Unbounded_String ("web");
-       AS_2.Node_Id := To_Unbounded_String ("node-2");
-       AS_2.Version := 2;
-       AS_2.Updated_At := Ada.Calendar.Clock;
-       AS_Repo.Upsert (D, AS_2);
-
-       Mismatches := Podmander.Controller.Find_State_Mismatches (D);
-       Assert
-         (Natural (Mismatches.Length) = 1,
-          "Should find 1 mismatch: only node-1/web is stale");
-       if not Mismatches.Is_Empty then
-          Assert
-            (To_String (Mismatches.First_Element.Service_Name) = "web",
-             "Mismatch should be for service 'web'");
-          Assert
-            (To_String (Mismatches.First_Element.Node_Id) = "node-1",
-             "Mismatch should be for node-1");
-          Assert
-            (Mismatches.First_Element.Desired_Version = 2,
-             "Desired version should be 2");
-          Assert
-            (Mismatches.First_Element.Current_Version = 1,
-             "Current version should be 1");
-       end if;
-    end Test_Find_State_Mismatches_Multiple_Services;
+    --  Test: Check_Test_Deploy does nothing when Service_Name is empty
 
    --  Test: Handle_Deploy_Result logs warning when no Service_Version exists
    --  (defensive: should not crash even if version lookup fails)
@@ -969,110 +814,7 @@ Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
          "Check_Test_Deploy should not trigger when Service_Name is empty");
    end Test_Test_Deploy_No_Trigger_When_Empty;
 
-    procedure Test_Handle_Deploy_Result_Updates_Actual_State
-      (T : in out AUnit.Test_Cases.Test_Case'Class)
-    is
-       pragma Unreferenced (T);
-       Ctrl  : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-       H     : Podmander.Controller.Message_Handlers.Controller_Handler :=
-         Make_Handler (Ctrl'Access, "node-1");
-       Svc   : constant Podmander.Controller.Service.Service :=
-         Svc_Repo.Create (Ctrl.DB, "web");
-       SV    : Podmander.Controller.Service_Version;
- Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
-          (Catalog_Id    => 0,
-           Code          => Podmander.Messages.Result_Codes.Ok,
-           Service_Name  => To_Unbounded_String ("web"),
-           Error_Message => Null_Unbounded_String);
-       All_E : Podmander.Controller.Actual_State_Vectors.Vector;
-    begin
-       SV.Id := 0;
-       SV.Service_Id := Svc.Id;
-       SV.Version := 1;
-       SV.Image := To_Unbounded_String ("web:1");
-       SV.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (Ctrl.DB, SV);
-
-       H.Handle_Deploy_Result (Res);
-
-       All_E := Podmander.Controller.Actual_State.Repository.Get_All (Ctrl.DB);
-       Assert
-         (Natural (All_E.Length) = 1,
-          "Should have 1 actual_state entry after deploy result");
-       Assert
-         (To_String (All_E.First_Element.Service_Name) = "web",
-          "Service name should be 'web'");
-       Assert
-         (To_String (All_E.First_Element.Node_Id) = "node-1",
-          "Node ID should be 'node-1'");
-       Assert (All_E.First_Element.Version = 1, "Version should be 1");
-    end Test_Handle_Deploy_Result_Updates_Actual_State;
-
-    procedure Test_Reconcile_State_No_Op_When_No_Mismatches
-      (T : in out AUnit.Test_Cases.Test_Case'Class)
-    is
-       pragma Unreferenced (T);
-       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-       Svc  : constant Podmander.Controller.Service.Service :=
-         Svc_Repo.Create (Ctrl.DB, "web");
-       SV   : Podmander.Controller.Service_Version;
-       AS_E : Podmander.Controller.Actual_State_Entry;
-    begin
-       SV.Id := 0;
-       SV.Service_Id := Svc.Id;
-       SV.Version := 1;
-       SV.Image := To_Unbounded_String ("web:1");
-       SV.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (Ctrl.DB, SV);
-
-       AS_E.Service_Name := To_Unbounded_String ("web");
-       AS_E.Node_Id := To_Unbounded_String ("node-1");
-       AS_E.Version := 1;
-       AS_E.Updated_At := Ada.Calendar.Clock;
-       Podmander.Controller.Actual_State.Repository.Upsert (Ctrl.DB, AS_E);
-
-       --  Should not raise (no mismatches = nothing to do)
-       Podmander.Controller.Reconcile_State (Ctrl);
-       Assert (True, "Reconcile_State completed without error");
-    end Test_Reconcile_State_No_Op_When_No_Mismatches;
-
-    procedure Test_Reconcile_State_Skips_Unknown_Agent
-      (T : in out AUnit.Test_Cases.Test_Case'Class)
-    is
-       pragma Unreferenced (T);
-       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-       Svc  : constant Podmander.Controller.Service.Service :=
-         Svc_Repo.Create (Ctrl.DB, "web");
-       SV_1 : Podmander.Controller.Service_Version;
-       SV_2 : Podmander.Controller.Service_Version;
-       AS_E : Podmander.Controller.Actual_State_Entry;
-    begin
-       SV_1.Id := 0;
-       SV_1.Service_Id := Svc.Id;
-       SV_1.Version := 1;
-       SV_1.Image := To_Unbounded_String ("web:1");
-       SV_1.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (Ctrl.DB, SV_1);
-
-       SV_2.Id := 0;
-       SV_2.Service_Id := Svc.Id;
-       SV_2.Version := 2;
-       SV_2.Image := To_Unbounded_String ("web:2");
-       SV_2.Created_At := Ada.Calendar.Clock;
-       Svc_Repo.Create_Version (Ctrl.DB, SV_2);
-
-       AS_E.Service_Name := To_Unbounded_String ("web");
-       AS_E.Node_Id := To_Unbounded_String ("unknown-node");
-       AS_E.Version := 1;
-       AS_E.Updated_At := Ada.Calendar.Clock;
-       Podmander.Controller.Actual_State.Repository.Upsert (Ctrl.DB, AS_E);
-
-       --  Should not raise: agent not in Agents map, so mismatch is skipped
-       Podmander.Controller.Reconcile_State (Ctrl);
-       Assert (True, "Reconcile_State skipped unknown agent without error");
-    end Test_Reconcile_State_Skips_Unknown_Agent;
-
-   overriding
+    overriding
    procedure Register_Tests (T : in out Controller_Test) is
       use AUnit.Test_Cases.Registration;
    begin
@@ -1164,38 +906,10 @@ Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
         (T,
          Test_Test_Deploy_No_Trigger_When_Empty'Access,
          "Check_Test_Deploy does nothing when Service_Name is empty");
-      Register_Routine
-        (T,
-         Test_Find_State_Mismatches_Detects_Stale'Access,
-         "Find_State_Mismatches detects stale version in actual_state");
-      Register_Routine
-        (T,
-         Test_Find_State_Mismatches_None_When_Current'Access,
-         "Find_State_Mismatches finds none when version is current");
-      Register_Routine
-        (T,
-         Test_Find_State_Mismatches_Empty_Actual'Access,
-         "Find_State_Mismatches returns empty when no actual state");
-      Register_Routine
-        (T,
-         Test_Find_State_Mismatches_Multiple_Services'Access,
-         "Find_State_Mismatches detects mismatches across services and nodes");
-       Register_Routine
-         (T,
-          Test_Handle_Deploy_Result_Updates_Actual_State'Access,
-          "Handle_Deploy_Result updates actual_state on success");
        Register_Routine
          (T,
           Test_Handle_Deploy_Result_No_Version'Access,
           "Handle_Deploy_Result logs warning when no version exists");
-       Register_Routine
-         (T,
-          Test_Reconcile_State_No_Op_When_No_Mismatches'Access,
-         "Reconcile_State is a no-op when there are no mismatches");
-      Register_Routine
-        (T,
-         Test_Reconcile_State_Skips_Unknown_Agent'Access,
-         "Reconcile_State skips mismatches for unknown agents");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

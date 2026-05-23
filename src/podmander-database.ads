@@ -70,8 +70,12 @@ package Podmander.Database is
    --  Raises Database_Error on failure.
 
    procedure Bind_Text
-     (QH : in out Query_Handle; Index : Positive; Value : String);
+      (QH : in out Query_Handle; Index : Positive; Value : String);
    --  Bind a text value to a parameter by position.
+
+   procedure Bind_Null
+      (QH : in out Query_Handle; Index : Positive);
+   --  Bind NULL to a parameter by position.
 
    function Step (QH : in out Query_Handle) return Boolean;
    --  Execute next step. True if a row is available (ROW), False if done.

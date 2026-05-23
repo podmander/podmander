@@ -39,17 +39,20 @@ package Podmander.Controller is
       Node_Id      : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
-   type Actual_State_Entry is record
-      Service_Name : Ada.Strings.Unbounded.Unbounded_String;
-      Node_Id      : Ada.Strings.Unbounded.Unbounded_String;
-      Version      : Positive;
-      Updated_At   : Ada.Calendar.Time;
+   type Service_Catalog_Entry is record
+      Id              : Integer;
+      Service_Id      : Integer;
+      Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
+      Current_Version : Natural := 0;
+      Target_Version  : Positive;
+      Failed          : Boolean := False;
+      Updated_At      : Ada.Calendar.Time;
    end record;
 
-   package Actual_State_Vectors is new
+   package Catalog_Entry_Vectors is new
      Ada.Containers.Vectors
        (Index_Type   => Positive,
-        Element_Type => Actual_State_Entry);
+        Element_Type => Service_Catalog_Entry);
 
    Default_Agent_Timeout : constant Duration := 30.0;
 
@@ -109,14 +112,6 @@ package Podmander.Controller is
 
    procedure Run (Self : in out Controller_Instance);
 
-   procedure Reconcile_State (Self : in out Controller_Instance);
-   --  Compare desired vs actual state across all services and send deploy
-   --  commands to bring actual state in line with desired state.
-   --  For each mismatch found by Find_State_Mismatches, looks up the service
-   --  version details, generates the quadlet, and sends a deploy command
-   --  to the agent identified by the mismatch's Node_Id. Silently skips
-   --  agents that are not currently connected.
-
    procedure Stop (Self : in out Controller_Instance);
 
    procedure Check_Test_Deploy (Self : in out Controller_Instance);
@@ -132,26 +127,6 @@ package Podmander.Controller is
       Token : out Ada.Strings.Unbounded.Unbounded_String);
    --  Delegates to Podmander.Enrollment.Generate_Join_Token
    --  using this controller's public key and enrollment config.
-
-   --  Version comparison types
-   type State_Mismatch is record
-      Service_Name    : Ada.Strings.Unbounded.Unbounded_String;
-      Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
-      Desired_Version : Positive;
-      Current_Version : Positive;
-   end record;
-
-   package State_Mismatch_Vectors is new
-     Ada.Containers.Vectors
-       (Index_Type   => Positive,
-        Element_Type => State_Mismatch);
-
-   function Find_State_Mismatches
-     (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector;
-   --  Compare actual state against desired state (latest service version)
-   --  for every service currently deployed. Returns a vector of mismatches
-   --  where the deployed version is older than the desired version.
-   --  Services with no service_versions entry are silently skipped.
 
    procedure Send_Deploy_Command
      (Self         : in out Controller_Instance;
