@@ -365,6 +365,71 @@ package body Podmander.Database_Tests is
       Cleanup_DB (Path);
    end Test_Handle_Finalization;
 
+   --  Test: Migration 004 creates the service_versions table
+   procedure Test_Migration_Service_Versions_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      --  Open should not raise and should create service_versions table
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+         pragma Unreferenced (Handle);
+      begin
+         null;
+      end;
+      --  Verify service_versions table exists through a second connection
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare
+             (Conn, "SELECT service_name, version, image, env, ports, "
+              & "volumes, description, wanted_by, created_at "
+              & "FROM service_versions");
+      begin
+         --  Preparing the query should not raise — table exists with correct columns
+         null;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Migration_Service_Versions_Table;
+
+   --  Test: Migration 005 creates the actual_state table
+   procedure Test_Migration_Actual_State_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      --  Open should not raise and should create actual_state table
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+         pragma Unreferenced (Handle);
+      begin
+         null;
+      end;
+      --  Verify actual_state table exists through a second connection
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare
+             (Conn, "SELECT service_name, node_id, version, updated_at "
+              & "FROM actual_state");
+      begin
+         --  Preparing the query should not raise — table exists with correct columns
+         null;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Migration_Actual_State_Table;
+
    --  Test: Migration 002 creates the agents table
    procedure Test_Migration_Agents_Table
      (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -630,11 +695,17 @@ package body Podmander.Database_Tests is
         (T, Test_Handle_Finalization'Access,
          "DB_Handle finalization closes connection");
       Register_Routine
-         (T, Test_Migration_Agents_Table'Access,
-          "Migration 002 creates agents table");
+          (T, Test_Migration_Agents_Table'Access,
+           "Migration 002 creates agents table");
       Register_Routine
-          (T, Test_Open_Error_Path'Access,
-           "Open raises Database_Error for invalid path");
+        (T, Test_Migration_Service_Versions_Table'Access,
+         "Migration 004 creates service_versions table");
+      Register_Routine
+        (T, Test_Migration_Actual_State_Table'Access,
+         "Migration 005 creates actual_state table");
+      Register_Routine
+           (T, Test_Open_Error_Path'Access,
+            "Open raises Database_Error for invalid path");
       --  Query API tests
       Register_Routine
         (T, Test_Prepare_And_Step'Access,
