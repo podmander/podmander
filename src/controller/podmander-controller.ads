@@ -118,6 +118,14 @@ package Podmander.Controller is
 
    procedure Run (Self : in out Controller_Instance);
 
+   procedure Reconcile_State (Self : in out Controller_Instance);
+   --  Compare desired vs actual state across all services and send deploy
+   --  commands to bring actual state in line with desired state.
+   --  For each mismatch found by Find_State_Mismatches, looks up the service
+   --  version details, generates the quadlet, and sends a deploy command
+   --  to the agent identified by the mismatch's Node_Id. Silently skips
+   --  agents that are not currently connected.
+
    procedure Stop (Self : in out Controller_Instance);
 
    procedure Check_Test_Deploy (Self : in out Controller_Instance);

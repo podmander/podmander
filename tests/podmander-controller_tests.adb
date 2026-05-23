@@ -893,9 +893,105 @@ end Test_Test_Deploy_Trigger_With_Multiple_Agents;
        Assert
          (not Ctrl.Test_Deploy.Deployed,
           "Check_Test_Deploy should not trigger when Service_Name is empty");
-    end Test_Test_Deploy_No_Trigger_When_Empty;
+     end Test_Test_Deploy_No_Trigger_When_Empty;
 
-    overriding procedure Register_Tests (T : in out Controller_Test) is
+   procedure Test_Handle_Deploy_Result_Updates_Actual_State
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl  : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+      H     : Podmander.Controller.Message_Handlers.Controller_Handler :=
+        Make_Handler (Ctrl'Access, "node-1");
+      SV    : Podmander.Controller.Service_Version;
+      Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
+        (Code         => Podmander.Messages.Result_Codes.Ok,
+         Service_Name => To_Unbounded_String ("web"),
+         Error_Message => Null_Unbounded_String);
+      All_E : Podmander.Controller.Actual_State_Vectors.Vector;
+   begin
+      SV.Service_Name := To_Unbounded_String ("web");
+      SV.Version := 1;
+      SV.Image := To_Unbounded_String ("web:1");
+      SV.Created_At := Ada.Calendar.Clock;
+      Svc_Repo.Create_Version (Ctrl.DB, SV);
+
+      H.Handle_Deploy_Result (Res);
+
+      All_E := Podmander.Controller.Actual_State.Repository.Get_All (Ctrl.DB);
+      Assert
+        (Natural (All_E.Length) = 1,
+         "Should have 1 actual_state entry after deploy result");
+      Assert
+        (To_String (All_E.First_Element.Service_Name) = "web",
+         "Service name should be 'web'");
+      Assert
+        (To_String (All_E.First_Element.Node_Id) = "node-1",
+         "Node ID should be 'node-1'");
+      Assert
+        (All_E.First_Element.Version = 1,
+         "Version should be 1");
+   end Test_Handle_Deploy_Result_Updates_Actual_State;
+
+   procedure Test_Reconcile_State_No_Op_When_No_Mismatches
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl  : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+      SV    : Podmander.Controller.Service_Version;
+      AS_E  : Podmander.Controller.Actual_State_Entry;
+   begin
+      SV.Service_Name := To_Unbounded_String ("web");
+      SV.Version := 1;
+      SV.Image := To_Unbounded_String ("web:1");
+      SV.Created_At := Ada.Calendar.Clock;
+      Svc_Repo.Create_Version (Ctrl.DB, SV);
+
+      AS_E.Service_Name := To_Unbounded_String ("web");
+      AS_E.Node_Id := To_Unbounded_String ("node-1");
+      AS_E.Version := 1;
+      AS_E.Updated_At := Ada.Calendar.Clock;
+      Podmander.Controller.Actual_State.Repository.Upsert
+        (Ctrl.DB, AS_E);
+
+      --  Should not raise (no mismatches = nothing to do)
+      Podmander.Controller.Reconcile_State (Ctrl);
+      Assert (True, "Reconcile_State completed without error");
+   end Test_Reconcile_State_No_Op_When_No_Mismatches;
+
+   procedure Test_Reconcile_State_Skips_Unknown_Agent
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl  : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+      SV_1  : Podmander.Controller.Service_Version;
+      SV_2  : Podmander.Controller.Service_Version;
+      AS_E  : Podmander.Controller.Actual_State_Entry;
+   begin
+      SV_1.Service_Name := To_Unbounded_String ("web");
+      SV_1.Version := 1;
+      SV_1.Image := To_Unbounded_String ("web:1");
+      SV_1.Created_At := Ada.Calendar.Clock;
+      Svc_Repo.Create_Version (Ctrl.DB, SV_1);
+
+      SV_2.Service_Name := To_Unbounded_String ("web");
+      SV_2.Version := 2;
+      SV_2.Image := To_Unbounded_String ("web:2");
+      SV_2.Created_At := Ada.Calendar.Clock;
+      Svc_Repo.Create_Version (Ctrl.DB, SV_2);
+
+      AS_E.Service_Name := To_Unbounded_String ("web");
+      AS_E.Node_Id := To_Unbounded_String ("unknown-node");
+      AS_E.Version := 1;
+      AS_E.Updated_At := Ada.Calendar.Clock;
+      Podmander.Controller.Actual_State.Repository.Upsert
+        (Ctrl.DB, AS_E);
+
+      --  Should not raise: agent not in Agents map, so mismatch is skipped
+      Podmander.Controller.Reconcile_State (Ctrl);
+      Assert (True, "Reconcile_State skipped unknown agent without error");
+   end Test_Reconcile_State_Skips_Unknown_Agent;
+
+     overriding procedure Register_Tests (T : in out Controller_Test) is
       use AUnit.Test_Cases.Registration;
    begin
        Register_Routine
@@ -976,6 +1072,15 @@ Register_Routine
            Register_Routine
              (T, Test_Find_State_Mismatches_Multiple_Services'Access,
               "Find_State_Mismatches detects mismatches across services and nodes");
+           Register_Routine
+             (T, Test_Handle_Deploy_Result_Updates_Actual_State'Access,
+              "Handle_Deploy_Result updates actual_state on success");
+           Register_Routine
+             (T, Test_Reconcile_State_No_Op_When_No_Mismatches'Access,
+              "Reconcile_State is a no-op when there are no mismatches");
+           Register_Routine
+             (T, Test_Reconcile_State_Skips_Unknown_Agent'Access,
+              "Reconcile_State skips mismatches for unknown agents");
          end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

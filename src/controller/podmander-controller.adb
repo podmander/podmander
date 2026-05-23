@@ -227,10 +227,57 @@ package body Podmander.Controller is
             Handle_Message (Self);
          end if;
          Check_Timeouts (Self);
+         Reconcile_State (Self);
          Check_Test_Deploy (Self);
       end loop;
       CZMQ.Pollers.Close (Poller);
    end Run;
+
+   function To_Service_Definition
+     (SV : Service_Version) return Service_Definition
+   is
+   begin
+      return
+        (Name          => SV.Service_Name,
+         Image         => SV.Image,
+         Env           => SV.Env,
+         Env_Count     => SV.Env_Count,
+         Ports         => SV.Ports,
+         Ports_Count   => SV.Ports_Count,
+         Volumes       => SV.Volumes,
+         Volumes_Count => SV.Volumes_Count,
+         Description   => SV.Description,
+         WantedBy      => SV.Wanted_By);
+   end To_Service_Definition;
+
+   procedure Reconcile_State (Self : in out Controller_Instance) is
+      Mismatches : constant State_Mismatch_Vectors.Vector :=
+        Find_State_Mismatches (Self.DB);
+   begin
+      for M of Mismatches loop
+         declare
+            Node_Id_Str  : constant String := To_String (M.Node_Id);
+            Svc_Name_Str : constant String := To_String (M.Service_Name);
+         begin
+            if Self.Agents.Contains (Node_Id_Str) then
+               declare
+                  SV     : constant Service_Version :=
+                    Service.Repository.Get_Latest_Version
+                      (Self.DB, Svc_Name_Str);
+                  Config : constant Service_Definition :=
+                    To_Service_Definition (SV);
+                  Quadlet : constant String :=
+                    Podmander.Generators.Quadlet.Render (Config);
+               begin
+                  Self.Send_Deploy_Command
+                    (Node_Id      => Node_Id_Str,
+                     Service_Name => Svc_Name_Str,
+                     Quadlet      => Quadlet);
+               end;
+            end if;
+         end;
+      end loop;
+   end Reconcile_State;
 
    procedure Check_Test_Deploy (Self : in out Controller_Instance) is
    begin

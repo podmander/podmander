@@ -3,7 +3,9 @@
 
 with Ada.Calendar;
 with CZMQ.Messages;
+with Podmander.Controller.Actual_State.Repository;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Service.Repository;
 with Podmander.Database;
 with Podmander.Enrollment;
 with Podmander.Logging;
@@ -148,8 +150,26 @@ package body Podmander.Controller.Message_Handlers is
       use Podmander.Messages.Deploy_Results;
       use type Podmander.Messages.Result_Codes.Result_Code;
       Result : constant Deploy_Result := Deploy_Result (M);
+      Node   : constant String := To_String (H.Identity);
    begin
       if Result.Code = Podmander.Messages.Result_Codes.Ok then
+         declare
+            Entry_To_Upsert : Podmander.Controller.Actual_State_Entry;
+            package Svc_Repo renames Podmander.Controller.Service.Repository;
+            SV              : constant Podmander.Controller.Service_Version :=
+              Svc_Repo.Get_Latest_Version
+                (H.Ctrl.DB, To_String (Result.Service_Name));
+         begin
+            Entry_To_Upsert.Service_Name := Result.Service_Name;
+            Entry_To_Upsert.Node_Id := To_Unbounded_String (Node);
+            Entry_To_Upsert.Version := SV.Version;
+            Entry_To_Upsert.Updated_At := Ada.Calendar.Clock;
+            Podmander.Controller.Actual_State.Repository.Upsert
+              (H.Ctrl.DB, Entry_To_Upsert);
+         exception
+            when Podmander.Database.Database_Error =>
+               null;
+         end;
          Podmander.Logging.Info
            ("controller",
             "Deploy succeeded for " & To_String (Result.Service_Name));
