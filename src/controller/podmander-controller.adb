@@ -10,7 +10,10 @@ with Podmander.Config;
 with Podmander.Config.Parser;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
+with Podmander.Controller.Registrar;
+with Podmander.Controller.Scheduler;
 with Podmander.Controller.Service.Repository;
+with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Generators.Quadlet;
 with Podmander.Logging;
 with Podmander.Messages;
@@ -25,22 +28,7 @@ package body Podmander.Controller is
    use type CZMQ.Messages.Receive_Status;
    use type Podmander.Database.Error_Kind;
 
-   --  Body-private types for state reconciliation (to be replaced in #86)
-   type State_Mismatch is record
-      Service_Name    : Ada.Strings.Unbounded.Unbounded_String;
-      Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
-      Desired_Version : Positive;
-      Current_Version : Positive;
-   end record;
-
-   package State_Mismatch_Vectors is new
-     Ada.Containers.Vectors
-       (Index_Type   => Positive,
-        Element_Type => State_Mismatch);
-
    procedure Reconcile_State (Self : in out Controller_Instance);
-   function Find_State_Mismatches
-     (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector;
 
    Poll_Interval_Ms : constant := 1000;
 
@@ -75,15 +63,14 @@ package body Podmander.Controller is
            Ada.Environment_Variables.Value ("HOME")
            & "/.local/share/podmander/state.db"
          else Get_DB_Path (Config));
-   begin
+    begin
       return
          C : Controller_Instance :=
-           (Config      => Config,
-            DB          => Database.Open (DB_Path),
-            Certificate => <>,
-            Socket      => <>,
-            Running     => True,
-            Test_Deploy => <>)
+            (Config      => Config,
+             DB          => Database.Open (DB_Path),
+             Certificate => <>,
+             Socket      => <>,
+             Running     => True)
       do
          --  Per ADR-0037: agents that were Registered or Unresponsive
          --  start as Unresponsive Ã¢ÂÂ they must send a heartbeat to prove
@@ -240,117 +227,166 @@ package body Podmander.Controller is
          if Poller.Wait (Poll_Interval_Ms) then
             Handle_Message (Self);
          end if;
-         Check_Timeouts (Self);
-         Reconcile_State (Self);
-         Check_Test_Deploy (Self);
-      end loop;
+          Check_Timeouts (Self);
+          Reconcile_State (Self);
+       end loop;
       CZMQ.Pollers.Close (Poller);
    end Run;
 
-     function To_Service_Definition
-       (SV : Service_Version; Name : String) return Service_Definition is
-     begin
-        return
-          (Name          => To_Unbounded_String (Name),
-           Image         => SV.Image,
-           Env           => SV.Env,
-           Env_Count     => SV.Env_Count,
-           Ports         => SV.Ports,
-           Ports_Count   => SV.Ports_Count,
-           Volumes       => SV.Volumes,
-           Volumes_Count => SV.Volumes_Count,
-           Description   => SV.Description,
-           WantedBy      => SV.Wanted_By);
-     end To_Service_Definition;
-
-     function To_Service_Version
-       (SD : Service_Definition; Version_Num : Positive;
-        Service_Id : Integer) return Service_Version is
-     begin
-        return
-          (Id             => 0,
-           Service_Id     => Service_Id,
-           Version        => Version_Num,
-           Image          => SD.Image,
-           Env            => SD.Env,
-           Env_Count      => SD.Env_Count,
-           Ports          => SD.Ports,
-           Ports_Count    => SD.Ports_Count,
-           Volumes        => SD.Volumes,
-           Volumes_Count  => SD.Volumes_Count,
-           Description    => SD.Description,
-           Wanted_By      => SD.WantedBy,
-           Created_At     => Ada.Calendar.Clock);
-     end To_Service_Version;
-
-     procedure Reconcile_State (Self : in out Controller_Instance) is
-        pragma Unreferenced (Self);
-     begin
-        null;
-     end Reconcile_State;
-
-   procedure Check_Test_Deploy (Self : in out Controller_Instance) is
+   function To_Service_Definition
+     (SV : Service_Version; Name : String) return Service_Definition is
    begin
-      --  No pending deploy
-      if Self.Test_Deploy.Service_Name = Null_Unbounded_String then
-         return;
-      end if;
+      return
+        (Name          => To_Unbounded_String (Name),
+         Image         => SV.Image,
+         Env           => SV.Env,
+         Env_Count     => SV.Env_Count,
+         Ports         => SV.Ports,
+         Ports_Count   => SV.Ports_Count,
+         Volumes       => SV.Volumes,
+         Volumes_Count => SV.Volumes_Count,
+         Description   => SV.Description,
+         WantedBy      => SV.Wanted_By);
+   end To_Service_Definition;
 
-      --  Already sent
-      if Self.Test_Deploy.Deployed then
-         return;
-      end if;
+   function To_Service_Version
+     (SD : Service_Definition; Version_Num : Positive;
+      Service_Id : Integer) return Service_Version is
+   begin
+      return
+        (Id             => 0,
+         Service_Id     => Service_Id,
+         Version        => Version_Num,
+         Image          => SD.Image,
+         Env            => SD.Env,
+         Env_Count      => SD.Env_Count,
+         Ports          => SD.Ports,
+         Ports_Count    => SD.Ports_Count,
+         Volumes        => SD.Volumes,
+         Volumes_Count  => SD.Volumes_Count,
+         Description    => SD.Description,
+         Wanted_By      => SD.WantedBy,
+         Created_At     => Ada.Calendar.Clock);
+   end To_Service_Version;
 
-      --  Count agents that are actually connected (Registered state).
-      --  Agents loaded from the DB start as Unresponsive - they must
-      --  send a heartbeat before they're considered connected.
+   procedure Reconcile_State (Self : in out Controller_Instance) is
+      use Podmander.Controller.Service_Catalog.Repository;
+      use Podmander.Messages.Deploy_Commands;
+
+      --  Step 1: Schedule unscheduled entries
+      Unscheduled : constant Catalog_Entry_Vectors.Vector :=
+        Get_Unscheduled (Self.DB);
+   begin
+      for Cursor in Unscheduled.Iterate loop
+         declare
+            Cat_Entry        : constant Service_Catalog_Entry :=
+              Catalog_Entry_Vectors.Element (Cursor);
+            All_Agents       : constant Podmander.Types.Agent_Maps.Map :=
+              Agent.Repository.Load_All (Self.DB);
+            Target_Node_Id   : Unbounded_String := Null_Unbounded_String;
+            Registered_Count : Natural := 0;
+         begin
+            for Agent_Cur in All_Agents.Iterate loop
+               declare
+                  Info : constant Podmander.Types.Agent_Info :=
+                    Podmander.Types.Agent_Maps.Element (Agent_Cur);
+               begin
+                  if Info.State = Podmander.Types.Registered then
+                     Registered_Count := Registered_Count + 1;
+                     Target_Node_Id := Info.Node_Id;
+                  end if;
+               end;
+            end loop;
+
+            if Registered_Count = 1 then
+               declare
+                  Ok : constant Boolean :=
+                    Assign_Node
+                      (Self.DB,
+                       Cat_Entry.Id,
+                       To_String (Target_Node_Id));
+                  pragma Unreferenced (Ok);
+               begin
+                  Podmander.Logging.Info
+                    ("controller",
+                     "Scheduled catalog entry "
+                     & Cat_Entry.Id'Image
+                     & " to node " & To_String (Target_Node_Id));
+               end;
+            elsif Registered_Count > 1 then
+               Podmander.Logging.Warning
+                 ("controller",
+                  "Cannot schedule catalog entry "
+                  & Cat_Entry.Id'Image
+                  & ": multiple agents connected");
+            end if;
+            --  If no agents connected, leave unscheduled and try next iteration
+         end;
+      end loop;
+
+      --  Step 2: Deploy drifted entries
       declare
-         Registered_Count : Natural := 0;
-         Target_Node_Id   : Unbounded_String := Null_Unbounded_String;
-         All_Agents       : constant Podmander.Types.Agent_Maps.Map :=
-           Agent.Repository.Load_All (Self.DB);
+         Drift : constant Catalog_Entry_Vectors.Vector :=
+           Get_Drift (Self.DB);
       begin
-         for Cursor in All_Agents.Iterate loop
+         for Cursor in Drift.Iterate loop
             declare
-               Info : constant Podmander.Types.Agent_Info :=
-                 Podmander.Types.Agent_Maps.Element (Cursor);
+               Cat_Entry : constant Service_Catalog_Entry :=
+                 Catalog_Entry_Vectors.Element (Cursor);
+               Node_Id   : constant String :=
+                 To_String (Cat_Entry.Node_Id);
             begin
-               if Info.State = Podmander.Types.Registered then
-                  Registered_Count := Registered_Count + 1;
-                  Target_Node_Id := Info.Node_Id;
+               --  Skip entries without a node (shouldn't happen after step 1,
+               --  but guard against race conditions)
+               if Node_Id = "" then
+                  goto Continue;
                end if;
+
+               --  Look up the service version to get the ASD
+               declare
+                  SV : constant Service_Version :=
+                    Service.Repository.Get_Version
+                      (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version);
+                  SD : constant Service_Definition :=
+                    To_Service_Definition (SV, "");
+                  Svc : constant Podmander.Controller.Service.Service :=
+                    Service.Repository.Get_By_Id (Self.DB, Cat_Entry.Service_Id);
+                  SD_With_Name : constant Service_Definition :=
+                    (Name          => Svc.Name,
+                     Image         => SD.Image,
+                     Env           => SD.Env,
+                     Env_Count     => SD.Env_Count,
+                     Ports         => SD.Ports,
+                     Ports_Count   => SD.Ports_Count,
+                     Volumes       => SD.Volumes,
+                     Volumes_Count => SD.Volumes_Count,
+                     Description   => SD.Description,
+                     WantedBy      => SD.WantedBy);
+                  Quadlet : constant String :=
+                    Podmander.Generators.Quadlet.Render (SD_With_Name);
+                  Cmd : constant Deploy_Command :=
+                    (Catalog_Id   => Cat_Entry.Id,
+                     Service_Name => Svc.Name,
+                     Quadlet      => To_Unbounded_String (Quadlet));
+                  Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+               begin
+                  Msg.Add_String (Node_Id);
+                  Cmd.Encode (Msg);
+                  Msg.Send (Self.Socket);
+                  Podmander.Logging.Info
+                    ("controller",
+                     "Deploying " & To_String (Svc.Name)
+                     & " v" & Cat_Entry.Target_Version'Image
+                     & " to " & Node_Id
+                     & " (catalog " & Cat_Entry.Id'Image & ")");
+               end;
+               <<Continue>>
             end;
          end loop;
-
-         if Registered_Count = 0 then
-            --  No agents connected yet, keep waiting
-            return;
-         end if;
-
-         if Registered_Count > 1 then
-            --  --test-config targets a single agent. With multiple agents
-            --  connected, we cannot select a target, so stop with an error.
-            --  The production path (podctl deploy) handles multi-node deploys.
-            Podmander.Logging.Error
-              ("controller",
-               "Multiple agents connected; cannot select target"
-               & " for --test-config."
-               & " Use podctl deploy for multi-node deploys.");
-            Self.Test_Deploy.Deployed := True;
-            Self.Stop;
-            return;
-         end if;
-
-         --  Exactly one Registered agent: send the deploy command
-         Self.Send_Deploy_Command
-           (Node_Id      => To_String (Target_Node_Id),
-            Service_Name => To_String (Self.Test_Deploy.Service_Name),
-            Quadlet      => To_String (Self.Test_Deploy.Quadlet));
-         Self.Test_Deploy.Deployed := True;
       end;
-   end Check_Test_Deploy;
+   end Reconcile_State;
 
-   procedure Stop (Self : in out Controller_Instance) is
+    procedure Stop (Self : in out Controller_Instance) is
    begin
       Self.Running := False;
    end Stop;
@@ -374,95 +410,83 @@ package body Podmander.Controller is
          Token      => Token);
    end Generate_Join_Token;
 
-    function Load_Test_Deploy
-      (Self : in out Controller_Instance; Path : String) return Boolean
-    is
-       Result : constant Podmander.Config.Parser.Parse_Result :=
-         Podmander.Config.Parser.Parse (Path);
-    begin
-       if not Result.Success then
-          Podmander.Logging.Error
-            ("controller",
-             "Failed to parse " & Path & ": " & To_String (Result.Message));
-          return False;
-       end if;
-
-        declare
-           Quadlet_Content : constant String :=
-             Podmander.Generators.Quadlet.Render (Result.Config);
-           Name            : constant String :=
-             To_String (Result.Config.Name);
-           Version_Num     : Positive := 1;
-           Svc             : constant Service.Service :=
-             Service.Repository.Create (Self.DB, Name);
-        begin
-           --  Determine the next version number for this service.
-           --  If a version already exists, increment; otherwise start at 1.
-           begin
-              declare
-                 Latest : constant Service_Version :=
-                   Service.Repository.Get_Latest_Version
-                     (Self.DB, Svc.Id);
-              begin
-                 Version_Num := Latest.Version + 1;
-              end;
-           exception
-              when Podmander.Database.Database_Error =>
-                 --  No existing version for this service; start at 1
-                 null;
-           end;
-
-           declare
-              SV : constant Service_Version :=
-                To_Service_Version (Result.Config, Version_Num, Svc.Id);
-           begin
-              Service.Repository.Create_Version (Self.DB, SV);
-           end;
-
-          Self.Test_Deploy :=
-            (Service_Name => Result.Config.Name,
-             Quadlet      => To_Unbounded_String (Quadlet_Content),
-             Deployed     => False);
-          Podmander.Logging.Info
-            ("controller",
-             "Will deploy " & To_String (Result.Config.Name) & " from " & Path);
-          return True;
-       end;
-    end Load_Test_Deploy;
-
-    function Find_State_Mismatches
-       (DB : in out Database.DB_Handle) return State_Mismatch_Vectors.Vector
-     is
-        pragma Unreferenced (DB);
-     begin
-        return State_Mismatch_Vectors.Empty_Vector;
-     end Find_State_Mismatches;
-
-   procedure Send_Deploy_Command
-     (Self         : in out Controller_Instance;
-      Node_Id      : String;
-      Service_Name : String;
-      Quadlet      : String)
+   function Load_Test_Deploy
+     (Self : in out Controller_Instance; Path : String) return Boolean
    is
-      use Podmander.Messages.Deploy_Commands;
-Cmd : constant Deploy_Command :=
-         (Catalog_Id   => 0,
-          Service_Name => To_Unbounded_String (Service_Name),
-          Quadlet      => To_Unbounded_String (Quadlet));
-      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse (Path);
    begin
-      if not Self.Socket.Is_Valid then
-         Podmander.Logging.Warning
-           ("controller", "Cannot send deploy command: socket not open");
-         return;
+      if not Result.Success then
+         Podmander.Logging.Error
+           ("controller",
+            "Failed to parse " & Path & ": " & To_String (Result.Message));
+         return False;
       end if;
 
-      Msg.Add_String (Node_Id);
-      Cmd.Encode (Msg);
-      Msg.Send (Self.Socket);
-      Podmander.Logging.Info
-        ("controller",
-         "Sent deploy command for " & Service_Name & " to " & Node_Id);
-   end Send_Deploy_Command;
+      declare
+         Reg_Result : constant Podmander.Controller.Registrar.Register_Result :=
+           Podmander.Controller.Registrar.Register (Self.DB, Result.Config);
+      begin
+         if not Reg_Result.Ok then
+            Podmander.Logging.Error
+              ("controller",
+               "Failed to register service "
+               & To_String (Result.Config.Name));
+            return False;
+         end if;
+
+         --  Find connected agent (MVP: single-agent deployment)
+         declare
+            Node_Id          : Unbounded_String := Null_Unbounded_String;
+            All_Agents       : constant Podmander.Types.Agent_Maps.Map :=
+              Agent.Repository.Load_All (Self.DB);
+            Registered_Count : Natural := 0;
+         begin
+            for Cursor in All_Agents.Iterate loop
+               declare
+                  Info : constant Podmander.Types.Agent_Info :=
+                    Podmander.Types.Agent_Maps.Element (Cursor);
+               begin
+                  if Info.State = Podmander.Types.Registered then
+                     Registered_Count := Registered_Count + 1;
+                     Node_Id := Info.Node_Id;
+                  end if;
+               end;
+            end loop;
+
+            if Registered_Count > 1 then
+               Podmander.Logging.Error
+                 ("controller",
+                  "Multiple agents connected; cannot select target"
+                  & " for --test-config."
+                  & " Use podctl deploy for multi-node deploys.");
+               return False;
+            end if;
+
+            declare
+               Sched_Result : constant Scheduler.Schedule_Result :=
+                 Scheduler.Schedule
+                   (Self.DB,
+                    Service_Id     => Reg_Result.Version.Service_Id,
+                    Target_Version => Reg_Result.Version.Version,
+                    Node_Id        => To_String (Node_Id));
+            begin
+               if not Sched_Result.Ok then
+                  Podmander.Logging.Error
+                    ("controller",
+                     "Failed to schedule "
+                     & To_String (Result.Config.Name));
+                  return False;
+               end if;
+            end;
+
+            Podmander.Logging.Info
+              ("controller",
+               "Scheduled " & To_String (Result.Config.Name)
+               & " from " & Path);
+            return True;
+         end;
+      end;
+   end Load_Test_Deploy;
 
 end Podmander.Controller;

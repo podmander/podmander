@@ -4,6 +4,7 @@
 with Ada.Calendar;
 with CZMQ.Messages;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Database;
 with Podmander.Enrollment;
 with Podmander.Logging;
@@ -156,28 +157,57 @@ package body Podmander.Controller.Message_Handlers is
       M : Podmander.Messages.Deploy_Result_Type'Class)
    is
       use Podmander.Messages.Deploy_Results;
-       use type Podmander.Messages.Result_Codes.Result_Code;
-       Result : constant Deploy_Result := Deploy_Result (M);
-    begin
-      if Result.Code = Podmander.Messages.Result_Codes.Ok then
-         Podmander.Logging.Info
-           ("controller",
-            "Deploy succeeded for " & To_String (Result.Service_Name));
-       else
-         Podmander.Logging.Warning
-           ("controller",
-            "Deploy failed for "
-            & To_String (Result.Service_Name)
-            & ": "
-            & To_String (Result.Error_Message));
-      end if;
-
-      --  --test-config is a one-shot validation mechanism: exit after
-      --  receiving the deploy result so the operator gets a clear
-      --  exit code. The production path (podctl deploy) uses the
-      --  long-running supervisor loop instead.
-      if H.Ctrl.Test_Deploy.Deployed then
-         H.Ctrl.Stop;
+      use type Podmander.Messages.Result_Codes.Result_Code;
+      Result : constant Deploy_Result := Deploy_Result (M);
+   begin
+      if Result.Catalog_Id > 0 then
+         --  Catalog-based deploy: update the catalog entry
+         if Result.Code = Podmander.Messages.Result_Codes.Ok then
+            declare
+               use Podmander.Controller.Service_Catalog.Repository;
+               Cat_Entry : constant
+                 Podmander.Controller.Service_Catalog_Entry :=
+                 Get_By_Id (H.Ctrl.DB, Result.Catalog_Id);
+               Ok : constant Boolean :=
+                 Update_On_Success
+                   (H.Ctrl.DB,
+                    Cat_Entry.Id,
+                    Cat_Entry.Target_Version);
+               pragma Unreferenced (Ok);
+            begin
+               Podmander.Logging.Info
+                 ("controller",
+                  "Deploy succeeded for "
+                  & To_String (Result.Service_Name)
+                  & " (catalog " & Result.Catalog_Id'Image & ")");
+            end;
+         else
+            declare
+               use Podmander.Controller.Service_Catalog.Repository;
+               Ok : constant Boolean :=
+                 Update_On_Failure (H.Ctrl.DB, Result.Catalog_Id);
+               pragma Unreferenced (Ok);
+            begin
+               Podmander.Logging.Warning
+                 ("controller",
+                  "Deploy failed for "
+                  & To_String (Result.Service_Name)
+                  & " (catalog " & Result.Catalog_Id'Image & "): "
+                  & To_String (Result.Error_Message));
+            end;
+         end if;
+      else
+         --  Legacy path (catalog_id = 0): just log
+         if Result.Code = Podmander.Messages.Result_Codes.Ok then
+            Podmander.Logging.Info
+              ("controller",
+               "Deploy succeeded for " & To_String (Result.Service_Name));
+         else
+            Podmander.Logging.Warning
+              ("controller",
+               "Deploy failed for " & To_String (Result.Service_Name)
+               & ": " & To_String (Result.Error_Message));
+         end if;
       end if;
    end Handle_Deploy_Result;
 

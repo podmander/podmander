@@ -377,8 +377,7 @@ package body Podmander.Controller_Tests is
             DB          => Podmander.Database.Open (":memory:"),
             Certificate => <>,
             Socket      => <>,
-            Running     => False,
-            Test_Deploy => <>)
+            Running     => False)
       do
          Podmander.Enrollment.Set_Secret (C.Config.Enrollment, "secret");
       end return;
@@ -392,48 +391,10 @@ package body Podmander.Controller_Tests is
       return (Ctrl => Ctrl, Identity => To_Unbounded_String (Identity));
    end Make_Handler;
 
-   --  Test: Pending_Deploy construction and field access
-   procedure Test_Pending_Deploy_Construction
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Pending : constant Podmander.Controller.Pending_Deploy :=
-        (Service_Name => To_Unbounded_String ("web"),
-         Quadlet      =>
-           To_Unbounded_String ("[Container]\nContainerImage=nginx"),
-         Deployed     => False);
-   begin
-      Assert
-        (To_String (Pending.Service_Name) = "web",
-         "Pending_Deploy.Service_Name should be 'web'");
-      Assert
-        (To_String (Pending.Quadlet) = "[Container]\nContainerImage=nginx",
-         "Pending_Deploy.Quadlet should match input");
-      Assert
-        (not Pending.Deployed,
-         "Pending_Deploy.Deployed should be False by default");
-   end Test_Pending_Deploy_Construction;
-
-   --  Test: Controller_Instance Test_Deploy field can be set and read
-   procedure Test_Controller_Test_Deploy_Field
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-   begin
-      Ctrl.Test_Deploy :=
-        (Service_Name => To_Unbounded_String ("web"),
-         Quadlet      =>
-           To_Unbounded_String ("[Container]\nContainerImage=nginx"),
-         Deployed     => False);
-      Assert
-        (To_String (Ctrl.Test_Deploy.Service_Name) = "web",
-         "Test_Deploy.Service_Name should be 'web'");
-   end Test_Controller_Test_Deploy_Field;
-
-   --  Test: Load_Test_Deploy with a valid TOML file parses, renders, and stores
+   --  Test: Load_Test_Deploy with a valid TOML file parses, registers,
+   --  and schedules through the pipeline.
    procedure Test_Load_Test_Deploy_Valid_File
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       Ctrl   : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
@@ -441,22 +402,11 @@ package body Podmander.Controller_Tests is
         Ctrl.Load_Test_Deploy ("tests/fixtures/valid.toml");
    begin
       Assert (Result, "Load_Test_Deploy should return True for valid file");
-      Assert
-        (To_String (Ctrl.Test_Deploy.Service_Name) = "web",
-         "Test_Deploy.Service_Name should be 'web'");
-      Assert
-        (not Ctrl.Test_Deploy.Deployed,
-         "Test_Deploy.Deployed should be False");
-      Assert
-        (Ada.Strings.Fixed.Index
-           (To_String (Ctrl.Test_Deploy.Quadlet), "Image=nginx:latest")
-         > 0,
-         "Quadlet should contain Image=nginx:latest");
    end Test_Load_Test_Deploy_Valid_File;
 
    --  Test: Load_Test_Deploy with a nonexistent path returns False
    procedure Test_Load_Test_Deploy_Invalid_File
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
+      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       Ctrl   : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
@@ -465,9 +415,6 @@ package body Podmander.Controller_Tests is
    begin
       Assert
         (not Result, "Load_Test_Deploy should return False for invalid file");
-      Assert
-        (To_String (Ctrl.Test_Deploy.Service_Name) = "",
-         "Test_Deploy.Service_Name should be empty after failure");
    end Test_Load_Test_Deploy_Invalid_File;
 
    --  Test: Handle_Registration_Request adds the agent to the controller's map
@@ -671,108 +618,6 @@ package body Podmander.Controller_Tests is
          raise;
    end Test_Controller_Startup_Generates_Secret;
 
-   --  Test: Check_Test_Deploy sends deploy when one agent is connected
-   procedure Test_Test_Deploy_Trigger_With_One_Agent
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      Info : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("agent-1"),
-         Node_Id   => To_Unbounded_String ("node-1"),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Ada.Calendar.Clock);
-   begin
-      Ctrl.Test_Deploy :=
-        (Service_Name => To_Unbounded_String ("web"),
-         Quadlet      =>
-           To_Unbounded_String ("[Container]\nContainerImage=nginx"),
-         Deployed     => False);
-      Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
-      Podmander.Controller.Check_Test_Deploy (Ctrl);
-      Assert
-        (Ctrl.Test_Deploy.Deployed,
-         "Check_Test_Deploy should mark Deployed True with one agent");
-   end Test_Test_Deploy_Trigger_With_One_Agent;
-
-   --  Test: Check_Test_Deploy waits when no agents are connected
-   procedure Test_Test_Deploy_Trigger_With_No_Agents
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-   begin
-      Ctrl.Test_Deploy :=
-        (Service_Name => To_Unbounded_String ("web"),
-         Quadlet      =>
-           To_Unbounded_String ("[Container]\nContainerImage=nginx"),
-         Deployed     => False);
-      Podmander.Controller.Check_Test_Deploy (Ctrl);
-      Assert
-        (not Ctrl.Test_Deploy.Deployed,
-         "Check_Test_Deploy should not mark Deployed True with no agents");
-   end Test_Test_Deploy_Trigger_With_No_Agents;
-
-   --  Test: Check_Test_Deploy errors when multiple agents are connected
-   procedure Test_Test_Deploy_Trigger_With_Multiple_Agents
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl  : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      Info1 : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("agent-1"),
-         Node_Id   => To_Unbounded_String ("node-1"),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Ada.Calendar.Clock);
-      Info2 : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("agent-2"),
-         Node_Id   => To_Unbounded_String ("node-2"),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Ada.Calendar.Clock);
-   begin
-      Ctrl.Test_Deploy :=
-        (Service_Name => To_Unbounded_String ("web"),
-         Quadlet      =>
-           To_Unbounded_String ("[Container]\nContainerImage=nginx"),
-         Deployed     => False);
-      Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info1);
-      Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info2);
-      Podmander.Controller.Check_Test_Deploy (Ctrl);
-      Assert
-        (Ctrl.Test_Deploy.Deployed,
-         "Check_Test_Deploy should mark Deployed True with multiple agents");
-      Assert
-        (not Ctrl.Running,
-         "Check_Test_Deploy should stop controller with multiple agents");
-   end Test_Test_Deploy_Trigger_With_Multiple_Agents;
-
-   --  Test: Check_Test_Deploy waits when only Unresponsive agents exist
-   --  (simulates controller restart where agents are loaded from DB but
-   --  haven't reconnected yet â they must not receive deploy commands)
-   procedure Test_Test_Deploy_Waits_For_Unresponsive_Agent
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      Info : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("agent-1"),
-         Node_Id   => To_Unbounded_String ("node-1"),
-         State     => Podmander.Types.Unresponsive,
-         Last_Seen => Ada.Calendar.Clock);
-   begin
-      Ctrl.Test_Deploy :=
-        (Service_Name => To_Unbounded_String ("web"),
-         Quadlet      => To_Unbounded_String ("[Container]\nImage=nginx"),
-         Deployed     => False);
-      Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
-      Podmander.Controller.Check_Test_Deploy (Ctrl);
-      Assert
-        (not Ctrl.Test_Deploy.Deployed,
-         "Check_Test_Deploy should not deploy to Unresponsive agent");
-   end Test_Test_Deploy_Waits_For_Unresponsive_Agent;
-
-    --  Test: Check_Test_Deploy does nothing when Service_Name is empty
-
    --  Test: Handle_Deploy_Result logs warning when no Service_Version exists
    --  (defensive: should not crash even if version lookup fails)
    procedure Test_Handle_Deploy_Result_No_Version
@@ -793,26 +638,6 @@ Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
       --  If we get here without crashing, the defensive handler worked
       Assert (True, "Handle_Deploy_Result should not crash without version");
    end Test_Handle_Deploy_Result_No_Version;
-
-   --  Test: Check_Test_Deploy does nothing when Service_Name is empty
-    procedure Test_Test_Deploy_No_Trigger_When_Empty
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      Info : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("agent-1"),
-         Node_Id   => To_Unbounded_String ("node-1"),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Ada.Calendar.Clock);
-   begin
-      --  Leave Test_Deploy at default (empty Service_Name)
-      Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
-      Podmander.Controller.Check_Test_Deploy (Ctrl);
-      Assert
-        (not Ctrl.Test_Deploy.Deployed,
-         "Check_Test_Deploy should not trigger when Service_Name is empty");
-   end Test_Test_Deploy_No_Trigger_When_Empty;
 
     overriding
    procedure Register_Tests (T : in out Controller_Test) is
@@ -866,47 +691,19 @@ Res   : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
         (T,
          Test_Controller_Startup_Loads_Secret'Access,
          "Controller loads pre-seeded registration secret from DB");
-      Register_Routine
-        (T,
-         Test_Controller_Startup_Generates_Secret'Access,
-         "Controller generates new secret when none exists");
-      Register_Routine
-        (T,
-         Test_Pending_Deploy_Construction'Access,
-         "Pending_Deploy construction and field access");
-      Register_Routine
-        (T,
-         Test_Controller_Test_Deploy_Field'Access,
-         "Controller_Instance Test_Deploy field can be set and read");
-      Register_Routine
-        (T,
-         Test_Load_Test_Deploy_Valid_File'Access,
-         "Load_Test_Deploy with valid file parses and stores");
-      Register_Routine
-        (T,
-         Test_Load_Test_Deploy_Invalid_File'Access,
-         "Load_Test_Deploy with nonexistent file returns False");
-      Register_Routine
-        (T,
-         Test_Test_Deploy_Trigger_With_One_Agent'Access,
-         "Check_Test_Deploy sends deploy when one agent is connected");
-      Register_Routine
-        (T,
-         Test_Test_Deploy_Trigger_With_No_Agents'Access,
-         "Check_Test_Deploy waits when no agents are connected");
-      Register_Routine
-        (T,
-         Test_Test_Deploy_Trigger_With_Multiple_Agents'Access,
-         "Check_Test_Deploy errors when multiple agents are connected");
-      Register_Routine
-        (T,
-         Test_Test_Deploy_Waits_For_Unresponsive_Agent'Access,
-         "Check_Test_Deploy waits when only Unresponsive agents exist");
-      Register_Routine
-        (T,
-         Test_Test_Deploy_No_Trigger_When_Empty'Access,
-         "Check_Test_Deploy does nothing when Service_Name is empty");
        Register_Routine
+         (T,
+          Test_Controller_Startup_Generates_Secret'Access,
+          "Controller generates new secret when none exists");
+       Register_Routine
+         (T,
+          Test_Load_Test_Deploy_Valid_File'Access,
+          "Load_Test_Deploy with valid file parses and schedules");
+       Register_Routine
+         (T,
+          Test_Load_Test_Deploy_Invalid_File'Access,
+          "Load_Test_Deploy with nonexistent file returns False");
+        Register_Routine
          (T,
           Test_Handle_Deploy_Result_No_Version'Access,
           "Handle_Deploy_Result logs warning when no version exists");
