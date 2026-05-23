@@ -21,10 +21,17 @@ package Podmander.Controller.Service_Catalog.Repository is
    --  Returns the created entry with its auto-generated id.
 
    function Get_By_Id
-     (DB : in out DB_Handle; Id : Integer)
-      return Podmander.Controller.Service_Catalog_Entry;
+      (DB : in out DB_Handle; Id : Integer)
+       return Podmander.Controller.Service_Catalog_Entry;
    --  Return a catalog entry by id.
    --  Raises Database_Error with Not_Found if no matching entry exists.
+
+   function Get_By_Service_Id
+      (DB : in out DB_Handle; Service_Id : Integer)
+       return Podmander.Controller.Service_Catalog_Entry;
+   --  Return the catalog entry for the given service_id.
+   --  Raises Database_Error with Not_Found if no entry exists.
+   --  If multiple entries exist (different nodes), returns the first one.
 
    function Get_Unscheduled
      (DB : in out DB_Handle)

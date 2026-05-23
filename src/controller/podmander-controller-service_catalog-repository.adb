@@ -131,6 +131,39 @@ package body Podmander.Controller.Service_Catalog.Repository is
       end if;
    end Get_By_Id;
 
+   -----------------------
+   --  Get_By_Service_Id
+   -----------------------
+
+   function Get_By_Service_Id
+      (DB : in out DB_Handle; Service_Id : Integer)
+       return Podmander.Controller.Service_Catalog_Entry
+   is
+      QH : Query_Handle :=
+        Prepare
+          (DB,
+           "SELECT id, service_id, node_id, current_version, "
+           & "target_version, failed, updated_at "
+           & "FROM service_catalog WHERE service_id = ? LIMIT 1");
+   begin
+      Bind_Text
+        (QH, 1, Ada.Strings.Fixed.Trim (Service_Id'Image, Ada.Strings.Left));
+      if Step (QH) then
+         return Row_To_Entry (DB, QH);
+      else
+         raise Database_Error
+           with
+             Format_Error
+               ((Kind    => Not_Found,
+                 Message =>
+                   To_Unbounded_String
+                     ("Service catalog entry not found for service_id: "
+                      & Ada.Strings.Fixed.Trim
+                          (Service_Id'Image, Ada.Strings.Left)),
+                 Code    => 0));
+      end if;
+   end Get_By_Service_Id;
+
    --------------------
    --  Get_Unscheduled
    --------------------
