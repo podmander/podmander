@@ -10,7 +10,7 @@ package Podmander.Controller.Service_Catalog.Repository is
 
    use Podmander.Database;
 
-function Create_Entry
+   function Create_Entry
       (DB             : in out DB_Handle;
        Service_Id     : Podmander.Controller.Service_Id_Type;
        Node_Id        : String;
@@ -58,7 +58,7 @@ function Create_Entry
    -- Set node_id = Node_Id, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
-function Set_Target
+   function Set_Target
        (DB : in out DB_Handle; Id : Integer;
         Target_Version : Podmander.Controller.Service_Version_Type)
         return Boolean;

@@ -49,7 +49,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -- Create_Entry
    -----------------
 
-function Create_Entry
+   function Create_Entry
       (DB             : in out DB_Handle;
        Service_Id     : Podmander.Controller.Service_Id_Type;
        Node_Id        : String;
@@ -135,7 +135,7 @@ function Create_Entry
    -- Get_By_Service_Id
    -----------------------
 
-function Get_By_Service_Id
+   function Get_By_Service_Id
       (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
        return Podmander.Controller.Service_Catalog_Entry
    is
@@ -200,7 +200,7 @@ function Get_By_Service_Id
            "SELECT id, service_id, node_id, current_version, "
            & "target_version, state, updated_at "
            & "FROM service_catalog "
-            & "WHERE state = 0");
+           & "WHERE state = 0");
       Result : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
       while Step (QH) loop
@@ -222,8 +222,8 @@ function Get_By_Service_Id
         Prepare
           (DB,
            "UPDATE service_catalog "
-            & "SET current_version = ?, state = 3, updated_at = ? "
-            & "WHERE id = ?");
+           & "SET current_version = ?, state = 3, updated_at = ? "
+           & "WHERE id = ?");
    begin
       Bind_Text
         (QH,
@@ -360,7 +360,7 @@ function Get_By_Service_Id
    -- Set_Target
    ---------------
 
-function Set_Target
+   function Set_Target
        (DB : in out DB_Handle; Id : Integer;
         Target_Version : Podmander.Controller.Service_Version_Type)
         return Boolean
