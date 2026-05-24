@@ -6,7 +6,7 @@ with Ada.Strings.Unbounded;
 package Podmander.Controller.Service is
 
    type Service is record
-      Id   : Integer;
+      Id   : Podmander.Controller.Service_Id_Type;
       Name : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 

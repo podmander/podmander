@@ -24,13 +24,13 @@ package body Podmander.Controller.Service_Catalog.Repository is
    begin
       return
         (Id              => Column_Int (QH, 0),
-         Service_Id      => Column_Int (QH, 1),
+         Service_Id      => Podmander.Controller.Service_Id_Type (Column_Int (QH, 1)),
          Node_Id         =>
            (if Node_Text = ""
             then Null_Unbounded_String
             else To_Unbounded_String (Node_Text)),
          Current_Version => Column_Int (QH, 3),
-         Target_Version  => Positive'Value (Column_Text (QH, 4)),
+         Target_Version  => Podmander.Controller.Service_Version_No'Value (Column_Text (QH, 4)),
           State           => Catalog_Entry_State'Val (Column_Int (QH, 5)),
          Updated_At      => ISO8601_To_Time (Column_Text (QH, 6)));
    exception
@@ -49,12 +49,12 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -- Create_Entry
    -----------------
 
-   function Create_Entry
-     (DB             : in out DB_Handle;
-      Service_Id     : Integer;
-      Node_Id        : String;
-      Target_Version : Positive)
-      return Podmander.Controller.Service_Catalog_Entry
+function Create_Entry
+      (DB             : in out DB_Handle;
+       Service_Id     : Podmander.Controller.Service_Id_Type;
+       Node_Id        : String;
+       Target_Version : Podmander.Controller.Service_Version_No)
+       return Podmander.Controller.Service_Catalog_Entry
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=
@@ -135,9 +135,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -- Get_By_Service_Id
    -----------------------
 
-   function Get_By_Service_Id
-     (DB : in out DB_Handle; Service_Id : Integer)
-      return Podmander.Controller.Service_Catalog_Entry
+function Get_By_Service_Id
+      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
+       return Podmander.Controller.Service_Catalog_Entry
    is
       QH : Query_Handle :=
         Prepare
@@ -360,9 +360,10 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -- Set_Target
    ---------------
 
-   function Set_Target
-      (DB : in out DB_Handle; Id : Integer; Target_Version : Positive)
-       return Boolean
+function Set_Target
+       (DB : in out DB_Handle; Id : Integer;
+        Target_Version : Podmander.Controller.Service_Version_No)
+        return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=

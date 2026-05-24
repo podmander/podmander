@@ -33,14 +33,14 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    -- Helper: create a service and at least one version so FK constraints
    -- are satisfied. Returns the service id.
-   function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Integer is
+   function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Podmander.Controller.Service_Id_Type is
       Svc_Rec : constant Podmander.Controller.Service.Service := Svc_Repo.Create (Handle, Name);
       SV      : Podmander.Controller.Service_Version;
    begin
       for V in 1 .. Versions loop
          SV.Id := 0;
          SV.Service_Id := Svc_Rec.Id;
-         SV.Version := V;
+         SV.Version := Podmander.Controller.Service_Version_No (V);
          SV.Image := To_Unbounded_String ("test:latest");
          SV.Created_At := Ada.Calendar.Clock;
          Svc_Repo.Create_Version (Handle, SV);
@@ -55,7 +55,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Create_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 2);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
    begin
@@ -63,7 +63,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
       Assert (To_String (Cat_Ent.Node_Id) = "node-1", "Node_Id should be 'node-1'");
       Assert (Cat_Ent.Current_Version = 0, "Current_Version should be 0");
-      Assert (Cat_Ent.Target_Version = 2, "Target_Version should be 2");
+      Assert (Cat_Ent.Target_Version = Podmander.Controller.Service_Version_No (2), "Target_Version should be 2");
       Assert (Cat_Ent.State = Podmander.Controller.Pending, "State should be Pending");
    end Test_Create_Entry;
 
@@ -74,7 +74,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Create_Entry_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "db", 1);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
    begin
@@ -89,7 +89,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Get_By_Id (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 2);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Created : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Loaded  : Podmander.Controller.Service_Catalog_Entry := Repo.Get_By_Id (D, Created.Id);
@@ -97,7 +97,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
       Assert (To_String (Loaded.Node_Id) = "node-1", "Node_Id should match");
-      Assert (Loaded.Target_Version = 2, "Target_Version should match");
+      Assert (Loaded.Target_Version = Podmander.Controller.Service_Version_No (2), "Target_Version should match");
    end Test_Get_By_Id;
 
    ---------------------------
@@ -135,7 +135,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Get_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D           : DB.DB_Handle := DB.Open (":memory:");
-      Svc         : Integer := Seed_Service (D, "web", 1);
+      Svc         : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
       Ignored1    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 1);
       Ignored2    : Podmander.Controller.Service_Catalog_Entry :=
@@ -156,7 +156,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Get_Drift (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D     : DB.DB_Handle := DB.Open (":memory:");
-      Svc   : Integer := Seed_Service (D, "web", 3);
+      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
       -- Entry with matching versions (no drift)
       E1    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 3);
@@ -172,7 +172,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Get_Drift_Excludes_Non_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 2);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       E1      : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Ignored : Boolean;
@@ -192,7 +192,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Update_On_Success (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 2);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Updated : Boolean;
@@ -227,7 +227,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Update_On_Failure (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 2);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Updated : Boolean;
@@ -256,7 +256,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 1);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
       Updated : Boolean;
@@ -285,7 +285,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Set_Target (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 3);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
       Updated : Boolean;
@@ -300,7 +300,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Updated, "Set_Target should return True");
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
-      Assert (Loaded.Target_Version = 3, "Target_Version should be 3");
+      Assert (Loaded.Target_Version = Podmander.Controller.Service_Version_No (3), "Target_Version should be 3");
       Assert (Loaded.State = Podmander.Controller.Pending, "State should be Pending after Set_Target");
    end Test_Set_Target;
 

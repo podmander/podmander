@@ -11,9 +11,11 @@ package body Podmander.Controller.Registrar is
    use Ada.Calendar;
    use Ada.Strings.Unbounded;
 
-   function To_Service_Version
-     (ASD : Service_Definition; Service_Id : Integer; Version : Positive)
-      return Podmander.Controller.Service_Version is
+function To_Service_Version
+      (ASD : Service_Definition;
+       Service_Id : Podmander.Controller.Service_Id_Type;
+       Version    : Podmander.Controller.Service_Version_No)
+       return Podmander.Controller.Service_Version is
    begin
       return
         (Id            => 0,
@@ -41,7 +43,7 @@ package body Podmander.Controller.Registrar is
    is
       Name        : constant String := To_String (ASD.Name);
       Svc         : Podmander.Controller.Service.Service;
-      Version_Num : Positive := 1;
+      Version_Num : Podmander.Controller.Service_Version_No := 1;
       SV          : Podmander.Controller.Service_Version;
    begin
       -- Step 1: Create or get existing service row

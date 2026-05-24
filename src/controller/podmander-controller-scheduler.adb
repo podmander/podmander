@@ -17,20 +17,21 @@ package body Podmander.Controller.Scheduler is
    --  Dummy entry returned in error cases where no real entry exists.
    Dummy_Entry : constant Podmander.Controller.Service_Catalog_Entry :=
      (Id              => 0,
-      Service_Id      => 0,
+      Service_Id      => Podmander.Controller.Service_Id_Type'First,
       Node_Id         => Null_Unbounded_String,
       Current_Version => 0,
-      Target_Version  => 1,
-       State           => Pending,
+      Target_Version  => Podmander.Controller.Service_Version_No'First,
+      State           => Pending,
       Updated_At      => Clock);
 
    ---------------
    -- Schedule --
    ---------------
 
-   function Schedule
-     (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive)
-      return Schedule_Result
+function Schedule
+      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type;
+       Target_Version : Podmander.Controller.Service_Version_No)
+       return Schedule_Result
    is
       --  Query registered agents to select a target node.
       --  MVP strategy: assign the first registered agent found.

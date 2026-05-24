@@ -39,14 +39,14 @@ package body Podmander.Controller.Scheduler_Tests is
 
    -- Helper: create a service and at least one version so FK constraints
    -- are satisfied. Returns the service id.
-   function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Integer is
+   function Seed_Service (Handle : in out DB.DB_Handle; Name : String; Versions : Positive) return Podmander.Controller.Service_Id_Type is
       Svc_Rec : constant Podmander.Controller.Service.Service := Svc_Repo.Create (Handle, Name);
       SV      : Podmander.Controller.Service_Version;
    begin
       for V in 1 .. Versions loop
          SV.Id := 0;
          SV.Service_Id := Svc_Rec.Id;
-         SV.Version := V;
+         SV.Version := Podmander.Controller.Service_Version_No (V);
          SV.Image := To_Unbounded_String ("test:latest");
          SV.Created_At := Ada.Calendar.Clock;
          Svc_Repo.Create_Version (Handle, SV);
@@ -72,7 +72,7 @@ package body Podmander.Controller.Scheduler_Tests is
    procedure Test_Schedule_New_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Svc    : Integer := Seed_Service (D, "web", 2);
+      Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Result : Scheduler.Schedule_Result;
    begin
       --  Register one agent so the Scheduler can assign it
@@ -84,7 +84,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
       Assert (To_String (Result.Catalog_Entry.Node_Id) = "node-1", "Node_Id should be 'node-1'");
       Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should be 0");
-      Assert (Result.Catalog_Entry.Target_Version = 2, "Target_Version should be 2");
+      Assert (Result.Catalog_Entry.Target_Version = Podmander.Controller.Service_Version_No (2), "Target_Version should be 2");
       Assert (Result.Catalog_Entry.State = Podmander.Controller.Pending, "State should be Pending");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_New_Entry;
@@ -96,7 +96,7 @@ package body Podmander.Controller.Scheduler_Tests is
    procedure Test_Schedule_New_Entry_No_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Svc    : Integer := Seed_Service (D, "db", 1);
+      Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
       Result : Scheduler.Schedule_Result;
    begin
       --  No agents registered — Scheduler should create entry with empty Node_Id
@@ -113,7 +113,7 @@ package body Podmander.Controller.Scheduler_Tests is
    procedure Test_Schedule_Update_Existing (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 3);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
       Created : Podmander.Controller.Service_Catalog_Entry :=
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
@@ -134,7 +134,7 @@ package body Podmander.Controller.Scheduler_Tests is
 
       Assert (Result.Ok, "Schedule should succeed for existing entry");
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
-      Assert (Result.Catalog_Entry.Target_Version = 3, "Target_Version should be updated to 3");
+      Assert (Result.Catalog_Entry.Target_Version = Podmander.Controller.Service_Version_No (3), "Target_Version should be updated to 3");
       Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should remain 0");
       Assert (Result.Catalog_Entry.State = Podmander.Controller.Pending, "State should be Pending after schedule");
       Assert (Result.Error = Scheduler.None, "Error should be None");
@@ -147,7 +147,7 @@ package body Podmander.Controller.Scheduler_Tests is
    procedure Test_Schedule_Update_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Integer := Seed_Service (D, "web", 2);
+      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Created : Podmander.Controller.Service_Catalog_Entry :=
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
@@ -162,7 +162,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
       Assert
         (To_String (Result.Catalog_Entry.Node_Id) = "assigned-node", "Node_Id should be 'assigned-node' after assign");
-      Assert (Result.Catalog_Entry.Target_Version = 2, "Target_Version should be updated");
+      Assert (Result.Catalog_Entry.Target_Version = Podmander.Controller.Service_Version_No (2), "Target_Version should be updated");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Update_Assign_Node;
 
@@ -173,7 +173,7 @@ package body Podmander.Controller.Scheduler_Tests is
    procedure Test_Schedule_Picks_First_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Svc    : Integer := Seed_Service (D, "cache", 1);
+      Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "cache", 1);
       Result : Scheduler.Schedule_Result;
    begin
       --  Register two agents — Scheduler should pick the first one and succeed

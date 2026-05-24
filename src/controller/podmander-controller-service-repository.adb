@@ -24,8 +24,8 @@ package body Podmander.Controller.Service.Repository is
       Result : Podmander.Controller.Service_Version;
    begin
       Result.Id := Column_Int (QH, 0);
-      Result.Service_Id := Column_Int (QH, 1);
-      Result.Version := Positive'Value (Column_Text (QH, 2));
+      Result.Service_Id := Podmander.Controller.Service_Id_Type (Column_Int (QH, 1));
+      Result.Version := Podmander.Controller.Service_Version_No'Value (Column_Text (QH, 2));
       Result.Image := To_Unbounded_String (Column_Text (QH, 3));
       Parse_Env_Array (Column_Text (QH, 4), Result.Env, Result.Env_Count);
       Parse_Port_Array (Column_Text (QH, 5), Result.Ports, Result.Ports_Count);
@@ -63,9 +63,9 @@ package body Podmander.Controller.Service.Repository is
 
       Bind_Text (SEL, 1, Name);
       if Step (SEL) then
-         return
-           (Id   => Column_Int (SEL, 0),
-            Name => To_Unbounded_String (Column_Text (SEL, 1)));
+return
+            (Id   => Podmander.Controller.Service_Id_Type (Column_Int (SEL, 0)),
+             Name => To_Unbounded_String (Column_Text (SEL, 1)));
       else
          raise Database_Error
            with
@@ -89,16 +89,16 @@ package body Podmander.Controller.Service.Repository is
    begin
       Bind_Text (QH, 1, Name);
       if Step (QH) then
-         return
-           (Id   => Column_Int (QH, 0),
-            Name => To_Unbounded_String (Column_Text (QH, 1)));
+return
+            (Id   => Podmander.Controller.Service_Id_Type (Column_Int (QH, 0)),
+             Name => To_Unbounded_String (Column_Text (QH, 1)));
       else
          raise Database_Error
            with
              Format_Error
                ((Kind    => Not_Found,
-                 Message => To_Unbounded_String ("Service not found: " & Name),
-                 Code    => 0));
+                  Message => To_Unbounded_String ("Service not found: " & Name),
+                  Code    => 0));
       end if;
    end Get_By_Name;
 
@@ -106,25 +106,27 @@ package body Podmander.Controller.Service.Repository is
    -- Get_By_Id --
    ---------------
 
-   function Get_By_Id (DB : in out DB_Handle; Id : Integer) return Service is
+   function Get_By_Id
+      (DB : in out DB_Handle; Id : Podmander.Controller.Service_Id_Type) return Service
+   is
       QH : Query_Handle :=
         Prepare (DB, "SELECT id, name FROM services WHERE id = ?");
    begin
       Bind_Text (QH, 1, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
       if Step (QH) then
-         return
-           (Id   => Column_Int (QH, 0),
-            Name => To_Unbounded_String (Column_Text (QH, 1)));
+return
+            (Id   => Podmander.Controller.Service_Id_Type (Column_Int (QH, 0)),
+             Name => To_Unbounded_String (Column_Text (QH, 1)));
       else
          raise Database_Error
            with
              Format_Error
                ((Kind    => Not_Found,
-                 Message =>
-                   To_Unbounded_String
-                     ("Service not found by id: "
-                      & Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left)),
-                 Code    => 0));
+                  Message =>
+                    To_Unbounded_String
+                      ("Service not found by id: "
+                       & Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left)),
+                  Code    => 0));
       end if;
    end Get_By_Id;
 
@@ -169,9 +171,11 @@ package body Podmander.Controller.Service.Repository is
    -- Get_Version --
    -----------------
 
-   function Get_Version
-     (DB : in out DB_Handle; Service_Id : Integer; Version : Positive)
-      return Podmander.Controller.Service_Version
+function Get_Version
+      (DB             : in out DB_Handle;
+       Service_Id     : Podmander.Controller.Service_Id_Type;
+       Version        : Podmander.Controller.Service_Version_No)
+       return Podmander.Controller.Service_Version
    is
       QH : Query_Handle :=
         Prepare
@@ -208,9 +212,9 @@ package body Podmander.Controller.Service.Repository is
    -- Get_Latest_Version --
    ------------------------
 
-   function Get_Latest_Version
-     (DB : in out DB_Handle; Service_Id : Integer)
-      return Podmander.Controller.Service_Version
+function Get_Latest_Version
+      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
+       return Podmander.Controller.Service_Version
    is
       QH : Query_Handle :=
         Prepare

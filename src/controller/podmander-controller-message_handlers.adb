@@ -176,7 +176,7 @@ package body Podmander.Controller.Message_Handlers is
                    Get_By_Id (H.Ctrl.DB, Result.Catalog_Id);
                Ok        : constant Boolean :=
                  Update_On_Success
-                   (H.Ctrl.DB, Cat_Entry.Id, Cat_Entry.Target_Version);
+                   (H.Ctrl.DB, Cat_Entry.Id, Natural (Cat_Entry.Target_Version));
                pragma Unreferenced (Ok);
             begin
                Podmander.Logging.Info

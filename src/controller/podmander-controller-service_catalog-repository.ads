@@ -10,24 +10,24 @@ package Podmander.Controller.Service_Catalog.Repository is
 
    use Podmander.Database;
 
-   function Create_Entry
-     (DB             : in out DB_Handle;
-      Service_Id     : Integer;
-      Node_Id        : String;
-      Target_Version : Positive)
-      return Podmander.Controller.Service_Catalog_Entry;
+function Create_Entry
+      (DB             : in out DB_Handle;
+       Service_Id     : Podmander.Controller.Service_Id_Type;
+       Node_Id        : String;
+       Target_Version : Podmander.Controller.Service_Version_No)
+       return Podmander.Controller.Service_Catalog_Entry;
    -- Insert a new catalog entry. Node_Id may be empty (not yet scheduled).
    -- Returns the created entry with its auto-generated id.
 
    function Get_By_Id
-     (DB : in out DB_Handle; Id : Integer)
-      return Podmander.Controller.Service_Catalog_Entry;
+      (DB : in out DB_Handle; Id : Integer)
+       return Podmander.Controller.Service_Catalog_Entry;
    -- Return a catalog entry by id.
    -- Raises Database_Error with Not_Found if no matching entry exists.
 
    function Get_By_Service_Id
-     (DB : in out DB_Handle; Service_Id : Integer)
-      return Podmander.Controller.Service_Catalog_Entry;
+      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
+       return Podmander.Controller.Service_Catalog_Entry;
    -- Return the catalog entry for the given service_id.
    -- Raises Database_Error with Not_Found if no entry exists.
    -- If multiple entries exist (different nodes), returns the first one.
@@ -58,9 +58,10 @@ package Podmander.Controller.Service_Catalog.Repository is
    -- Set node_id = Node_Id, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
-   function Set_Target
-      (DB : in out DB_Handle; Id : Integer; Target_Version : Positive)
-       return Boolean;
+function Set_Target
+       (DB : in out DB_Handle; Id : Integer;
+        Target_Version : Podmander.Controller.Service_Version_No)
+        return Boolean;
    -- Set target_version = Target_Version, state = Pending,
    -- update updated_at.  Returns True if a row was updated, False otherwise.
 

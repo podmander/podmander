@@ -20,15 +20,16 @@ package Podmander.Controller.Scheduler is
       Error         : Schedule_Error := None;
    end record;
 
-   function Schedule
-     (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive)
-      return Schedule_Result;
+function Schedule
+      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type;
+       Target_Version : Podmander.Controller.Service_Version_No)
+       return Schedule_Result;
    --  Create or update a catalog entry for the given service.
    --  If an entry already exists for this service, update target_version
    --  and set state = Pending. If no entry exists, create one with
    --  current_version = 0 and the given target_version.
    --  The Scheduler selects the target node by querying registered
-   --  agents: 0 agents â unscheduled (node_id NULL), otherwise
+   --  agents: 0 agents -> unscheduled (node_id NULL), otherwise
    --  assigns the first registered agent found.
 
 end Podmander.Controller.Scheduler;

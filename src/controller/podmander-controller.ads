@@ -13,12 +13,24 @@ package Podmander.Controller is
 
    use Podmander.Config;
 
+   --  Domain-specific ID types. Derived from Positive so the compiler
+   --  catches accidental mixing of service IDs, version numbers, and
+   --  generic integers.
+
+   type Service_Id_Type is new Positive;
+   --  Row identifier in the services table. Distinct from Integer so
+   --  a catalog-entry ID or version number cannot be passed by mistake.
+
+   type Service_Version_No is new Positive;
+   --  Semantic version number for a service deployment (always >= 1).
+   --  Used for both Service_Version.Version and catalog Target_Version.
+
    -- State tracking types
 
    type Service_Version is record
       Id            : Integer;
-      Service_Id    : Integer;
-      Version       : Positive;
+      Service_Id    : Service_Id_Type;
+      Version       : Service_Version_No;
       Image         : Ada.Strings.Unbounded.Unbounded_String;
       Env           : Env_Array (1 .. MAX_ENV_ENTRIES);
       Env_Count     : Natural := 0;
@@ -44,10 +56,10 @@ package Podmander.Controller is
 
    type Service_Catalog_Entry is record
       Id              : Integer;
-      Service_Id      : Integer;
+      Service_Id      : Service_Id_Type;
       Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
       Current_Version : Natural := 0;
-      Target_Version  : Positive;
+      Target_Version  : Service_Version_No;
       State           : Catalog_Entry_State := Pending;
       Updated_At      : Ada.Calendar.Time;
    end record;

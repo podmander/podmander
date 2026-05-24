@@ -37,7 +37,11 @@ package body Podmander.Controller.Service.Repository_Tests is
    My_Wanted  : constant String := "multi-user.target";
 
    -- Helper: build a Service_Version with the given version number and service_id
-   function Make_Version (V : Positive; Service_Id : Integer) return Podmander.Controller.Service_Version is
+   function Make_Version
+      (V : Podmander.Controller.Service_Version_No;
+       Service_Id : Podmander.Controller.Service_Id_Type)
+       return Podmander.Controller.Service_Version
+   is
       Result : Podmander.Controller.Service_Version;
    begin
       Result.Id := 0;
@@ -75,11 +79,11 @@ package body Podmander.Controller.Service.Repository_Tests is
       Loaded : Podmander.Controller.Service_Version;
    begin
       Repo.Create_Version (D, SV);
-      Loaded := Repo.Get_Version (D, Svc.Id, 1);
-      Assert (Loaded.Id > 0, "Id should be positive after insert");
+      Loaded := Repo.Get_Version (D, Svc.Id, Podmander.Controller.Service_Version_No(1));
+       Assert (Loaded.Id > 0, "Id should be positive after insert");
       Assert (Loaded.Service_Id = Svc.Id, "Service_Id should match");
       Assert (To_String (Loaded.Image) = My_Image, "Image should match");
-      Assert (Loaded.Version = 1, "Version should be 1");
+      Assert (Loaded.Version = Podmander.Controller.Service_Version_No(1), "Version should be 1");
       Assert (To_String (Loaded.Description) = My_Desc, "Description should match");
       Assert (To_String (Loaded.Wanted_By) = My_Wanted, "Wanted_By should match");
       Assert (Loaded.Env_Count = 1, "Should have 1 env var");
@@ -123,7 +127,7 @@ package body Podmander.Controller.Service.Repository_Tests is
    begin
       begin
          declare
-            Ignored : Podmander.Controller.Service_Version := Repo.Get_Version (D, 999, 1);
+            Ignored : Podmander.Controller.Service_Version := Repo.Get_Version (D, Podmander.Controller.Service_Id_Type(999), Podmander.Controller.Service_Version_No(1));
          begin
             null;
             pragma Unreferenced (Ignored);
@@ -157,7 +161,7 @@ package body Podmander.Controller.Service.Repository_Tests is
       Repo.Create_Version (D, SV3);
 
       Latest := Repo.Get_Latest_Version (D, Svc.Id);
-      Assert (Latest.Version = 3, "Latest version should be 3");
+      Assert (Latest.Version = Podmander.Controller.Service_Version_No(3), "Latest version should be 3");
       Assert (To_String (Latest.Image) = "nginx:1.27", "Latest image should match version 3");
    end Test_Get_Latest_Version;
 
@@ -168,7 +172,7 @@ package body Podmander.Controller.Service.Repository_Tests is
    begin
       begin
          declare
-            Ignored : Podmander.Controller.Service_Version := Repo.Get_Latest_Version (D, 999);
+            Ignored : Podmander.Controller.Service_Version := Repo.Get_Latest_Version (D, Podmander.Controller.Service_Id_Type(999));
          begin
             null;
             pragma Unreferenced (Ignored);
@@ -197,7 +201,7 @@ package body Podmander.Controller.Service.Repository_Tests is
       SV.Volumes_Count := 0;
 
       Repo.Create_Version (D, SV);
-      Loaded := Repo.Get_Version (D, Svc.Id, 1);
+      Loaded := Repo.Get_Version (D, Svc.Id, Podmander.Controller.Service_Version_No(1));
       Assert (Loaded.Env_Count = 0, "Env_Count should be 0");
       Assert (Loaded.Ports_Count = 0, "Ports_Count should be 0");
       Assert (Loaded.Volumes_Count = 0, "Volumes_Count should be 0");
@@ -286,7 +290,7 @@ package body Podmander.Controller.Service.Repository_Tests is
    begin
       begin
          declare
-            Ignored : Podmander.Controller.Service.Service := Repo.Get_By_Id (D, 999);
+            Ignored : Podmander.Controller.Service.Service := Repo.Get_By_Id (D, Podmander.Controller.Service_Id_Type(999));
          begin
             null;
             pragma Unreferenced (Ignored);
