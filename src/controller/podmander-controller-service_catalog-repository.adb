@@ -31,7 +31,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
             else To_Unbounded_String (Node_Text)),
          Current_Version => Column_Int (QH, 3),
          Target_Version  => Positive'Value (Column_Text (QH, 4)),
-         Failed          => Column_Int (QH, 5) = 1,
+          State           => Catalog_Entry_State'Val (Column_Int (QH, 5)),
          Updated_At      => ISO8601_To_Time (Column_Text (QH, 6)));
    exception
       when Constraint_Error =>
@@ -67,8 +67,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "SELECT id, service_id, node_id, current_version, "
-           & "target_version, failed, updated_at "
-           & "FROM service_catalog WHERE id = last_insert_rowid()");
+            & "target_version, state, updated_at "
+            & "FROM service_catalog WHERE id = last_insert_rowid()");
    begin
       Bind_Text
         (QH, 1, Ada.Strings.Fixed.Trim (Service_Id'Image, Ada.Strings.Left));
@@ -112,7 +112,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "SELECT id, service_id, node_id, current_version, "
-           & "target_version, failed, updated_at "
+           & "target_version, state, updated_at "
            & "FROM service_catalog WHERE id = ?");
    begin
       Bind_Text (QH, 1, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
@@ -143,7 +143,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "SELECT id, service_id, node_id, current_version, "
-           & "target_version, failed, updated_at "
+           & "target_version, state, updated_at "
            & "FROM service_catalog WHERE service_id = ? LIMIT 1");
    begin
       Bind_Text
@@ -176,7 +176,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "SELECT id, service_id, node_id, current_version, "
-           & "target_version, failed, updated_at "
+           & "target_version, state, updated_at "
            & "FROM service_catalog WHERE node_id IS NULL");
       Result : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
@@ -198,9 +198,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "SELECT id, service_id, node_id, current_version, "
-           & "target_version, failed, updated_at "
+           & "target_version, state, updated_at "
            & "FROM service_catalog "
-           & "WHERE current_version != target_version AND failed = 0");
+            & "WHERE state = 0");
       Result : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
       while Step (QH) loop
@@ -222,8 +222,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "UPDATE service_catalog "
-           & "SET current_version = ?, failed = 0, updated_at = ? "
-           & "WHERE id = ?");
+            & "SET current_version = ?, state = 3, updated_at = ? "
+            & "WHERE id = ?");
    begin
       Bind_Text
         (QH,
@@ -249,8 +249,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "UPDATE service_catalog "
-           & "SET failed = 1, updated_at = ? "
-           & "WHERE id = ?");
+            & "SET state = 2, updated_at = ? "
+            & "WHERE id = ?");
    begin
       Bind_Text (QH, 1, Now_Str);
       Bind_Text (QH, 2, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
@@ -288,12 +288,12 @@ package body Podmander.Controller.Service_Catalog.Repository is
       return Changes (DB) > 0;
    end Assign_Node;
 
-   ---------------
-   -- Set_Target
-   ---------------
+   ----------------
+   -- Set_State --
+   ----------------
 
-   function Set_Target
-     (DB : in out DB_Handle; Id : Integer; Target_Version : Positive)
+   function Set_State
+     (DB : in out DB_Handle; Id : Integer; State : Catalog_Entry_State)
       return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
@@ -301,7 +301,75 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "UPDATE service_catalog "
-           & "SET target_version = ?, failed = 0, updated_at = ? "
+           & "SET state = ?, updated_at = ? "
+           & "WHERE id = ?");
+   begin
+      Bind_Text
+        (QH, 1,
+         Ada.Strings.Fixed.Trim (Catalog_Entry_State'Pos (State)'Image, Ada.Strings.Left));
+      Bind_Text (QH, 2, Now_Str);
+      Bind_Text (QH, 3, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      while Step (QH) loop
+         null;
+      end loop;
+      return Changes (DB) > 0;
+   end Set_State;
+
+   -------------------------------
+   -- Reset_In_Progress_For_Node --
+   -------------------------------
+
+   procedure Reset_In_Progress_For_Node
+     (DB : in out DB_Handle; Node_Id : String)
+   is
+      Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
+      QH      : Query_Handle :=
+        Prepare
+          (DB,
+           "UPDATE service_catalog "
+           & "SET state = 0, updated_at = ? "
+           & "WHERE node_id = ? AND state = 1");
+   begin
+      Bind_Text (QH, 1, Now_Str);
+      Bind_Text (QH, 2, Node_Id);
+      while Step (QH) loop
+         null;
+      end loop;
+   end Reset_In_Progress_For_Node;
+
+   -------------------------
+   -- Reset_In_Progress --
+   -------------------------
+
+   procedure Reset_In_Progress (DB : in out DB_Handle) is
+      Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
+      QH      : Query_Handle :=
+        Prepare
+          (DB,
+           "UPDATE service_catalog "
+           & "SET state = 0, updated_at = ? "
+           & "WHERE state = 1");
+   begin
+      Bind_Text (QH, 1, Now_Str);
+      while Step (QH) loop
+         null;
+      end loop;
+   end Reset_In_Progress;
+
+   ---------------
+   -- Set_Target
+   ---------------
+
+   function Set_Target
+      (DB : in out DB_Handle; Id : Integer; Target_Version : Positive)
+       return Boolean
+   is
+      Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
+      QH      : Query_Handle :=
+        Prepare
+          (DB,
+           "UPDATE service_catalog "
+           & "SET target_version = ?, state = 0, updated_at = ? "
            & "WHERE id = ?");
    begin
       Bind_Text

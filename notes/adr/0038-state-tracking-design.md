@@ -1,7 +1,7 @@
 # ADR-0038: State Tracking Design for MVP
 
 **Date**: 2026-05-23
-**Amended**: 2026-05-23 — Replaced actual_state with service_catalog; added services table and pipeline objects.
+**Amended**: 2026-05-24 — Replaced `failed` boolean with `Catalog_Entry_State` enum (Pending, In_Progress, Failed, Deployed) to prevent duplicate deploys.
 
 ## Context
 
@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS service_catalog (
     node_id         TEXT,           -- NULL = not yet scheduled
     current_version INTEGER NOT NULL DEFAULT 0,  -- 0 = not deployed
     target_version  INTEGER NOT NULL,
-    failed          INTEGER NOT NULL DEFAULT 0,   -- boolean: 0 = ok, 1 = failed attempt
+    state           INTEGER NOT NULL DEFAULT 0,   -- Catalog_Entry_State: 0=Pending, 1=In_Progress, 2=Failed, 3=Deployed
     updated_at      TEXT NOT NULL,  -- ISO 8601 UTC
     FOREIGN KEY (service_id) REFERENCES services(id),
     FOREIGN KEY (service_id, target_version)
@@ -117,7 +117,7 @@ Key design points:
 
 - `current_version = 0` means "not deployed." No foreign key constraint on this column (0 doesn't exist in `service_versions`).
 - `target_version` always references a real `service_versions` row. The scheduler sets it when creating or updating the catalog entry.
-- `failed` is a boolean flag. Set to 1 when a deploy fails. Cleared when `target_version` changes (new deploy intent). The supervisor skips entries where `failed = 1`.
+- `state` is a `Catalog_Entry_State` enum stored as an integer: Pending (0) = needs deployment, In_Progress (1) = deploy command sent awaiting result, Failed (2) = deploy failed, Deployed (3) = current_version matches target_version. The supervisor only picks up entries in Pending state, preventing duplicate deploys. `Set_Target` resets state to Pending (retrigger). On controller startup, any In_Progress entries are reset to Pending (stale from crash).
 - `node_id = NULL` means "not yet scheduled." The supervisor calls the scheduler to assign a node when it finds unscheduled entries.
 - The unique index on `(service_id, node_id)` only applies when `node_id IS NOT NULL`. Multiple NULL rows for the same service are prevented at the application level.
 - `node_id` is TEXT for MVP (referencing `agents.name`). Issue #79 tracks replacing it with an integer FK to `agents.id`.
@@ -133,11 +133,11 @@ Every `Deploy_Command` carries a `catalog_id` — the primary key of the Service
 The supervisor loop runs on each iteration:
 
 1. **Schedule**: Find catalog entries where `node_id IS NULL`. Call the scheduler to assign a node (or leave NULL if no agent is connected).
-2. **Reconcile**: Find catalog entries where `current_version ≠ target_version AND failed = 0`. Render the quadlet from the ASD and send a `Deploy_Command` with the entry's `catalog_id`.
+2. **Reconcile**: Find catalog entries where `state = Pending` (0). Render the quadlet from the ASD, send a `Deploy_Command` with the entry's `catalog_id`, and set `state = In_Progress`.
 
 On `Deploy_Result`:
-- **Success**: Set `current_version = target_version`, `failed = 0`, update `updated_at`.
-- **Failure**: Set `failed = 1`, update `updated_at`. `current_version` stays unchanged.
+- **Success**: Set `current_version = target_version`, `state = Deployed`, update `updated_at`.
+- **Failure**: Set `state = Failed`, update `updated_at`. `current_version` stays unchanged.
 
 ### 8. --test-config is temporary
 

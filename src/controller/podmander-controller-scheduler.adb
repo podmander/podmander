@@ -21,7 +21,7 @@ package body Podmander.Controller.Scheduler is
       Node_Id         => Null_Unbounded_String,
       Current_Version => 0,
       Target_Version  => 1,
-      Failed          => False,
+       State           => Pending,
       Updated_At      => Clock);
 
    ---------------

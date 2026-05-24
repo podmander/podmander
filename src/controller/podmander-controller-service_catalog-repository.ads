@@ -38,20 +38,19 @@ package Podmander.Controller.Service_Catalog.Repository is
    -- Return all catalog entries where node_id IS NULL.
 
    function Get_Drift
-     (DB : in out DB_Handle)
-      return Podmander.Controller.Catalog_Entry_Vectors.Vector;
-   -- Return all catalog entries where current_version != target_version
-   -- AND failed = 0.
+      (DB : in out DB_Handle)
+       return Podmander.Controller.Catalog_Entry_Vectors.Vector;
+   -- Return all catalog entries where state = Pending.
 
    function Update_On_Success
-     (DB : in out DB_Handle; Id : Integer; Current_Version : Natural)
-      return Boolean;
-   -- Set current_version = Current_Version, failed = 0, update updated_at.
+      (DB : in out DB_Handle; Id : Integer; Current_Version : Natural)
+       return Boolean;
+   -- Set current_version = Current_Version, state = Deployed, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Update_On_Failure
-     (DB : in out DB_Handle; Id : Integer) return Boolean;
-   -- Set failed = 1, update updated_at.
+      (DB : in out DB_Handle; Id : Integer) return Boolean;
+   -- Set state = Failed, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Assign_Node
@@ -60,9 +59,26 @@ package Podmander.Controller.Service_Catalog.Repository is
    -- Returns True if a row was updated, False otherwise.
 
    function Set_Target
-     (DB : in out DB_Handle; Id : Integer; Target_Version : Positive)
-      return Boolean;
-   -- Set target_version = Target_Version, clear failed (set to 0),
+      (DB : in out DB_Handle; Id : Integer; Target_Version : Positive)
+       return Boolean;
+   -- Set target_version = Target_Version, state = Pending,
    -- update updated_at.  Returns True if a row was updated, False otherwise.
+
+   function Set_State
+     (DB : in out DB_Handle; Id : Integer; State : Catalog_Entry_State)
+      return Boolean;
+   --  Set state = State, update updated_at.
+   --  Returns True if a row was updated, False otherwise.
+
+   procedure Reset_In_Progress_For_Node
+     (DB : in out DB_Handle; Node_Id : String);
+   --  Reset all In_Progress catalog entries for the given node
+   --  back to Pending. Called when an agent reconnects to ensure
+   --  any lost deploy commands are retried.
+
+   procedure Reset_In_Progress (DB : in out DB_Handle);
+   --  Reset all In_Progress entries to Pending.
+   --  Called on controller startup to handle stale in-progress entries
+   --  from a previous controller crash.
 
 end Podmander.Controller.Service_Catalog.Repository;

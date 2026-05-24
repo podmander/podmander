@@ -36,13 +36,19 @@ package Podmander.Controller is
       Node_Id      : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
+   type Catalog_Entry_State is
+     (Pending,      -- needs deployment
+      In_Progress,  -- deploy command sent, awaiting result
+      Failed,       -- deploy failed, needs retrigger
+      Deployed);    -- current_version == target_version
+
    type Service_Catalog_Entry is record
       Id              : Integer;
       Service_Id      : Integer;
       Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
       Current_Version : Natural := 0;
       Target_Version  : Positive;
-      Failed          : Boolean := False;
+      State           : Catalog_Entry_State := Pending;
       Updated_At      : Ada.Calendar.Time;
    end record;
 

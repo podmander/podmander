@@ -64,7 +64,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (To_String (Cat_Ent.Node_Id) = "node-1", "Node_Id should be 'node-1'");
       Assert (Cat_Ent.Current_Version = 0, "Current_Version should be 0");
       Assert (Cat_Ent.Target_Version = 2, "Target_Version should be 2");
-      Assert (not Cat_Ent.Failed, "Failed should be False");
+      Assert (Cat_Ent.State = Podmander.Controller.Pending, "State should be Pending");
    end Test_Create_Entry;
 
    -------------------------------
@@ -169,7 +169,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Natural (Drift.Length) = 2, "Should find 2 drift entries (both are current 0 != target)");
    end Test_Get_Drift;
 
-   procedure Test_Get_Drift_Excludes_Failed (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Get_Drift_Excludes_Non_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Integer := Seed_Service (D, "web", 2);
@@ -183,7 +183,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       pragma Unreferenced (Ignored);
       Drift := Repo.Get_Drift (D);
       Assert (Natural (Drift.Length) = 0, "Should find 0 drift entries when the only one has failed");
-   end Test_Get_Drift_Excludes_Failed;
+   end Test_Get_Drift_Excludes_Non_Pending;
 
    --------------------------
    -- Test_Update_On_Success
@@ -208,7 +208,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
       Assert (Loaded.Current_Version = 2, "Current_Version should be 2");
-      Assert (not Loaded.Failed, "Failed should be False after success");
+      Assert (Loaded.State = Podmander.Controller.Deployed, "State should be Deployed after success");
    end Test_Update_On_Success;
 
    procedure Test_Update_On_Success_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -237,7 +237,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Updated, "Update_On_Failure should return True");
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
-      Assert (Loaded.Failed, "Failed should be True after failure");
+      Assert (Loaded.State = Podmander.Controller.Failed, "State should be Failed after failure");
    end Test_Update_On_Failure;
 
    procedure Test_Update_On_Failure_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -301,7 +301,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
       Assert (Loaded.Target_Version = 3, "Target_Version should be 3");
-      Assert (not Loaded.Failed, "Failed should be cleared after Set_Target");
+      Assert (Loaded.State = Podmander.Controller.Pending, "State should be Pending after Set_Target");
    end Test_Set_Target;
 
    procedure Test_Set_Target_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -324,14 +324,14 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Register_Routine (T, Test_Get_By_Id_Not_Found'Access, "Get by unknown id raises Not_Found");
       Register_Routine (T, Test_Get_Unscheduled'Access, "Get_Unscheduled returns only entries without a node");
       Register_Routine (T, Test_Get_Drift'Access, "Get_Drift returns entries where versions differ");
-      Register_Routine (T, Test_Get_Drift_Excludes_Failed'Access, "Get_Drift excludes entries with failed=1");
-      Register_Routine (T, Test_Update_On_Success'Access, "Update_On_Success sets current_version and clears failed");
+      Register_Routine (T, Test_Get_Drift_Excludes_Non_Pending'Access, "Get_Drift excludes non-Pending entries");
+      Register_Routine (T, Test_Update_On_Success'Access, "Update_On_Success sets current_version and state = Deployed");
       Register_Routine (T, Test_Update_On_Success_Not_Found'Access, "Update_On_Success returns False for unknown id");
-      Register_Routine (T, Test_Update_On_Failure'Access, "Update_On_Failure sets failed flag");
+      Register_Routine (T, Test_Update_On_Failure'Access, "Update_On_Failure sets state = Failed");
       Register_Routine (T, Test_Update_On_Failure_Not_Found'Access, "Update_On_Failure returns False for unknown id");
       Register_Routine (T, Test_Assign_Node'Access, "Assign_Node sets node_id on an unscheduled entry");
       Register_Routine (T, Test_Assign_Node_Not_Found'Access, "Assign_Node returns False for unknown id");
-      Register_Routine (T, Test_Set_Target'Access, "Set_Target updates target_version and clears failed");
+      Register_Routine (T, Test_Set_Target'Access, "Set_Target updates target_version and sets state = Pending");
       Register_Routine (T, Test_Set_Target_Not_Found'Access, "Set_Target returns False for unknown id");
    end Register_Tests;
 

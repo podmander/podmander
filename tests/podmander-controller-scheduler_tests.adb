@@ -5,6 +5,7 @@ with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
+with Podmander.Controller;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Scheduler;
 with Podmander.Controller.Service.Repository;
@@ -84,7 +85,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert (To_String (Result.Catalog_Entry.Node_Id) = "node-1", "Node_Id should be 'node-1'");
       Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should be 0");
       Assert (Result.Catalog_Entry.Target_Version = 2, "Target_Version should be 2");
-      Assert (not Result.Catalog_Entry.Failed, "Failed should be False");
+      Assert (Result.Catalog_Entry.State = Podmander.Controller.Pending, "State should be Pending");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_New_Entry;
 
@@ -135,7 +136,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
       Assert (Result.Catalog_Entry.Target_Version = 3, "Target_Version should be updated to 3");
       Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should remain 0");
-      Assert (not Result.Catalog_Entry.Failed, "Failed should be cleared after schedule");
+      Assert (Result.Catalog_Entry.State = Podmander.Controller.Pending, "State should be Pending after schedule");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Update_Existing;
 
@@ -193,7 +194,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Register_Routine
         (T, Test_Schedule_New_Entry_No_Agent'Access, "Schedule creates entry with empty Node_Id when no agent");
       Register_Routine
-        (T, Test_Schedule_Update_Existing'Access, "Schedule updates target and clears failed on existing");
+        (T, Test_Schedule_Update_Existing'Access, "Schedule updates target and sets state = Pending on existing");
       Register_Routine
         (T, Test_Schedule_Update_Assign_Node'Access, "Schedule assigns node when updating existing entry");
       Register_Routine

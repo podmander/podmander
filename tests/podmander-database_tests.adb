@@ -357,7 +357,7 @@ package body Podmander.Database_Tests is
            Ada_Sqlite3.Prepare
              (Conn,
               "SELECT id, service_id, node_id, current_version, "
-              & "target_version, failed, updated_at "
+               & "target_version, state, updated_at "
               & "FROM service_catalog");
       begin
          -- Preparing the query should not raise  -- " table exists with correct columns

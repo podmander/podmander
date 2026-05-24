@@ -92,6 +92,14 @@ package body Podmander.Controller is
             end loop;
          end;
 
+         --  Reset any catalog entries that were In_Progress when the
+         --  controller last ran. They need to be redeployed.
+         declare
+            use Podmander.Controller.Service_Catalog.Repository;
+         begin
+            Reset_In_Progress (C.DB);
+         end;
+
          -- Load or generate CURVE certificate
          declare
             Cert_Path : constant String :=
@@ -295,6 +303,30 @@ package body Podmander.Controller is
                   goto Continue;
                end if;
 
+               --  Only deploy to agents that are currently connected.
+               declare
+                  All_Agents  : constant Podmander.Types.Agent_Maps.Map :=
+                    Agent.Repository.Load_All (Self.DB);
+                  Agent_Found : Boolean := False;
+               begin
+                  for Cur in All_Agents.Iterate loop
+                     declare
+                        Info : constant Podmander.Types.Agent_Info :=
+                          Podmander.Types.Agent_Maps.Element (Cur);
+                     begin
+                        if To_String (Info.Node_Id) = Node_Id
+                          and then Info.State = Podmander.Types.Registered
+                        then
+                           Agent_Found := True;
+                           exit;
+                        end if;
+                     end;
+                  end loop;
+                  if not Agent_Found then
+                     goto Continue;
+                  end if;
+               end;
+
                -- Look up the service version to get the ASD
                declare
                   SV           : constant Service_Version :=
@@ -331,6 +363,13 @@ package body Podmander.Controller is
                   Msg.Add_String (Node_Id);
                   Cmd.Encode (Msg);
                   Msg.Send (Self.Socket);
+                  declare
+                     Set_State_Ok : constant Boolean :=
+                       Set_State (Self.DB, Cat_Entry.Id, In_Progress);
+                     pragma Unreferenced (Set_State_Ok);
+                  begin
+                     null;
+                  end;
                   Podmander.Logging.Info
                     ("controller",
                      "Deploying "

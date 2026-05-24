@@ -102,6 +102,7 @@ package body Podmander.Controller.Message_Handlers is
      (H : in out Controller_Handler;
       M : Podmander.Messages.Heartbeat_Message_Type'Class)
    is
+      use Podmander.Controller.Service_Catalog.Repository;
       use Podmander.Messages.Heartbeats;
       HB         : constant Heartbeat_Message := Heartbeat_Message (M);
       Node_Id    : constant String := To_String (HB.Node_Id);
@@ -122,6 +123,9 @@ package body Podmander.Controller.Message_Handlers is
                if Info.State /= Podmander.Types.Registered then
                   Info.State := Podmander.Types.Registered;
                   Agent.Repository.Set_State (H.Ctrl.DB, Info);
+                  --  Reset any In_Progress deploys for this agent so they
+                  --  are retried now that the agent is connected again.
+                  Reset_In_Progress_For_Node (H.Ctrl.DB, Node_Id);
                   Podmander.Logging.Info
                     ("controller", "Agent " & Node_Id & " reconnected");
                end if;

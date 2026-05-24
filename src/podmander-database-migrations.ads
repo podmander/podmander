@@ -130,6 +130,13 @@ private
      & "    ON service_catalog(service_id, node_id)"
      & "    WHERE node_id IS NOT NULL;";
 
+   --  Migration 009: Replace failed boolean with state enum.
+   --  SQLite doesn't support ALTER COLUMN, so we rename the column
+   --  and convert values: 0 (not failed) -> 0 (Pending), 1 (failed) -> 2 (Failed).
+   Migration_009_SQL : constant String :=
+     "ALTER TABLE service_catalog RENAME COLUMN failed TO state;"
+     & "UPDATE service_catalog SET state = 2 WHERE state = 1;";
+
    Migration_History : constant Migration_Array :=
      [1 =>
         (Version => 1,
@@ -162,6 +169,10 @@ private
       8 =>
         (Version => 8,
          SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_008_SQL))];
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_008_SQL)),
+      9 =>
+        (Version => 9,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_009_SQL))];
 
 end Podmander.Database.Migrations;
