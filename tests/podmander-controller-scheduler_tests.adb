@@ -5,10 +5,12 @@ with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
+with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Scheduler;
 with Podmander.Controller.Service.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Database;
+with Podmander.Types;
 
 package body Podmander.Controller.Scheduler_Tests is
 
@@ -19,6 +21,7 @@ package body Podmander.Controller.Scheduler_Tests is
    package DB renames Podmander.Database;
    package Svc_Repo renames Podmander.Controller.Service.Repository;
    package Cat_Repo renames Podmander.Controller.Service_Catalog.Repository;
+   package Agent_Repo renames Podmander.Controller.Agent.Repository;
    package Scheduler renames Podmander.Controller.Scheduler;
 
    use type DB.Error_Kind;
@@ -50,6 +53,17 @@ package body Podmander.Controller.Scheduler_Tests is
       return Svc_Rec.Id;
    end Seed_Service;
 
+   -- Helper: register a single agent in Registered state.
+   procedure Register_Agent (Handle : in out DB.DB_Handle; Name : String; Node_Id : String) is
+      Info : constant Podmander.Types.Agent_Info :=
+        (Name      => To_Unbounded_String (Name),
+         Node_Id   => To_Unbounded_String (Node_Id),
+         State     => Podmander.Types.Registered,
+         Last_Seen => Ada.Calendar.Clock);
+   begin
+      Agent_Repo.Register (Handle, Info);
+   end Register_Agent;
+
    --------------------------
    -- Test_Schedule_New_Entry
    --------------------------
@@ -58,9 +72,12 @@ package body Podmander.Controller.Scheduler_Tests is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
       Svc    : Integer := Seed_Service (D, "web", 2);
-      Result : Scheduler.Schedule_Result :=
-        Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2, Node_Id => "node-1");
+      Result : Scheduler.Schedule_Result;
    begin
+      --  Register one agent so the Scheduler can assign it
+      Register_Agent (D, "agent-1", "node-1");
+
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2);
       Assert (Result.Ok, "Schedule should succeed for new entry");
       Assert (Result.Catalog_Entry.Id > 0, "Id should be positive after create");
       Assert (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
@@ -79,9 +96,10 @@ package body Podmander.Controller.Scheduler_Tests is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
       Svc    : Integer := Seed_Service (D, "db", 1);
-      Result : Scheduler.Schedule_Result :=
-        Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1, Node_Id => "");
+      Result : Scheduler.Schedule_Result;
    begin
+      --  No agents registered — Scheduler should create entry with empty Node_Id
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1);
       Assert (Result.Ok, "Schedule should succeed with no agent");
       Assert (To_String (Result.Catalog_Entry.Node_Id) = "", "Node_Id should be empty when no agent is connected");
       Assert (Result.Error = Scheduler.None, "Error should be None");
@@ -99,7 +117,10 @@ package body Podmander.Controller.Scheduler_Tests is
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
-      -- Mark as failed first to verify it gets cleared
+      --  Register one agent so the Scheduler can assign it
+      Register_Agent (D, "agent-1", "node-1");
+
+      --  Mark as failed first to verify it gets cleared
       declare
          Ignored : Boolean := Cat_Repo.Update_On_Failure (D, Created.Id);
          pragma Unreferenced (Ignored);
@@ -107,8 +128,8 @@ package body Podmander.Controller.Scheduler_Tests is
          null;
       end;
 
-      -- Schedule with a new target_version
-      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 3, Node_Id => "node-1");
+      --  Schedule with a new target_version
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 3);
 
       Assert (Result.Ok, "Schedule should succeed for existing entry");
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
@@ -130,8 +151,11 @@ package body Podmander.Controller.Scheduler_Tests is
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
-      -- Schedule with a node_id to assign it
-      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2, Node_Id => "assigned-node");
+      --  Register one agent so the Scheduler can assign it
+      Register_Agent (D, "agent-1", "assigned-node");
+
+      --  Schedule — the Scheduler should assign the registered agent's node
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2);
 
       Assert (Result.Ok, "Schedule should succeed");
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
@@ -140,6 +164,25 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert (Result.Catalog_Entry.Target_Version = 2, "Target_Version should be updated");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Update_Assign_Node;
+
+   ------------------------------------
+   -- Test_Schedule_Multiple_Agents
+   ------------------------------------
+
+   procedure Test_Schedule_Multiple_Agents (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      Svc    : Integer := Seed_Service (D, "cache", 1);
+      Result : Scheduler.Schedule_Result;
+   begin
+      --  Register two agents — Scheduler should return Multiple_Agents error
+      Register_Agent (D, "agent-1", "node-1");
+      Register_Agent (D, "agent-2", "node-2");
+
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1);
+      Assert (not Result.Ok, "Schedule should fail with multiple agents");
+      Assert (Result.Error = Scheduler.Multiple_Agents, "Error should be Multiple_Agents");
+   end Test_Schedule_Multiple_Agents;
 
    overriding
    procedure Register_Tests (T : in out Scheduler_Test) is
@@ -152,6 +195,8 @@ package body Podmander.Controller.Scheduler_Tests is
         (T, Test_Schedule_Update_Existing'Access, "Schedule updates target and clears failed on existing");
       Register_Routine
         (T, Test_Schedule_Update_Assign_Node'Access, "Schedule assigns node when updating existing entry");
+      Register_Routine
+        (T, Test_Schedule_Multiple_Agents'Access, "Schedule returns Multiple_Agents error when >1 agent");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

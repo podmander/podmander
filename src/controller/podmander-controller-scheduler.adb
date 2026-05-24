@@ -3,7 +3,9 @@
 
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
+with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
+with Podmander.Types;
 
 package body Podmander.Controller.Scheduler is
 
@@ -26,39 +28,68 @@ package body Podmander.Controller.Scheduler is
    ---------------
 
    function Schedule
-     (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive; Node_Id : String) return Schedule_Result
+     (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive) return Schedule_Result
    is
+      --  Query registered agents to select a target node.
+      All_Agents       : constant Podmander.Types.Agent_Maps.Map :=
+        Podmander.Controller.Agent.Repository.Load_All (DB);
+      Target_Node_Id   : Unbounded_String := Null_Unbounded_String;
+      Registered_Count : Natural := 0;
    begin
-      declare
-         Existing : constant Podmander.Controller.Service_Catalog_Entry := Get_By_Service_Id (DB, Service_Id);
-         Updated  : Boolean;
-         pragma Unreferenced (Updated);
-      begin
-         -- Entry exists  -- update target and clear failed
-         Updated := Set_Target (DB, Existing.Id, Target_Version);
-
-         -- Assign node if one is provided
-         if Node_Id /= "" then
-            Updated := Assign_Node (DB, Existing.Id, Node_Id);
-         end if;
-
-         return (Ok => True, Catalog_Entry => Get_By_Id (DB, Existing.Id), Error => None);
-      end;
-   exception
-      when E : Podmander.Database.Database_Error =>
+      for Cursor in All_Agents.Iterate loop
          declare
-            Info : constant Error_Info := Parse_Error (E);
+            Info : constant Podmander.Types.Agent_Info :=
+              Podmander.Types.Agent_Maps.Element (Cursor);
          begin
-            if Info.Kind = Not_Found then
-               -- No existing entry  -- create a new one
-               return
-                 (Ok            => True,
-                  Catalog_Entry =>
-                    Create_Entry (DB, Service_Id => Service_Id, Node_Id => Node_Id, Target_Version => Target_Version),
-                  Error         => None);
+            if Info.State = Podmander.Types.Registered then
+               Registered_Count := Registered_Count + 1;
+               Target_Node_Id := Info.Node_Id;
             end if;
          end;
-         return (Ok => False, Catalog_Entry => Dummy_Entry, Error => Database_Error);
+      end loop;
+
+      --  MVP: cannot schedule when multiple agents are connected
+      if Registered_Count > 1 then
+         return (Ok => False, Catalog_Entry => Dummy_Entry, Error => Multiple_Agents);
+      end if;
+
+      declare
+         Node_Id_Str : constant String := To_String (Target_Node_Id);
+      begin
+         --  Try to update an existing entry
+         declare
+            Existing : constant Podmander.Controller.Service_Catalog_Entry :=
+              Get_By_Service_Id (DB, Service_Id);
+            Updated  : Boolean;
+            pragma Unreferenced (Updated);
+         begin
+            --  Entry exists — update target and clear failed
+            Updated := Set_Target (DB, Existing.Id, Target_Version);
+
+            --  Assign node if one is available
+            if Node_Id_Str /= "" then
+               Updated := Assign_Node (DB, Existing.Id, Node_Id_Str);
+            end if;
+
+            return (Ok => True, Catalog_Entry => Get_By_Id (DB, Existing.Id), Error => None);
+         end;
+      exception
+         when E : Podmander.Database.Database_Error =>
+            declare
+               Info : constant Error_Info := Parse_Error (E);
+            begin
+               if Info.Kind = Not_Found then
+                  --  No existing entry — create a new one
+                  return
+                    (Ok            => True,
+                     Catalog_Entry =>
+                       Create_Entry
+                         (DB, Service_Id => Service_Id, Node_Id => Node_Id_Str, Target_Version => Target_Version),
+                     Error         => None);
+               end if;
+            end;
+            return (Ok => False, Catalog_Entry => Dummy_Entry, Error => Database_Error);
+      end;
    end Schedule;
 
 end Podmander.Controller.Scheduler;

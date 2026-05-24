@@ -27,6 +27,7 @@ package body Podmander.Controller is
    use Ada.Strings.Unbounded;
    use type CZMQ.Messages.Receive_Status;
    use type Podmander.Database.Error_Kind;
+   use type Podmander.Controller.Scheduler.Schedule_Error;
 
    procedure Reconcile_State (Self : in out Controller_Instance);
 
@@ -236,32 +237,18 @@ package body Podmander.Controller is
    begin
       for Cursor in Unscheduled.Iterate loop
          declare
-            Cat_Entry        : constant Service_Catalog_Entry := Catalog_Entry_Vectors.Element (Cursor);
-            All_Agents       : constant Podmander.Types.Agent_Maps.Map := Agent.Repository.Load_All (Self.DB);
-            Target_Node_Id   : Unbounded_String := Null_Unbounded_String;
-            Registered_Count : Natural := 0;
+            Cat_Entry : constant Service_Catalog_Entry := Catalog_Entry_Vectors.Element (Cursor);
+            Result    : constant Scheduler.Schedule_Result :=
+              Scheduler.Schedule (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version);
          begin
-            for Agent_Cur in All_Agents.Iterate loop
-               declare
-                  Info : constant Podmander.Types.Agent_Info := Podmander.Types.Agent_Maps.Element (Agent_Cur);
-               begin
-                  if Info.State = Podmander.Types.Registered then
-                     Registered_Count := Registered_Count + 1;
-                     Target_Node_Id := Info.Node_Id;
-                  end if;
-               end;
-            end loop;
-
-            if Registered_Count = 1 then
-               declare
-                  Ok : constant Boolean := Assign_Node (Self.DB, Cat_Entry.Id, To_String (Target_Node_Id));
-                  pragma Unreferenced (Ok);
-               begin
+            if Result.Ok then
+               if To_String (Result.Catalog_Entry.Node_Id) /= "" then
                   Podmander.Logging.Info
                     ("controller",
-                     "Scheduled catalog entry " & Cat_Entry.Id'Image & " to node " & To_String (Target_Node_Id));
-               end;
-            elsif Registered_Count > 1 then
+                     "Scheduled catalog entry " & Cat_Entry.Id'Image & " to node "
+                     & To_String (Result.Catalog_Entry.Node_Id));
+               end if;
+            elsif Result.Error = Scheduler.Multiple_Agents then
                Podmander.Logging.Warning
                  ("controller", "Cannot schedule catalog entry " & Cat_Entry.Id'Image & ": multiple agents connected");
             end if;
@@ -366,50 +353,31 @@ package body Podmander.Controller is
             return False;
          end if;
 
-         -- Find connected agent (MVP: single-agent deployment)
-         declare
-            Node_Id          : Unbounded_String := Null_Unbounded_String;
-            All_Agents       : constant Podmander.Types.Agent_Maps.Map := Agent.Repository.Load_All (Self.DB);
-            Registered_Count : Natural := 0;
-         begin
-            for Cursor in All_Agents.Iterate loop
-               declare
-                  Info : constant Podmander.Types.Agent_Info := Podmander.Types.Agent_Maps.Element (Cursor);
-               begin
-                  if Info.State = Podmander.Types.Registered then
-                     Registered_Count := Registered_Count + 1;
-                     Node_Id := Info.Node_Id;
-                  end if;
-               end;
-            end loop;
+-- Schedule the service for deployment
+          declare
+             Sched_Result : constant Scheduler.Schedule_Result :=
+               Scheduler.Schedule
+                 (Self.DB,
+                  Service_Id     => Reg_Result.Version.Service_Id,
+                  Target_Version => Reg_Result.Version.Version);
+          begin
+             if not Sched_Result.Ok then
+                if Sched_Result.Error = Scheduler.Multiple_Agents then
+                   Podmander.Logging.Error
+                     ("controller",
+                      "Multiple agents connected; cannot select target"
+                      & " for --test-config."
+                      & " Use podctl deploy for multi-node deploys.");
+                else
+                   Podmander.Logging.Error ("controller", "Failed to schedule " & To_String (Result.Config.Name));
+                end if;
+                return False;
+             end if;
+          end;
 
-            if Registered_Count > 1 then
-               Podmander.Logging.Error
-                 ("controller",
-                  "Multiple agents connected; cannot select target"
-                  & " for --test-config."
-                  & " Use podctl deploy for multi-node deploys.");
-               return False;
-            end if;
-
-            declare
-               Sched_Result : constant Scheduler.Schedule_Result :=
-                 Scheduler.Schedule
-                   (Self.DB,
-                    Service_Id     => Reg_Result.Version.Service_Id,
-                    Target_Version => Reg_Result.Version.Version,
-                    Node_Id        => To_String (Node_Id));
-            begin
-               if not Sched_Result.Ok then
-                  Podmander.Logging.Error ("controller", "Failed to schedule " & To_String (Result.Config.Name));
-                  return False;
-               end if;
-            end;
-
-            Podmander.Logging.Info ("controller", "Scheduled " & To_String (Result.Config.Name) & " from " & Path);
-            return True;
-         end;
-      end;
+          Podmander.Logging.Info ("controller", "Scheduled " & To_String (Result.Config.Name) & " from " & Path);
+          return True;
+       end;
    end Load_Test_Deploy;
 
 end Podmander.Controller;
