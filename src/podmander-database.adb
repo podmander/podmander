@@ -213,6 +213,12 @@ package body Podmander.Database is
       Ada_Sqlite3.Bind_Text (QH.Stmt, Index, Value);
    end Bind_Text;
 
+   procedure Bind_Int
+     (QH : in out Query_Handle; Index : Positive; Value : Integer) is
+   begin
+      Ada_Sqlite3.Bind_Int (QH.Stmt, Index, Value);
+   end Bind_Int;
+
    procedure Bind_Null (QH : in out Query_Handle; Index : Positive) is
    begin
       Ada_Sqlite3.Bind_Null (QH.Stmt, Index);

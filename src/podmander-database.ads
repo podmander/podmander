@@ -73,6 +73,10 @@ package Podmander.Database is
      (QH : in out Query_Handle; Index : Positive; Value : String);
    -- Bind a text value to a parameter by position.
 
+   procedure Bind_Int
+     (QH : in out Query_Handle; Index : Positive; Value : Integer);
+   -- Bind an integer value to a parameter by position.
+
    procedure Bind_Null (QH : in out Query_Handle; Index : Positive);
    -- Bind NULL to a parameter by position.
 
