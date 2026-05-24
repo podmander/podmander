@@ -31,10 +31,10 @@ package body Podmander.Controller.Scheduler is
      (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive) return Schedule_Result
    is
       --  Query registered agents to select a target node.
-      All_Agents       : constant Podmander.Types.Agent_Maps.Map :=
+      --  MVP strategy: assign the first registered agent found.
+      All_Agents     : constant Podmander.Types.Agent_Maps.Map :=
         Podmander.Controller.Agent.Repository.Load_All (DB);
-      Target_Node_Id   : Unbounded_String := Null_Unbounded_String;
-      Registered_Count : Natural := 0;
+      Target_Node_Id : Unbounded_String := Null_Unbounded_String;
    begin
       for Cursor in All_Agents.Iterate loop
          declare
@@ -42,16 +42,11 @@ package body Podmander.Controller.Scheduler is
               Podmander.Types.Agent_Maps.Element (Cursor);
          begin
             if Info.State = Podmander.Types.Registered then
-               Registered_Count := Registered_Count + 1;
                Target_Node_Id := Info.Node_Id;
+               exit;
             end if;
          end;
       end loop;
-
-      --  MVP: cannot schedule when multiple agents are connected
-      if Registered_Count > 1 then
-         return (Ok => False, Catalog_Entry => Dummy_Entry, Error => Multiple_Agents);
-      end if;
 
       declare
          Node_Id_Str : constant String := To_String (Target_Node_Id);

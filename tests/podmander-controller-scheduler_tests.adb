@@ -166,23 +166,24 @@ package body Podmander.Controller.Scheduler_Tests is
    end Test_Schedule_Update_Assign_Node;
 
    ------------------------------------
-   -- Test_Schedule_Multiple_Agents
+   -- Test_Schedule_Picks_First_Agent
    ------------------------------------
 
-   procedure Test_Schedule_Multiple_Agents (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Schedule_Picks_First_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
       Svc    : Integer := Seed_Service (D, "cache", 1);
       Result : Scheduler.Schedule_Result;
    begin
-      --  Register two agents — Scheduler should return Multiple_Agents error
+      --  Register two agents — Scheduler should pick the first one and succeed
       Register_Agent (D, "agent-1", "node-1");
       Register_Agent (D, "agent-2", "node-2");
 
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1);
-      Assert (not Result.Ok, "Schedule should fail with multiple agents");
-      Assert (Result.Error = Scheduler.Multiple_Agents, "Error should be Multiple_Agents");
-   end Test_Schedule_Multiple_Agents;
+      Assert (Result.Ok, "Schedule should succeed with multiple agents");
+      Assert (Result.Catalog_Entry.Node_Id /= Null_Unbounded_String, "Node_Id should be assigned");
+      Assert (Result.Error = Scheduler.None, "Error should be None");
+   end Test_Schedule_Picks_First_Agent;
 
    overriding
    procedure Register_Tests (T : in out Scheduler_Test) is
@@ -196,7 +197,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Register_Routine
         (T, Test_Schedule_Update_Assign_Node'Access, "Schedule assigns node when updating existing entry");
       Register_Routine
-        (T, Test_Schedule_Multiple_Agents'Access, "Schedule returns Multiple_Agents error when >1 agent");
+        (T, Test_Schedule_Picks_First_Agent'Access, "Schedule picks first agent when multiple are connected");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

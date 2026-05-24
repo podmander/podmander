@@ -3,9 +3,8 @@
 
 --  The Scheduler creates or updates service_catalog entries to schedule
 --  a service for deployment. It selects the target node by querying
---  available agents. For MVP, it assigns the single connected agent
---  (or leaves node_id NULL if none connected), and returns
---  Multiple_Agents if more than one agent is registered.
+--  available agents. For MVP, it assigns the first connected agent
+--  (or leaves node_id NULL if none connected).
 
 with Podmander.Database;
 
@@ -13,7 +12,7 @@ package Podmander.Controller.Scheduler is
 
    use Podmander.Database;
 
-   type Schedule_Error is (None, Database_Error, Multiple_Agents);
+   type Schedule_Error is (None, Database_Error);
 
    type Schedule_Result is record
       Ok            : Boolean := False;
@@ -29,7 +28,7 @@ package Podmander.Controller.Scheduler is
    --  and clear failed. If no entry exists, create one with
    --  current_version = 0 and the given target_version.
    --  The Scheduler selects the target node by querying registered
-   --  agents: 0 agents → unscheduled (node_id NULL), 1 agent → assigned,
-   --  >1 agents → Multiple_Agents error.
+   --  agents: 0 agents → unscheduled (node_id NULL), otherwise
+   --  assigns the first registered agent found.
 
 end Podmander.Controller.Scheduler;

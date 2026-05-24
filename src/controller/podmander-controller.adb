@@ -25,7 +25,6 @@ package body Podmander.Controller is
    use Ada.Strings.Unbounded;
    use type CZMQ.Messages.Receive_Status;
    use type Podmander.Database.Error_Kind;
-   use type Podmander.Controller.Scheduler.Schedule_Error;
 
    procedure Reconcile_State (Self : in out Controller_Instance);
 
@@ -227,9 +226,6 @@ package body Podmander.Controller is
                      "Scheduled catalog entry " & Cat_Entry.Id'Image & " to node "
                      & To_String (Result.Catalog_Entry.Node_Id));
                end if;
-            elsif Result.Error = Scheduler.Multiple_Agents then
-               Podmander.Logging.Warning
-                 ("controller", "Cannot schedule catalog entry " & Cat_Entry.Id'Image & ": multiple agents connected");
             end if;
          -- If no agents connected, leave unscheduled and try next iteration
          end;
@@ -341,15 +337,7 @@ package body Podmander.Controller is
                  Target_Version => Reg_Result.Version.Version);
          begin
             if not Sched_Result.Ok then
-               if Sched_Result.Error = Scheduler.Multiple_Agents then
-                  Podmander.Logging.Error
-                    ("controller",
-                     "Multiple agents connected; cannot select target"
-                     & " for --test-config."
-                     & " Use podctl deploy for multi-node deploys.");
-               else
-                  Podmander.Logging.Error ("controller", "Failed to schedule " & To_String (Result.Config.Name));
-               end if;
+               Podmander.Logging.Error ("controller", "Failed to schedule " & To_String (Result.Config.Name));
                return False;
             end if;
          end;
