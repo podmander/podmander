@@ -40,7 +40,7 @@ TOML → [Parser] → Service_Definition (ASD)
                          ↓
                [Registrar] → services row (if new) + service_versions row
                          ↓
-               [Scheduler] → service_catalog row (node_id or NULL)
+                [Scheduler] → service_catalog row (agent_id or NULL)
                          ↓
                [Supervisor] → schedule unscheduled entries
                             → reconcile current ≠ target, not failed
@@ -51,9 +51,9 @@ TOML → [Parser] → Service_Definition (ASD)
 
 - **Parser**: Converts TOML to a Service_Definition (ASD). Unchanged from current implementation.
 - **Registrar**: Creates a `services` row (if the service is new) and a `service_versions` row. Implicit service creation on first deploy — no separate "register service" command needed.
-- **Scheduler**: Creates or updates a `service_catalog` entry, assigning a node. For MVP, always assigns the single connected node or leaves `node_id = NULL` if no agent is connected.
-- **Supervisor**: Two jobs per iteration: (1) schedule any catalog entries with `node_id IS NULL`, (2) deploy any entries where `current_version ≠ target_version AND failed = 0`.
+- **Scheduler**: Creates or updates a `service_catalog` entry, assigning an agent. For MVP, always assigns the single connected agent or leaves `agent_id = NULL` if no agent is connected.
 
+- **Supervisor**: Two jobs per iteration: (1) schedule any catalog entries with `agent_id IS NULL`, (2) deploy any entries where `current_version ≠ target_version AND failed = 0`.
 ### 3. Service Version as immutable ASD snapshot
 
 A Service Version is an immutable snapshot of the Abstract Service Definition (ASD) — the structured representation of a service's configuration (image, environment variables, ports, volumes). Each deploy that changes a service creates a new version with a monotonic version number. Rollback creates a new version with content from a previous version (like `git revert`).
@@ -99,18 +99,13 @@ CREATE TABLE IF NOT EXISTS service_versions (
 CREATE TABLE IF NOT EXISTS service_catalog (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     service_id      INTEGER NOT NULL,
-    node_id         TEXT,           -- NULL = not yet scheduled
-    current_version INTEGER NOT NULL DEFAULT 0,  -- 0 = not deployed
-    target_version  INTEGER NOT NULL,
-    state           INTEGER NOT NULL DEFAULT 0,   -- Catalog_Entry_State: 0=Pending, 1=In_Progress, 2=Failed, 3=Deployed
-    updated_at      TEXT NOT NULL,  -- ISO 8601 UTC
-    FOREIGN KEY (service_id) REFERENCES services(id),
-    FOREIGN KEY (service_id, target_version)
-        REFERENCES service_versions(service_id, version)
-);
-CREATE UNIQUE INDEX idx_catalog_scheduled
-    ON service_catalog(service_id, node_id)
-    WHERE node_id IS NOT NULL;
+    agent_id        INTEGER REFERENCES agents(id), -- NULL = unscheduled
+
+    ...
+
+    ON service_catalog(service_id, agent_id)
+
+    WHERE agent_id IS NOT NULL;
 ```
 
 Key design points:
@@ -118,9 +113,9 @@ Key design points:
 - `current_version = 0` means "not deployed." No foreign key constraint on this column (0 doesn't exist in `service_versions`).
 - `target_version` always references a real `service_versions` row. The scheduler sets it when creating or updating the catalog entry.
 - `state` is a `Catalog_Entry_State` enum stored as an integer: Pending (0) = needs deployment, In_Progress (1) = deploy command sent awaiting result, Failed (2) = deploy failed, Deployed (3) = current_version matches target_version. The supervisor only picks up entries in Pending state, preventing duplicate deploys. `Set_Target` resets state to Pending (retrigger). On controller startup, any In_Progress entries are reset to Pending (stale from crash).
-- `node_id = NULL` means "not yet scheduled." The supervisor calls the scheduler to assign a node when it finds unscheduled entries.
-- The unique index on `(service_id, node_id)` only applies when `node_id IS NOT NULL`. Multiple NULL rows for the same service are prevented at the application level.
-- `node_id` is TEXT for MVP (referencing `agents.name`). Issue #79 tracks replacing it with an integer FK to `agents.id`.
+- `agent_id = NULL` means "not yet scheduled." The supervisor calls the scheduler to assign an agent when it finds unscheduled entries.
+- The unique index on `(service_id, agent_id)` only applies when `agent_id IS NOT NULL`. Multiple NULL rows for the same service are prevented at the application level.
+- `agent_id` is `INTEGER REFERENCES agents(id)` (nullable). Issue #79 replaced the TEXT node_id with this integer FK.
 
 Complex ASD fields (env, ports, volumes) are stored as JSON strings. They are small and rarely queried independently. Normalization can be added later if query patterns demand it.
 
@@ -132,7 +127,7 @@ Every `Deploy_Command` carries a `catalog_id` — the primary key of the Service
 
 The supervisor loop runs on each iteration:
 
-1. **Schedule**: Find catalog entries where `node_id IS NULL`. Call the scheduler to assign a node (or leave NULL if no agent is connected).
+1. **Schedule**: Find catalog entries where `agent_id IS NULL`. Call the scheduler to assign an agent (or leave NULL if no agent is connected).
 2. **Reconcile**: Find catalog entries where `state = Pending` (0). Render the quadlet from the ASD, send a `Deploy_Command` with the entry's `catalog_id`, and set `state = In_Progress`.
 
 On `Deploy_Result`:
@@ -165,8 +160,8 @@ The Stack concept (grouping related services) is deferred for MVP. A Service Ver
 - No runtime status in Service Catalog yet — the supervisor can only detect version mismatches, not service crashes. This is acceptable for MVP (a "Podman remote") but must be added before production use.
 - JSON serialization of ASD fields (env, ports, volumes) is not queryable in SQL. Acceptable at MVP scale; normalize later if needed.
 - No placement logic — all services deploy to the connected agent. The scheduler is a prerequisite for multi-node deployments.
-- `node_id` is TEXT for MVP, not an integer FK. Issue #79 tracks this normalization.
-- Application-level enforcement is needed for "only one NULL row per service" in the catalog (the unique index only covers non-NULL node_ids).
+- `agent_id` is `INTEGER REFERENCES agents(id)`. Issue #79 replaced the TEXT node_id with this integer FK.
+- Application-level enforcement is needed for "only one NULL row per service" in the catalog (the unique index only covers non-NULL agent_ids).
 
 ### Neutral
 
@@ -207,4 +202,4 @@ The Stack concept (grouping related services) is deferred for MVP. A Service Ver
 - [ADR-0006: Continuous Supervisor Loop](0006-continuous-supervisor-loop.md)
 - [ADR-0023: Per-Service Monotonic Versioning](0023-per-service-monotonic-versioning.md)
 - [ADR-0037: Database-Only State Access](0037-database-only-state-access.md)
-- [Issue #79: Replace node_id TEXT with integer FK](https://code.monospacementor.com/podmander/podmander/issues/79)
+- [Issue #79: Replace node_id TEXT with integer FK (resolved)](https://code.monospacementor.com/podmander/podmander/issues/79)
