@@ -56,11 +56,12 @@ package body Podmander.Controller.Message_Handlers is
       end if;
 
       declare
-         Info : constant Podmander.Types.Agent_Info :=
-           (Name      => Req.Agent_Name,
-            Node_Id   => To_Unbounded_String (Node_Id),
-            State     => Podmander.Types.Registered,
-            Last_Seen => Ada.Calendar.Clock);
+          Info : constant Podmander.Types.Agent_Info :=
+            (Id        => 0,
+             Name      => Req.Agent_Name,
+             Node_Id   => To_Unbounded_String (Node_Id),
+             State     => Podmander.Types.Registered,
+             Last_Seen => Ada.Calendar.Clock);
       begin
          -- Persist to DB
          begin
@@ -125,7 +126,8 @@ package body Podmander.Controller.Message_Handlers is
                   Agent.Repository.Set_State (H.Ctrl.DB, Info);
                   --  Reset any In_Progress deploys for this agent so they
                   --  are retried now that the agent is connected again.
-                  Reset_In_Progress_For_Node (H.Ctrl.DB, Node_Id);
+                  Reset_In_Progress_For_Agent
+                    (H.Ctrl.DB, Podmander.Controller.Agent_Id_Type (Info.Id));
                   Podmander.Logging.Info
                     ("controller", "Agent " & Node_Id & " reconnected");
                end if;

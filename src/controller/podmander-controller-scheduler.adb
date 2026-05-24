@@ -16,13 +16,13 @@ package body Podmander.Controller.Scheduler is
 
    --  Dummy entry returned in error cases where no real entry exists.
    Dummy_Entry : constant Podmander.Controller.Service_Catalog_Entry :=
-     (Id              => 0,
-      Service_Id      => Podmander.Controller.Service_Id_Type'First,
-      Node_Id         => Null_Unbounded_String,
-      Current_Version => 0,
-      Target_Version  => Podmander.Controller.Service_Version_Type'First,
-      State           => Pending,
-      Updated_At      => Clock);
+      (Id              => 0,
+       Service_Id      => Podmander.Controller.Service_Id_Type'First,
+       Agent_Id        => 0,
+       Current_Version => 0,
+       Target_Version  => Podmander.Controller.Service_Version_Type'First,
+       State           => Pending,
+       Updated_At      => Clock);
 
    ---------------
    -- Schedule --
@@ -33,11 +33,11 @@ package body Podmander.Controller.Scheduler is
        Target_Version : Podmander.Controller.Service_Version_Type)
        return Schedule_Result
    is
-      --  Query registered agents to select a target node.
+      --  Query registered agents to select a target agent.
       --  MVP strategy: assign the first registered agent found.
       All_Agents     : constant Podmander.Types.Agent_Maps.Map :=
         Podmander.Controller.Agent.Repository.Load_All (DB);
-      Target_Node_Id : Unbounded_String := Null_Unbounded_String;
+      Target_Agent_Id : Podmander.Controller.Agent_Id_Type := 0;
    begin
       for Cursor in All_Agents.Iterate loop
          declare
@@ -45,14 +45,12 @@ package body Podmander.Controller.Scheduler is
               Podmander.Types.Agent_Maps.Element (Cursor);
          begin
             if Info.State = Podmander.Types.Registered then
-               Target_Node_Id := Info.Node_Id;
+               Target_Agent_Id := Podmander.Controller.Agent_Id_Type (Info.Id);
                exit;
             end if;
          end;
       end loop;
 
-      declare
-         Node_Id_Str : constant String := To_String (Target_Node_Id);
       begin
          --  Try to update an existing entry
          declare
@@ -61,12 +59,12 @@ package body Podmander.Controller.Scheduler is
             Updated  : Boolean;
             pragma Unreferenced (Updated);
          begin
-            --  Entry exists â update target and clear failed
+            --  Entry exists — update target and clear failed
             Updated := Set_Target (DB, Existing.Id, Target_Version);
 
-            --  Assign node if one is available
-            if Node_Id_Str /= "" then
-               Updated := Assign_Node (DB, Existing.Id, Node_Id_Str);
+            --  Assign agent if one is available
+            if Target_Agent_Id > 0 then
+               Updated := Assign_Agent (DB, Existing.Id, Target_Agent_Id);
             end if;
 
             return
@@ -80,14 +78,14 @@ package body Podmander.Controller.Scheduler is
                Info : constant Error_Info := Parse_Error (E);
             begin
                if Info.Kind = Not_Found then
-                  --  No existing entry â create a new one
+                  --  No existing entry — create a new one
                   return
                     (Ok            => True,
                      Catalog_Entry =>
                        Create_Entry
                          (DB,
                           Service_Id     => Service_Id,
-                          Node_Id        => Node_Id_Str,
+                          Agent_Id       => Target_Agent_Id,
                           Target_Version => Target_Version),
                      Error         => None);
                end if;

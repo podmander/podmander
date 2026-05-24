@@ -193,9 +193,53 @@ private
      & "    ON service_catalog(service_id, node_id)"
      & "    WHERE node_id IS NOT NULL;";
 
+   --  Migration 011: Add integer primary key to agents and replace
+   --  service_catalog.node_id TEXT with agent_id INTEGER FK.
+   --  SQLite doesn't support ALTER TABLE ADD COLUMN with PRIMARY KEY
+   --  or changes to column types, so we recreate both tables.
+   Migration_011_SQL : constant String :=
+     --  Recreate agents table with id INTEGER PRIMARY KEY AUTOINCREMENT
+     "CREATE TABLE agents_new ("
+     & "id        INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "name      TEXT NOT NULL UNIQUE,"
+     & "node_id   TEXT NOT NULL,"
+     & "state     TEXT NOT NULL CHECK (state IN ('registered', 'unresponsive', 'lost')),"
+     & "last_seen TEXT NOT NULL);"
+     & "INSERT INTO agents_new (name, node_id, state, last_seen)"
+     & " SELECT name, node_id, state, last_seen FROM agents;"
+     & "DROP TABLE agents;"
+     & "ALTER TABLE agents_new RENAME TO agents;"
+     --  Recreate service_catalog with agent_id instead of node_id.
+     --  Convert existing TEXT node_id values to integer agent_id via
+     --  LEFT JOIN on agents.name. Orphaned rows get NULL agent_id.
+     & "CREATE TABLE service_catalog_new ("
+     & "id              INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "service_id      INTEGER NOT NULL,"
+     & "agent_id        INTEGER REFERENCES agents(id),"
+     & "current_version INTEGER NOT NULL DEFAULT 0 CHECK (current_version >= 0),"
+     & "target_version  INTEGER NOT NULL,"
+     & "state           INTEGER NOT NULL DEFAULT 0 CHECK (state IN (0, 1, 2, 3)),"
+     & "updated_at      TEXT NOT NULL,"
+     & "FOREIGN KEY (service_id) REFERENCES services(id),"
+     & "FOREIGN KEY (service_id, target_version)"
+     & "    REFERENCES service_versions(service_id, version)"
+     & ");"
+     & "INSERT INTO service_catalog_new"
+     & " (id, service_id, agent_id, current_version, target_version,"
+     & "  state, updated_at)"
+     & " SELECT sc.id, sc.service_id, a.id, sc.current_version,"
+     & "  sc.target_version, sc.state, sc.updated_at"
+     & " FROM service_catalog sc"
+     & " LEFT JOIN agents a ON a.name = sc.node_id;"
+     & "DROP TABLE service_catalog;"
+     & "ALTER TABLE service_catalog_new RENAME TO service_catalog;"
+     & "CREATE UNIQUE INDEX idx_catalog_scheduled"
+     & "    ON service_catalog(service_id, agent_id)"
+     & "    WHERE agent_id IS NOT NULL;";
+
    Migration_History : constant Migration_Array :=
-     [1 =>
-        (Version => 1,
+      [1 =>
+         (Version => 1,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
       2 =>
@@ -230,9 +274,13 @@ private
          (Version => 9,
           SQL     =>
             Ada.Strings.Unbounded.To_Unbounded_String (Migration_009_SQL)),
-      10 =>
-        (Version => 10,
-         SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_010_SQL))];
+       10 =>
+         (Version => 10,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_010_SQL)),
+       11 =>
+         (Version => 11,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_011_SQL))];
 
 end Podmander.Database.Migrations;

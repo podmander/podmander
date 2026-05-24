@@ -273,15 +273,15 @@ package body Podmander.Controller is
               Scheduler.Schedule
                 (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version);
          begin
-            if Result.Ok then
-               if To_String (Result.Catalog_Entry.Node_Id) /= "" then
-                  Podmander.Logging.Info
-                    ("controller",
-                     "Scheduled catalog entry "
-                     & Cat_Entry.Id'Image
-                     & " to node "
-                     & To_String (Result.Catalog_Entry.Node_Id));
-               end if;
+          if Result.Ok then
+                if Result.Catalog_Entry.Agent_Id /= 0 then
+                   Podmander.Logging.Info
+                     ("controller",
+                      "Scheduled catalog entry "
+                      & Cat_Entry.Id'Image
+                      & " to agent "
+                      & Result.Catalog_Entry.Agent_Id'Image);
+                end if;
             end if;
          -- If no agents connected, leave unscheduled and try next iteration
          end;
@@ -292,98 +292,99 @@ package body Podmander.Controller is
          Drift : constant Catalog_Entry_Vectors.Vector := Get_Drift (Self.DB);
       begin
          for Cursor in Drift.Iterate loop
-            declare
-               Cat_Entry : constant Service_Catalog_Entry :=
-                 Catalog_Entry_Vectors.Element (Cursor);
-               Node_Id   : constant String := To_String (Cat_Entry.Node_Id);
-            begin
-               -- Skip entries without a node (shouldn't happen after step 1,
-               -- but guard against race conditions)
-               if Node_Id = "" then
-                  goto Continue;
-               end if;
+             declare
+                Cat_Entry : constant Service_Catalog_Entry :=
+                  Catalog_Entry_Vectors.Element (Cursor);
+             begin
+                -- Skip entries without an agent assigned (shouldn't happen
+                -- after step 1, but guard against race conditions)
+                if Cat_Entry.Agent_Id = 0 then
+                   goto Continue;
+                end if;
 
-               --  Only deploy to agents that are currently connected.
-               declare
-                  All_Agents  : constant Podmander.Types.Agent_Maps.Map :=
-                    Agent.Repository.Load_All (Self.DB);
-                  Agent_Found : Boolean := False;
-               begin
-                  for Cur in All_Agents.Iterate loop
-                     declare
-                        Info : constant Podmander.Types.Agent_Info :=
-                          Podmander.Types.Agent_Maps.Element (Cur);
-                     begin
-                        if To_String (Info.Node_Id) = Node_Id
-                          and then Info.State = Podmander.Types.Registered
-                        then
-                           Agent_Found := True;
-                           exit;
-                        end if;
-                     end;
-                  end loop;
-                  if not Agent_Found then
-                     goto Continue;
-                  end if;
-               end;
+                --  Only deploy to agents that are currently connected.
+                declare
+                   All_Agents    : constant Podmander.Types.Agent_Maps.Map :=
+                     Agent.Repository.Load_All (Self.DB);
+                   Agent_Found   : Boolean := False;
+                   Agent_Node_Id : Ada.Strings.Unbounded.Unbounded_String;
+                begin
+                   for Cur in All_Agents.Iterate loop
+                      declare
+                         Info : constant Podmander.Types.Agent_Info :=
+                           Podmander.Types.Agent_Maps.Element (Cur);
+                      begin
+                         if Info.Id = Integer (Cat_Entry.Agent_Id)
+                           and then Info.State = Podmander.Types.Registered
+                         then
+                            Agent_Found := True;
+                            Agent_Node_Id := Info.Node_Id;
+                            exit;
+                         end if;
+                      end;
+                   end loop;
+                   if not Agent_Found then
+                      goto Continue;
+                   end if;
 
-               -- Look up the service version to get the ASD
-               declare
-                  SV           : constant Service_Version :=
-                    Service.Repository.Get_Version
-                      (Self.DB,
-                       Cat_Entry.Service_Id,
-                       Cat_Entry.Target_Version);
-                  SD           : constant Service_Definition :=
-                    To_Service_Definition (SV, "");
-                  Svc          :
-                    constant Podmander.Controller.Service.Service :=
-                      Service.Repository.Get_By_Id
-                        (Self.DB, Cat_Entry.Service_Id);
-                  SD_With_Name : constant Service_Definition :=
-                    (Name          => Svc.Name,
-                     Image         => SD.Image,
-                     Env           => SD.Env,
-                     Env_Count     => SD.Env_Count,
-                     Ports         => SD.Ports,
-                     Ports_Count   => SD.Ports_Count,
-                     Volumes       => SD.Volumes,
-                     Volumes_Count => SD.Volumes_Count,
-                     Description   => SD.Description,
-                     WantedBy      => SD.WantedBy);
-                  Quadlet      : constant String :=
-                    Podmander.Generators.Quadlet.Render (SD_With_Name);
-                  Cmd          : constant Deploy_Command :=
-                    (Catalog_Id   => Cat_Entry.Id,
-                     Service_Name => Svc.Name,
-                     Quadlet      => To_Unbounded_String (Quadlet));
-                  Msg          : CZMQ.Messages.Message :=
-                    CZMQ.Messages.New_Message;
-               begin
-                  Msg.Add_String (Node_Id);
-                  Cmd.Encode (Msg);
-                  Msg.Send (Self.Socket);
-                  declare
-                     Set_State_Ok : constant Boolean :=
-                       Set_State (Self.DB, Cat_Entry.Id, In_Progress);
-                     pragma Unreferenced (Set_State_Ok);
-                  begin
-                     null;
-                  end;
-                  Podmander.Logging.Info
-                    ("controller",
-                     "Deploying "
-                     & To_String (Svc.Name)
-                     & " v"
-                     & Cat_Entry.Target_Version'Image
-                     & " to "
-                     & Node_Id
-                     & " (catalog "
-                     & Cat_Entry.Id'Image
-                     & ")");
-               end;
-               <<Continue>>
-            end;
+                   -- Look up the service version to get the ASD
+                   declare
+                      SV           : constant Service_Version :=
+                        Service.Repository.Get_Version
+                          (Self.DB,
+                           Cat_Entry.Service_Id,
+                           Cat_Entry.Target_Version);
+                      SD           : constant Service_Definition :=
+                        To_Service_Definition (SV, "");
+                      Svc          :
+                        constant Podmander.Controller.Service.Service :=
+                          Service.Repository.Get_By_Id
+                            (Self.DB, Cat_Entry.Service_Id);
+                      SD_With_Name : constant Service_Definition :=
+                        (Name          => Svc.Name,
+                         Image         => SD.Image,
+                         Env           => SD.Env,
+                         Env_Count     => SD.Env_Count,
+                         Ports         => SD.Ports,
+                         Ports_Count   => SD.Ports_Count,
+                         Volumes       => SD.Volumes,
+                         Volumes_Count => SD.Volumes_Count,
+                         Description   => SD.Description,
+                         WantedBy      => SD.WantedBy);
+                      Quadlet      : constant String :=
+                        Podmander.Generators.Quadlet.Render (SD_With_Name);
+                      Cmd          : constant Deploy_Command :=
+                        (Catalog_Id   => Cat_Entry.Id,
+                         Service_Name => Svc.Name,
+                         Quadlet      => To_Unbounded_String (Quadlet));
+                      Msg          : CZMQ.Messages.Message :=
+                        CZMQ.Messages.New_Message;
+                   begin
+                      Msg.Add_String (To_String (Agent_Node_Id));
+                      Cmd.Encode (Msg);
+                      Msg.Send (Self.Socket);
+                      declare
+                         Set_State_Ok : constant Boolean :=
+                           Set_State (Self.DB, Cat_Entry.Id, In_Progress);
+                         pragma Unreferenced (Set_State_Ok);
+                      begin
+                         null;
+                      end;
+                      Podmander.Logging.Info
+                        ("controller",
+                         "Deploying "
+                         & To_String (Svc.Name)
+                         & " v"
+                         & Cat_Entry.Target_Version'Image
+                         & " to "
+                         & To_String (Agent_Node_Id)
+                         & " (catalog "
+                         & Cat_Entry.Id'Image
+                         & ")");
+                   end;
+                end;
+                <<Continue>>
+             end;
          end loop;
       end;
    end Reconcile_State;

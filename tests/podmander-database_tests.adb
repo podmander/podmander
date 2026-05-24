@@ -354,11 +354,11 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
-           Ada_Sqlite3.Prepare
-             (Conn,
-              "SELECT id, service_id, node_id, current_version, "
-               & "target_version, state, updated_at "
-              & "FROM service_catalog");
+      Ada_Sqlite3.Prepare
+              (Conn,
+               "SELECT id, service_id, agent_id, current_version, "
+                & "target_version, state, updated_at "
+               & "FROM service_catalog");
       begin
          -- Preparing the query should not raise  -- " table exists with correct columns
          null;
@@ -387,7 +387,7 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
-           Ada_Sqlite3.Prepare (Conn, "SELECT name, node_id, state, last_seen FROM agents");
+           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, node_id, state, last_seen FROM agents");
       begin
          -- Preparing the query should not raise  -- table exists with correct columns
          null;
@@ -873,6 +873,79 @@ package body Podmander.Database_Tests is
          raise;
    end Test_Check_Current_Version_Non_Negative;
 
+   -- Test: Service_catalog FK constraint rejects non-existent agent_id
+   procedure Test_Catalog_Agent_FK (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+      begin
+         -- Insert a service and version first (needed for FKs)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare (Handle, "INSERT INTO services (name) VALUES (?)");
+         begin
+            DB.Bind_Text (Q, 1, "test-svc");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_versions"
+                 & " (service_id, version, image, env, ports, volumes,"
+                 & " description, wanted_by, created_at)"
+                 & " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 1);
+            DB.Bind_Text (Q, 3, "img:latest");
+            DB.Bind_Text (Q, 4, "[]");
+            DB.Bind_Text (Q, 5, "[]");
+            DB.Bind_Text (Q, 6, "[]");
+            DB.Bind_Text (Q, 7, "");
+            DB.Bind_Text (Q, 8, "");
+            DB.Bind_Text (Q, 9, "2026-01-01T00:00:00Z");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         -- Insert a catalog entry with non-existent agent_id (should fail FK)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_catalog"
+                 & " (service_id, target_version, agent_id, updated_at)"
+                 & " VALUES (?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 1);
+            DB.Bind_Int (Q, 3, 999);  --  Non-existent agent_id
+            DB.Bind_Text (Q, 4, "2026-01-01T00:00:00Z");
+            declare
+               Dummy : Boolean;
+            begin
+               Dummy := DB.Step (Q);
+               Assert (False, "INSERT with non-existent agent_id should have raised Database_Error");
+            exception
+               when DB.Database_Error =>
+                  null;  --  Expected: FK constraint violation
+            end;
+         end;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Catalog_Agent_FK;
+
    -- Register all test routines
    overriding
    procedure Register_Tests (T : in out Database_Test) is
@@ -915,6 +988,8 @@ package body Podmander.Database_Tests is
         (T, Test_Check_State_Enum'Access, "CHECK constraint rejects invalid state values");
       Register_Routine
         (T, Test_Check_Current_Version_Non_Negative'Access, "CHECK constraint rejects negative current_version");
+      Register_Routine
+        (T, Test_Catalog_Agent_FK'Access, "FK constraint rejects non-existent agent_id");
       -- Settings API tests
       Register_Routine (T, Test_Set_Setting_And_Get_Setting'Access, "Set_Setting then Get_Setting round-trip");
       Register_Routine (T, Test_Get_Setting_Not_Found'Access, "Get_Setting raises Not_Found for missing key");

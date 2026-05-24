@@ -6,9 +6,11 @@ with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with Podmander.Controller;
+with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Controller.Service.Repository;
 with Podmander.Database;
+with Podmander.Types;
 
 package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
@@ -48,6 +50,22 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       return Svc_Rec.Id;
    end Seed_Service;
 
+   -- Helper: register an agent and return its auto-generated id.
+   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Node_Id : String) return Podmander.Controller.Agent_Id_Type is
+      use Podmander.Types;
+      Info       : constant Agent_Info :=
+        (Id        => 0,
+         Name      => To_Unbounded_String (Name),
+         Node_Id   => To_Unbounded_String (Node_Id),
+         State     => Registered,
+         Last_Seen => Ada.Calendar.Clock);
+      All_Agents : Agent_Maps.Map;
+   begin
+      Podmander.Controller.Agent.Repository.Register (Handle, Info);
+      All_Agents := Podmander.Controller.Agent.Repository.Load_All (Handle);
+      return Podmander.Controller.Agent_Id_Type (All_Agents.Element (Name).Id);
+   end Seed_Agent;
+
    ---------------------
    -- Test_Create_Entry
    ---------------------
@@ -56,12 +74,13 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Agent   : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
-      Assert (To_String (Cat_Ent.Node_Id) = "node-1", "Node_Id should be 'node-1'");
+      Assert (Cat_Ent.Agent_Id = Agent, "Agent_Id should match");
       Assert (Cat_Ent.Current_Version = 0, "Current_Version should be 0");
       Assert (Cat_Ent.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should be 2");
       Assert (Cat_Ent.State = Podmander.Controller.Pending, "State should be Pending");
@@ -76,10 +95,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
+        Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
-      Assert (To_String (Cat_Ent.Node_Id) = "", "Node_Id should be empty for unscheduled entry");
+      Assert (Cat_Ent.Agent_Id = 0, "Agent_Id should be 0 for unscheduled entry");
    end Test_Create_Entry_Unscheduled;
 
    -----------------
@@ -88,15 +107,16 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Get_By_Id (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      D     : DB.DB_Handle := DB.Open (":memory:");
+      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Agent : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       Created : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
       Loaded  : Podmander.Controller.Service_Catalog_Entry := Repo.Get_By_Id (D, Created.Id);
    begin
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
-      Assert (To_String (Loaded.Node_Id) = "node-1", "Node_Id should match");
+      Assert (Loaded.Agent_Id = Agent, "Agent_Id should match");
       Assert (Loaded.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should match");
    end Test_Get_By_Id;
 
@@ -136,16 +156,17 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       pragma Unreferenced (T);
       D           : DB.DB_Handle := DB.Open (":memory:");
       Svc         : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
+      Agent       : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       Ignored1    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 1);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 1);
       Ignored2    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
+        Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
       Unscheduled : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Unscheduled (D);
    begin
       pragma Unreferenced (Ignored1);
       Assert (Natural (Unscheduled.Length) = 1, "Should find 1 unscheduled entry");
       if not Unscheduled.Is_Empty then
-         Assert (To_String (Unscheduled.First_Element.Node_Id) = "", "Unscheduled entry should have empty Node_Id");
+         Assert (Unscheduled.First_Element.Agent_Id = 0, "Unscheduled entry should have Agent_Id = 0");
       end if;
    end Test_Get_Unscheduled;
 
@@ -157,12 +178,13 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       pragma Unreferenced (T);
       D     : DB.DB_Handle := DB.Open (":memory:");
       Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
+      Agent : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       -- Entry with matching versions (no drift)
       E1    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 3);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 3);
       -- Entry with drift: current 0 != target 2
       E2    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-2", Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
       Drift : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Drift (D);
    begin
       pragma Unreferenced (E1);
@@ -171,10 +193,11 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Get_Drift_Excludes_Non_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      E1      : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
+      D     : DB.DB_Handle := DB.Open (":memory:");
+      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Agent : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
+      E1    : Podmander.Controller.Service_Catalog_Entry :=
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
       Ignored : Boolean;
       Drift   : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
@@ -191,10 +214,11 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Update_On_Success (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      D     : DB.DB_Handle := DB.Open (":memory:");
+      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Agent : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -226,10 +250,11 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Update_On_Failure (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      D     : DB.DB_Handle := DB.Open (":memory:");
+      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Agent : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -250,33 +275,34 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Test_Update_On_Failure_Not_Found;
 
    --------------------
-   -- Test_Assign_Node
+   -- Test_Assign_Agent
    --------------------
 
-   procedure Test_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Assign_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
+      Agent   : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "assigned-node");
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "", Target_Version => 1);
+        Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
-      Updated := Repo.Assign_Node (D, Cat_Ent.Id, "assigned-node");
-      Assert (Updated, "Assign_Node should return True");
+      Updated := Repo.Assign_Agent (D, Cat_Ent.Id, Agent);
+      Assert (Updated, "Assign_Agent should return True");
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
-      Assert (To_String (Loaded.Node_Id) = "assigned-node", "Node_Id should be 'assigned-node' after assign");
-   end Test_Assign_Node;
+      Assert (Loaded.Agent_Id = Agent, "Agent_Id should match after assign");
+   end Test_Assign_Agent;
 
-   procedure Test_Assign_Node_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Assign_Agent_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Updated : Boolean;
    begin
-      Updated := Repo.Assign_Node (D, 999, "node-x");
-      Assert (not Updated, "Assign_Node should return False for unknown id");
-   end Test_Assign_Node_Not_Found;
+      Updated := Repo.Assign_Agent (D, 999, Agent_Id => 1);
+      Assert (not Updated, "Assign_Agent should return False for unknown id");
+   end Test_Assign_Agent_Not_Found;
 
    -------------------
    -- Test_Set_Target
@@ -284,10 +310,11 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Set_Target (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
+      D     : DB.DB_Handle := DB.Open (":memory:");
+      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
+      Agent : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Node_Id => "node-1", Target_Version => 2);
+        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -319,18 +346,18 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    begin
       Register_Routine (T, Test_Create_Entry'Access, "Create a catalog entry and verify fields");
       Register_Routine
-        (T, Test_Create_Entry_Unscheduled'Access, "Create a catalog entry with empty Node_Id (unscheduled)");
+        (T, Test_Create_Entry_Unscheduled'Access, "Create a catalog entry with Agent_Id = 0 (unscheduled)");
       Register_Routine (T, Test_Get_By_Id'Access, "Get a catalog entry by id");
       Register_Routine (T, Test_Get_By_Id_Not_Found'Access, "Get by unknown id raises Not_Found");
-      Register_Routine (T, Test_Get_Unscheduled'Access, "Get_Unscheduled returns only entries without a node");
+      Register_Routine (T, Test_Get_Unscheduled'Access, "Get_Unscheduled returns only entries without a agent");
       Register_Routine (T, Test_Get_Drift'Access, "Get_Drift returns entries where versions differ");
       Register_Routine (T, Test_Get_Drift_Excludes_Non_Pending'Access, "Get_Drift excludes non-Pending entries");
       Register_Routine (T, Test_Update_On_Success'Access, "Update_On_Success sets current_version and state = Deployed");
       Register_Routine (T, Test_Update_On_Success_Not_Found'Access, "Update_On_Success returns False for unknown id");
       Register_Routine (T, Test_Update_On_Failure'Access, "Update_On_Failure sets state = Failed");
       Register_Routine (T, Test_Update_On_Failure_Not_Found'Access, "Update_On_Failure returns False for unknown id");
-      Register_Routine (T, Test_Assign_Node'Access, "Assign_Node sets node_id on an unscheduled entry");
-      Register_Routine (T, Test_Assign_Node_Not_Found'Access, "Assign_Node returns False for unknown id");
+      Register_Routine (T, Test_Assign_Agent'Access, "Assign_Agent sets agent_id on an unscheduled entry");
+      Register_Routine (T, Test_Assign_Agent_Not_Found'Access, "Assign_Agent returns False for unknown id");
       Register_Routine (T, Test_Set_Target'Access, "Set_Target updates target_version and sets state = Pending");
       Register_Routine (T, Test_Set_Target_Not_Found'Access, "Set_Target returns False for unknown id");
    end Register_Tests;

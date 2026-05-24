@@ -137,15 +137,16 @@ package body Podmander.Controller.Agent.Repository is
      (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map
    is
       QH  : Query_Handle :=
-        Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
+        Prepare (DB, "SELECT id, name, node_id, state, last_seen FROM agents");
       Map : Podmander.Types.Agent_Maps.Map;
       Rec : Agent_Info;
    begin
       while Step (QH) loop
-         Rec.Name := To_Unbounded_String (Column_Text (QH, 0));
-         Rec.Node_Id := To_Unbounded_String (Column_Text (QH, 1));
-         Rec.State := String_To_State (Column_Text (QH, 2));
-         Rec.Last_Seen := ISO8601_To_Time (Column_Text (QH, 3));
+         Rec.Id := Column_Int (QH, 0);
+         Rec.Name := To_Unbounded_String (Column_Text (QH, 1));
+         Rec.Node_Id := To_Unbounded_String (Column_Text (QH, 2));
+         Rec.State := String_To_State (Column_Text (QH, 3));
+         Rec.Last_Seen := ISO8601_To_Time (Column_Text (QH, 4));
          Map.Insert (To_String (Rec.Name), Rec);
       end loop;
       return Map;

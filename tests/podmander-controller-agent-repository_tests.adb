@@ -47,7 +47,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       D      : DB.DB_Handle := DB.Open (":memory:");
       Now    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info   : constant Agent_Info :=
-        (Name      => To_Unbounded_String ("test-agent"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("test-agent"),
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
@@ -76,7 +77,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       D         : DB.DB_Handle := DB.Open (":memory:");
       Now       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info      : constant Agent_Info :=
-        (Name      => To_Unbounded_String ("dup-agent"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("dup-agent"),
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
@@ -107,7 +109,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Now    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Later  : constant Ada.Calendar.Time := Now + 60.0;
       Info   : constant Agent_Info :=
-        (Name      => To_Unbounded_String ("touch-agent"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("touch-agent"),
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
@@ -118,7 +121,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Repo.Register (D, Info);
       Repo.Touch
         (D,
-         (Name      => To_Unbounded_String ("touch-agent"),
+         (Id        => 0,
+          Name      => To_Unbounded_String ("touch-agent"),
           Node_Id   => To_Unbounded_String ("node-001"),
           State     => Registered,
           Last_Seen => Later));
@@ -142,7 +146,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       begin
          Repo.Touch
            (D,
-            (Name      => To_Unbounded_String ("nonexistent"),
+            (Id        => 0,
+             Name      => To_Unbounded_String ("nonexistent"),
              Node_Id   => To_Unbounded_String (""),
              State     => Registered,
              Last_Seen => Now));
@@ -167,7 +172,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       D      : DB.DB_Handle := DB.Open (":memory:");
       Now    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info   : constant Agent_Info :=
-        (Name      => To_Unbounded_String ("state-agent"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("state-agent"),
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
@@ -178,7 +184,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Repo.Register (D, Info);
       Repo.Set_State
         (D,
-         (Name      => To_Unbounded_String ("state-agent"),
+         (Id        => 0,
+          Name      => To_Unbounded_String ("state-agent"),
           Node_Id   => To_Unbounded_String ("node-001"),
           State     => Unresponsive,
           Last_Seen => Now));
@@ -202,7 +209,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       begin
          Repo.Set_State
            (D,
-            (Name      => To_Unbounded_String ("nonexistent"),
+            (Id        => 0,
+             Name      => To_Unbounded_String ("nonexistent"),
              Node_Id   => To_Unbounded_String (""),
              State     => Lost,
              Last_Seen => Now));
@@ -227,7 +235,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       D    : DB.DB_Handle := DB.Open (":memory:");
       Now  : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info : constant Agent_Info :=
-        (Name      => To_Unbounded_String ("remove-agent"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("remove-agent"),
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
@@ -236,7 +245,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Repo.Register (D, Info);
       Repo.Remove
         (D,
-         (Name      => To_Unbounded_String ("remove-agent"),
+         (Id        => 0,
+          Name      => To_Unbounded_String ("remove-agent"),
           Node_Id   => To_Unbounded_String ("node-001"),
           State     => Registered,
           Last_Seen => Now));
@@ -253,7 +263,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       D    : DB.DB_Handle := DB.Open (":memory:");
       Now  : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info : constant Agent_Info :=
-        (Name      => To_Unbounded_String ("keep-agent"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("keep-agent"),
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
@@ -263,7 +274,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
       -- Remove a different (non-existent) agent
       Repo.Remove
         (D,
-         (Name      => To_Unbounded_String ("nonexistent"),
+         (Id        => 0,
+          Name      => To_Unbounded_String ("nonexistent"),
           Node_Id   => To_Unbounded_String (""),
           State     => Registered,
           Last_Seen => Now));

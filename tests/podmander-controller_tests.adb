@@ -217,7 +217,8 @@ package body Podmander.Controller_Tests is
       DB_Path : constant String := "/tmp/podmander_test_startup.db";
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info    : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("persisted-agent"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("persisted-agent"),
          Node_Id   => To_Unbounded_String ("node-001"),
          State     => Podmander.Types.Registered,
          Last_Seen => Now);
@@ -373,7 +374,8 @@ package body Podmander.Controller_Tests is
       H    : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "node-xyz");
       Past : constant Ada.Calendar.Time := Ada.Calendar.Clock - 60.0;
       Info : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("web-1"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("web-1"),
          Node_Id   => To_Unbounded_String ("node-xyz"),
          State     => Podmander.Types.Registered,
          Last_Seen => Past);
@@ -416,7 +418,8 @@ package body Podmander.Controller_Tests is
       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
       H    : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "lost-node");
       Info : constant Podmander.Types.Agent_Info :=
-        (Name      => To_Unbounded_String ("web-1"),
+        (Id        => 0,
+         Name      => To_Unbounded_String ("web-1"),
          Node_Id   => To_Unbounded_String ("lost-node"),
          State     => Podmander.Types.Lost,
          Last_Seen => Ada.Calendar.Clock - 300.0);
