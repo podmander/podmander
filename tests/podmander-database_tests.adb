@@ -545,6 +545,65 @@ package body Podmander.Database_Tests is
         (DB.Get_Setting (Handle, "upsert_key") = "second", "After upsert, Get_Setting should return the latest value");
    end Test_Set_Setting_Upsert;
 
+   -- Test: Bind_Int inserts integer values correctly
+   procedure Test_Bind_Int (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Handle : DB.DB_Handle := DB.Open (":memory:");
+   begin
+      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, count INTEGER, name TEXT)");
+
+      -- INSERT a row using Bind_Int for the integer column
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (count, name) VALUES (?, ?)");
+      begin
+         DB.Bind_Int (Q, 1, 42);
+         DB.Bind_Text (Q, 2, "Alice");
+         Assert (not DB.Step (Q), "INSERT should complete (DONE -> False)");
+      end;
+
+      -- SELECT and verify via Column_Int
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT count FROM test WHERE name = ?");
+      begin
+         DB.Bind_Text (Q, 1, "Alice");
+         Assert (DB.Step (Q), "SELECT should return a row");
+         Assert (DB.Column_Int (Q, 0) = 42, "Column_Int should return 42");
+         Assert (not DB.Step (Q), "SELECT should have exactly one row");
+      end;
+   end Test_Bind_Int;
+
+   -- Test: Bind_Int with WHERE clause parameter
+   procedure Test_Bind_Int_Where (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Handle : DB.DB_Handle := DB.Open (":memory:");
+   begin
+      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, val INTEGER)");
+
+      -- Insert two rows
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (val) VALUES (?)");
+      begin
+         DB.Bind_Int (Q, 1, 10);
+         Assert (not DB.Step (Q), "INSERT row 1 should complete");
+      end;
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (val) VALUES (?)");
+      begin
+         DB.Bind_Int (Q, 1, 20);
+         Assert (not DB.Step (Q), "INSERT row 2 should complete");
+      end;
+
+      -- Query by id using Bind_Int
+      declare
+         Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT val FROM test WHERE id = ?");
+      begin
+         DB.Bind_Int (Q, 1, 2);
+         Assert (DB.Step (Q), "SELECT should return a row");
+         Assert (DB.Column_Int (Q, 0) = 20, "Column_Int should return 20 for id=2");
+         Assert (not DB.Step (Q), "SELECT should have exactly one row");
+      end;
+   end Test_Bind_Int_Where;
+
    -- Test: Step raises Database_Error for nonexistent table
    procedure Test_Step_Error (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
@@ -570,6 +629,249 @@ package body Podmander.Database_Tests is
       when others =>
          Assert (False, "Prepare/Step raised wrong exception for nonexistent table");
    end Test_Step_Error;
+
+   -- Test: CHECK constraint rejects version < 1 in service_versions
+   procedure Test_Check_Version_GTE_One (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+      begin
+         -- Insert a service first (needed for FK)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare (Handle, "INSERT INTO services (name) VALUES (?)");
+         begin
+            DB.Bind_Text (Q, 1, "test-svc");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         -- Insert a valid version (should succeed)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_versions"
+                 & " (service_id, version, image, env, ports, volumes,"
+                 & " description, wanted_by, created_at)"
+                 & " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 1);
+            DB.Bind_Text (Q, 3, "img:latest");
+            DB.Bind_Text (Q, 4, "[]");
+            DB.Bind_Text (Q, 5, "[]");
+            DB.Bind_Text (Q, 6, "[]");
+            DB.Bind_Text (Q, 7, "");
+            DB.Bind_Text (Q, 8, "");
+            DB.Bind_Text (Q, 9, "2026-01-01T00:00:00Z");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         -- Insert an invalid version (version = 0, should fail CHECK)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_versions"
+                 & " (service_id, version, image, env, ports, volumes,"
+                 & " description, wanted_by, created_at)"
+                 & " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 0);  --  Invalid: version must be >= 1
+            DB.Bind_Text (Q, 3, "img:latest");
+            DB.Bind_Text (Q, 4, "[]");
+            DB.Bind_Text (Q, 5, "[]");
+            DB.Bind_Text (Q, 6, "[]");
+            DB.Bind_Text (Q, 7, "");
+            DB.Bind_Text (Q, 8, "");
+            DB.Bind_Text (Q, 9, "2026-01-01T00:00:00Z");
+            declare
+               Dummy : Boolean;
+            begin
+               Dummy := DB.Step (Q);
+               Assert (False, "INSERT with version=0 should have raised Database_Error");
+            exception
+               when DB.Database_Error =>
+                  null;  --  Expected: CHECK constraint violation
+            end;
+         end;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Check_Version_GTE_One;
+
+   -- Test: CHECK constraint rejects invalid state in service_catalog
+   procedure Test_Check_State_Enum (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+      begin
+         -- Insert a service and version first (needed for FKs)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare (Handle, "INSERT INTO services (name) VALUES (?)");
+         begin
+            DB.Bind_Text (Q, 1, "test-svc");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_versions"
+                 & " (service_id, version, image, env, ports, volumes,"
+                 & " description, wanted_by, created_at)"
+                 & " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 1);
+            DB.Bind_Text (Q, 3, "img:latest");
+            DB.Bind_Text (Q, 4, "[]");
+            DB.Bind_Text (Q, 5, "[]");
+            DB.Bind_Text (Q, 6, "[]");
+            DB.Bind_Text (Q, 7, "");
+            DB.Bind_Text (Q, 8, "");
+            DB.Bind_Text (Q, 9, "2026-01-01T00:00:00Z");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         -- Insert a valid catalog entry (state = 0, should succeed)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_catalog"
+                 & " (service_id, target_version, updated_at)"
+                 & " VALUES (?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 1);
+            DB.Bind_Text (Q, 3, "2026-01-01T00:00:00Z");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         -- Insert an invalid state (state = 4, should fail CHECK)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_catalog"
+                 & " (service_id, target_version, state, updated_at)"
+                 & " VALUES (?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 1);
+            DB.Bind_Int (Q, 3, 4);  --  Invalid: state must be 0-3
+            DB.Bind_Text (Q, 4, "2026-01-01T00:00:00Z");
+            declare
+               Dummy : Boolean;
+            begin
+               Dummy := DB.Step (Q);
+               Assert (False, "INSERT with state=4 should have raised Database_Error");
+            exception
+               when DB.Database_Error =>
+                  null;  --  Expected: CHECK constraint violation
+            end;
+         end;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Check_State_Enum;
+
+   -- Test: CHECK constraint rejects negative current_version in service_catalog
+   procedure Test_Check_Current_Version_Non_Negative (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+      begin
+         -- Insert a service and version first (needed for FKs)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare (Handle, "INSERT INTO services (name) VALUES (?)");
+         begin
+            DB.Bind_Text (Q, 1, "test-svc");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_versions"
+                 & " (service_id, version, image, env, ports, volumes,"
+                 & " description, wanted_by, created_at)"
+                 & " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, 1);
+            DB.Bind_Text (Q, 3, "img:latest");
+            DB.Bind_Text (Q, 4, "[]");
+            DB.Bind_Text (Q, 5, "[]");
+            DB.Bind_Text (Q, 6, "[]");
+            DB.Bind_Text (Q, 7, "");
+            DB.Bind_Text (Q, 8, "");
+            DB.Bind_Text (Q, 9, "2026-01-01T00:00:00Z");
+            while DB.Step (Q) loop
+               null;
+            end loop;
+         end;
+
+         -- Insert a catalog entry with negative current_version (should fail)
+         declare
+            Q : DB.Query_Handle :=
+              DB.Prepare
+                (Handle,
+                 "INSERT INTO service_catalog"
+                 & " (service_id, current_version, target_version, updated_at)"
+                 & " VALUES (?, ?, ?, ?)");
+         begin
+            DB.Bind_Int (Q, 1, 1);
+            DB.Bind_Int (Q, 2, -1);  --  Invalid: current_version must be >= 0
+            DB.Bind_Int (Q, 3, 1);
+            DB.Bind_Text (Q, 4, "2026-01-01T00:00:00Z");
+            declare
+               Dummy : Boolean;
+            begin
+               Dummy := DB.Step (Q);
+               Assert (False, "INSERT with current_version=-1 should have raised Database_Error");
+            exception
+               when DB.Database_Error =>
+                  null;  --  Expected: CHECK constraint violation
+            end;
+         end;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Check_Current_Version_Non_Negative;
 
    -- Register all test routines
    overriding
@@ -600,10 +902,19 @@ package body Podmander.Database_Tests is
       Register_Routine (T, Test_Open_Error_Path'Access, "Open raises Database_Error for invalid path");
       -- Query API tests
       Register_Routine (T, Test_Prepare_And_Step'Access, "Prepare/Bind/Step/Column_Text round-trip");
+      Register_Routine (T, Test_Bind_Int'Access, "Bind_Int inserts and retrieves integer values");
+      Register_Routine (T, Test_Bind_Int_Where'Access, "Bind_Int with WHERE clause parameter");
       Register_Routine (T, Test_Changes_Count'Access, "Changes count for INSERT/UPDATE/DELETE");
       Register_Routine (T, Test_Execute_Creates_Table'Access, "Execute creates table queried by Prepare");
       Register_Routine (T, Test_Prepare_Invalid_SQL'Access, "Prepare raises Database_Error for invalid SQL");
       Register_Routine (T, Test_Step_Error'Access, "Step raises Database_Error for nonexistent table");
+      -- CHECK constraint tests
+      Register_Routine
+        (T, Test_Check_Version_GTE_One'Access, "CHECK constraint rejects version < 1");
+      Register_Routine
+        (T, Test_Check_State_Enum'Access, "CHECK constraint rejects invalid state values");
+      Register_Routine
+        (T, Test_Check_Current_Version_Non_Negative'Access, "CHECK constraint rejects negative current_version");
       -- Settings API tests
       Register_Routine (T, Test_Set_Setting_And_Get_Setting'Access, "Set_Setting then Get_Setting round-trip");
       Register_Routine (T, Test_Get_Setting_Not_Found'Access, "Get_Setting raises Not_Found for missing key");
