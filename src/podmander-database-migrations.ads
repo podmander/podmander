@@ -137,6 +137,62 @@ private
      "ALTER TABLE service_catalog RENAME COLUMN failed TO state;"
      & "UPDATE service_catalog SET state = 2 WHERE state = 1;";
 
+   --  Migration 010: Add CHECK constraints to enforce data integrity.
+   --  SQLite doesn't support ALTER TABLE ADD CONSTRAINT, so we recreate
+   --  the tables with the constraints included.
+   --
+   --  service_versions: CHECK (version >= 1) — version must be positive.
+   --  service_catalog: CHECK (state IN (0, 1, 2, 3)) — state enum values.
+   --  service_catalog: CHECK (current_version >= 0) — non-negative.
+   Migration_010_SQL : constant String :=
+     --  service_versions: recreate with CHECK (version >= 1)
+     "CREATE TABLE service_versions_new ("
+     & "id           INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "service_id   INTEGER NOT NULL,"
+     & "version      INTEGER NOT NULL CHECK (version >= 1),"
+     & "image        TEXT NOT NULL,"
+     & "env          TEXT NOT NULL,"
+     & "ports        TEXT NOT NULL,"
+     & "volumes      TEXT NOT NULL,"
+     & "description  TEXT NOT NULL DEFAULT '',"
+     & "wanted_by    TEXT NOT NULL DEFAULT '',"
+     & "created_at   TEXT NOT NULL,"
+     & "FOREIGN KEY (service_id) REFERENCES services(id),"
+     & "UNIQUE (service_id, version));"
+     --  Copy data from old table
+     & "INSERT INTO service_versions_new"
+     & " SELECT id, service_id, version, image, env, ports, volumes,"
+     & " description, wanted_by, created_at"
+     & " FROM service_versions;"
+     --  Drop old table and rename
+     & "DROP TABLE service_versions;"
+     & "ALTER TABLE service_versions_new RENAME TO service_versions;"
+     --  service_catalog: recreate with CHECK constraints
+     & "CREATE TABLE service_catalog_new ("
+     & "id              INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "service_id      INTEGER NOT NULL,"
+     & "node_id         TEXT,"
+     & "current_version INTEGER NOT NULL DEFAULT 0 CHECK (current_version >= 0),"
+     & "target_version  INTEGER NOT NULL,"
+     & "state           INTEGER NOT NULL DEFAULT 0 CHECK (state IN (0, 1, 2, 3)),"
+     & "updated_at      TEXT NOT NULL,"
+     & "FOREIGN KEY (service_id) REFERENCES services(id),"
+     & "FOREIGN KEY (service_id, target_version)"
+     & "    REFERENCES service_versions(service_id, version)"
+     & ");"
+     --  Copy data from old table
+     & "INSERT INTO service_catalog_new"
+     & " SELECT id, service_id, node_id, current_version, target_version,"
+     & " state, updated_at"
+     & " FROM service_catalog;"
+     --  Drop old table and rename
+     & "DROP TABLE service_catalog;"
+     & "ALTER TABLE service_catalog_new RENAME TO service_catalog;"
+     --  Recreate the partial unique index
+     & "CREATE UNIQUE INDEX idx_catalog_scheduled"
+     & "    ON service_catalog(service_id, node_id)"
+     & "    WHERE node_id IS NOT NULL;";
+
    Migration_History : constant Migration_Array :=
      [1 =>
         (Version => 1,
@@ -170,9 +226,13 @@ private
         (Version => 8,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_008_SQL)),
-      9 =>
-        (Version => 9,
+9 =>
+         (Version => 9,
+          SQL     =>
+            Ada.Strings.Unbounded.To_Unbounded_String (Migration_009_SQL)),
+      10 =>
+        (Version => 10,
          SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_009_SQL))];
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_010_SQL))];
 
 end Podmander.Database.Migrations;
