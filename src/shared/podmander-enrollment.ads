@@ -36,9 +36,13 @@ package Podmander.Enrollment is
 
    function Get_Secret (Config : Enrollment_Config) return String;
 
-   function Secret_Matches (Config : Enrollment_Config; Value : String) return Boolean;
+   function Secret_Matches
+     (Config : Enrollment_Config; Value : String) return Boolean;
 
-   procedure Generate_Join_Token (Public_Key : String; Config : in out Enrollment_Config; Token : out Unbounded_String);
+   procedure Generate_Join_Token
+     (Public_Key : String;
+      Config     : in out Enrollment_Config;
+      Token      : out Unbounded_String);
 
    function Parse_Join_Token (Token : String) return Parsed_Token;
 

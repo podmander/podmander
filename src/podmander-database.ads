@@ -21,7 +21,8 @@ package Podmander.Database is
    -- The exception message carries a structured error description
    -- (see Error_Kind and Format_Error below).
 
-   type Error_Kind is (Constraint_Violation, Not_Found, Device_Full, Schema_Error, Unknown);
+   type Error_Kind is
+     (Constraint_Violation, Not_Found, Device_Full, Schema_Error, Unknown);
    -- Classification of SQLite error conditions. Used by callers that
    -- need to distinguish failure modes (e.g., UNIQUE violation vs I/O).
 
@@ -38,7 +39,8 @@ package Podmander.Database is
    -- Format Error_Info into a human-readable string for the
    -- Database_Error exception message. Format: "[Kind|code] message"
 
-   function Parse_Error (E : Ada.Exceptions.Exception_Occurrence) return Error_Info;
+   function Parse_Error
+     (E : Ada.Exceptions.Exception_Occurrence) return Error_Info;
    -- Extract Error_Info from a Database_Error exception occurrence.
    -- Returns Kind => Unknown if the message cannot be parsed.
 
@@ -67,7 +69,8 @@ package Podmander.Database is
    -- to the connection. Auto-finalized when it goes out of scope.
    -- Raises Database_Error on failure.
 
-   procedure Bind_Text (QH : in out Query_Handle; Index : Positive; Value : String);
+   procedure Bind_Text
+     (QH : in out Query_Handle; Index : Positive; Value : String);
    -- Bind a text value to a parameter by position.
 
    procedure Bind_Null (QH : in out Query_Handle; Index : Positive);

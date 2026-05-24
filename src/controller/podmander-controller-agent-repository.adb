@@ -7,6 +7,7 @@ with Ada.Strings.Unbounded;
 package body Podmander.Controller.Agent.Repository is
 
    use Ada.Strings.Unbounded;
+   use Podmander.Types;
 
    -- ISO 8601 conversion helpers
    -- Ada.Calendar.Formatting.Image returns "YYYY-MM-DD HH:MM:SS"
@@ -57,9 +58,14 @@ package body Podmander.Controller.Agent.Repository is
    -- Register --
    ---------------
 
-   procedure Register (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
+   procedure Register
+     (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
+   is
       QH : Query_Handle :=
-        Prepare (DB, "INSERT INTO agents (name, node_id, state, last_seen) " & "VALUES (?, ?, ?, ?)");
+        Prepare
+          (DB,
+           "INSERT INTO agents (name, node_id, state, last_seen) "
+           & "VALUES (?, ?, ?, ?)");
    begin
       Bind_Text (QH, 1, To_String (Agent.Name));
       Bind_Text (QH, 2, To_String (Agent.Node_Id));
@@ -74,8 +80,10 @@ package body Podmander.Controller.Agent.Repository is
    -- Touch --
    -----------
 
-   procedure Touch (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
-      QH : Query_Handle := Prepare (DB, "UPDATE agents SET last_seen = ? WHERE name = ?");
+   procedure Touch (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
+   is
+      QH : Query_Handle :=
+        Prepare (DB, "UPDATE agents SET last_seen = ? WHERE name = ?");
    begin
       Bind_Text (QH, 1, Time_To_ISO8601 (Agent.Last_Seen));
       Bind_Text (QH, 2, To_String (Agent.Name));
@@ -87,7 +95,9 @@ package body Podmander.Controller.Agent.Repository is
            with
              Format_Error
                ((Kind    => Not_Found,
-                 Message => To_Unbounded_String ("Agent not found: " & To_String (Agent.Name)),
+                 Message =>
+                   To_Unbounded_String
+                     ("Agent not found: " & To_String (Agent.Name)),
                  Code    => 0));
       end if;
    end Touch;
@@ -96,8 +106,11 @@ package body Podmander.Controller.Agent.Repository is
    -- Set_State --
    ---------------
 
-   procedure Set_State (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
-      QH : Query_Handle := Prepare (DB, "UPDATE agents SET state = ? WHERE name = ?");
+   procedure Set_State
+     (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
+   is
+      QH : Query_Handle :=
+        Prepare (DB, "UPDATE agents SET state = ? WHERE name = ?");
    begin
       Bind_Text (QH, 1, State_To_String (Agent.State));
       Bind_Text (QH, 2, To_String (Agent.Name));
@@ -109,7 +122,9 @@ package body Podmander.Controller.Agent.Repository is
            with
              Format_Error
                ((Kind    => Not_Found,
-                 Message => To_Unbounded_String ("Agent not found: " & To_String (Agent.Name)),
+                 Message =>
+                   To_Unbounded_String
+                     ("Agent not found: " & To_String (Agent.Name)),
                  Code    => 0));
       end if;
    end Set_State;
@@ -118,8 +133,11 @@ package body Podmander.Controller.Agent.Repository is
    -- Load_All --
    --------------
 
-   function Load_All (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map is
-      QH  : Query_Handle := Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
+   function Load_All
+     (DB : in out DB_Handle) return Podmander.Types.Agent_Maps.Map
+   is
+      QH  : Query_Handle :=
+        Prepare (DB, "SELECT name, node_id, state, last_seen FROM agents");
       Map : Podmander.Types.Agent_Maps.Map;
       Rec : Agent_Info;
    begin
@@ -137,7 +155,8 @@ package body Podmander.Controller.Agent.Repository is
    -- Remove --
    -------------
 
-   procedure Remove (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info) is
+   procedure Remove (DB : in out DB_Handle; Agent : Podmander.Types.Agent_Info)
+   is
       QH : Query_Handle := Prepare (DB, "DELETE FROM agents WHERE name = ?");
    begin
       Bind_Text (QH, 1, To_String (Agent.Name));

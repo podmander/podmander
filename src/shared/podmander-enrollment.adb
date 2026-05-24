@@ -11,7 +11,8 @@ package body Podmander.Enrollment is
    package Hex_Rand is new Ada.Numerics.Discrete_Random (Hex_Range);
 
    -- Total length of a well-formed join token.
-   Token_Length : constant Positive := Token_Prefix'Length + Public_Key_Length + 1 + Secret_Length;
+   Token_Length : constant Positive :=
+     Token_Prefix'Length + Public_Key_Length + 1 + Secret_Length;
 
    function Random_Hex (Length : Positive) return String is
       Gen : Hex_Rand.Generator;
@@ -37,19 +38,24 @@ package body Podmander.Enrollment is
       return To_String (Config.Secret);
    end Get_Secret;
 
-   function Secret_Matches (Config : Enrollment_Config; Value : String) return Boolean is
+   function Secret_Matches
+     (Config : Enrollment_Config; Value : String) return Boolean is
    begin
       return To_String (Config.Secret) = Value;
    end Secret_Matches;
 
-   procedure Generate_Join_Token (Public_Key : String; Config : in out Enrollment_Config; Token : out Unbounded_String)
-   is
+   procedure Generate_Join_Token
+     (Public_Key : String;
+      Config     : in out Enrollment_Config;
+      Token      : out Unbounded_String) is
    begin
       -- Generate a new secret only if one isn't already set
       if Config.Secret = Null_Unbounded_String then
          Config.Secret := To_Unbounded_String (Random_Hex (Secret_Length));
       end if;
-      Token := To_Unbounded_String (Token_Prefix & Public_Key & Separator & To_String (Config.Secret));
+      Token :=
+        To_Unbounded_String
+          (Token_Prefix & Public_Key & Separator & To_String (Config.Secret));
    end Generate_Join_Token;
 
    function Parse_Join_Token (Token : String) return Parsed_Token is
@@ -63,7 +69,9 @@ package body Podmander.Enrollment is
          raise Parse_Error with "Token has wrong length";
       end if;
 
-      if Token (Token'First .. Token'First + Token_Prefix'Length - 1) /= Token_Prefix then
+      if Token (Token'First .. Token'First + Token_Prefix'Length - 1)
+        /= Token_Prefix
+      then
          raise Parse_Error with "Token has wrong prefix";
       end if;
 
@@ -73,7 +81,8 @@ package body Podmander.Enrollment is
 
       return
         (Public_Key => To_Unbounded_String (Token (Key_Start .. Key_End)),
-         Secret     => To_Unbounded_String (Token (Secret_Start .. Secret_End)));
+         Secret     =>
+           To_Unbounded_String (Token (Secret_Start .. Secret_End)));
    end Parse_Join_Token;
 
 end Podmander.Enrollment;

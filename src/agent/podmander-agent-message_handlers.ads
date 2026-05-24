@@ -14,32 +14,47 @@ package Podmander.Agent.Message_Handlers is
    -- agent's host-side capability packages (currently: Podman).
    -- Accesses the socket through the agent instance, which owns
    -- the socket as a field managed by the CZMQ Open/Close API.
-   type Agent_Handler is limited new Podmander.Messages.Message_Handler with record
+   type Agent_Handler is limited new Podmander.Messages.Message_Handler
+   with record
       Agt : access Podmander.Agent.Agent_Instance;
    end record;
 
    overriding
    procedure Handle_Registration_Request
-     (H : in out Agent_Handler; M : Podmander.Messages.Registration_Request_Type'Class);
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Registration_Request_Type'Class);
 
    overriding
-   procedure Handle_Heartbeat (H : in out Agent_Handler; M : Podmander.Messages.Heartbeat_Message_Type'Class);
+   procedure Handle_Heartbeat
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Heartbeat_Message_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Command (H : in out Agent_Handler; M : Podmander.Messages.Deploy_Command_Type'Class);
+   procedure Handle_Deploy_Command
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Deploy_Command_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Result (H : in out Agent_Handler; M : Podmander.Messages.Deploy_Result_Type'Class);
+   procedure Handle_Deploy_Result
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Deploy_Result_Type'Class);
 
    overriding
-   procedure Handle_Status_Query (H : in out Agent_Handler; M : Podmander.Messages.Status_Query_Type'Class);
+   procedure Handle_Status_Query
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Status_Query_Type'Class);
 
    overriding
-   procedure Handle_Status_Response (H : in out Agent_Handler; M : Podmander.Messages.Status_Response_Type'Class);
+   procedure Handle_Status_Response
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Status_Response_Type'Class);
 
-   procedure Send_Deploy_Result (H : in out Agent_Handler; Result : Podmander.Messages.Deploy_Results.Deploy_Result);
+   procedure Send_Deploy_Result
+     (H      : in out Agent_Handler;
+      Result : Podmander.Messages.Deploy_Results.Deploy_Result);
 
    procedure Send_Status_Response
-     (H : in out Agent_Handler; Result : Podmander.Messages.Status_Responses.Status_Response);
+     (H      : in out Agent_Handler;
+      Result : Podmander.Messages.Status_Responses.Status_Response);
 
 end Podmander.Agent.Message_Handlers;

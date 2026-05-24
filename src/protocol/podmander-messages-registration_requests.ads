@@ -15,9 +15,11 @@ package Podmander.Messages.Registration_Requests is
    end record;
 
    overriding
-   procedure Encode (Self : Registration_Request; Msg : in out CZMQ.Messages.Message);
+   procedure Encode
+     (Self : Registration_Request; Msg : in out CZMQ.Messages.Message);
 
    overriding
-   procedure Dispatch_To (Self : Registration_Request; H : in out Message_Handler'Class);
+   procedure Dispatch_To
+     (Self : Registration_Request; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Registration_Requests;

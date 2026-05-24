@@ -13,6 +13,9 @@ package Podmander.Generators.Quadlet is
 
    -- Write a rendered Quadlet .container file to disk.
    -- Creates Output_Dir if it does not exist.
-   procedure Write_File (Service : Service_Definition; Output_Dir : String; Service_Name : String);
+   procedure Write_File
+     (Service      : Service_Definition;
+      Output_Dir   : String;
+      Service_Name : String);
 
 end Podmander.Generators.Quadlet;

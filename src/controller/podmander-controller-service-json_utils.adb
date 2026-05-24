@@ -3,12 +3,10 @@
 
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
-with Podmander.Config;
 
 package body Podmander.Controller.Service.Json_Utils is
 
    use Ada.Strings.Unbounded;
-   use Podmander.Config;
 
    -----------------------
    -- JSON serialization
@@ -35,7 +33,8 @@ package body Podmander.Controller.Service.Json_Utils is
       return To_String (Result);
    end Escape_JSON;
 
-   function Env_Array_To_JSON (Arr : Env_Array; Count : Natural) return String is
+   function Env_Array_To_JSON (Arr : Env_Array; Count : Natural) return String
+   is
       Result : Unbounded_String;
       First  : Boolean := True;
    begin
@@ -56,7 +55,9 @@ package body Podmander.Controller.Service.Json_Utils is
       return To_String (Result);
    end Env_Array_To_JSON;
 
-   function Port_Array_To_JSON (Arr : Port_Array; Count : Natural) return String is
+   function Port_Array_To_JSON
+     (Arr : Port_Array; Count : Natural) return String
+   is
       Result : Unbounded_String;
       First  : Boolean := True;
    begin
@@ -68,16 +69,23 @@ package body Podmander.Controller.Service.Json_Utils is
             Append (Result, ",");
          end if;
          Append (Result, "{""host"":");
-         Append (Result, Ada.Strings.Fixed.Trim (Arr (I).Host'Image, Ada.Strings.Left));
+         Append
+           (Result,
+            Ada.Strings.Fixed.Trim (Arr (I).Host'Image, Ada.Strings.Left));
          Append (Result, ",""container"":");
-         Append (Result, Ada.Strings.Fixed.Trim (Arr (I).Container'Image, Ada.Strings.Left));
+         Append
+           (Result,
+            Ada.Strings.Fixed.Trim
+              (Arr (I).Container'Image, Ada.Strings.Left));
          Append (Result, "}");
       end loop;
       Append (Result, "]");
       return To_String (Result);
    end Port_Array_To_JSON;
 
-   function Volume_Array_To_JSON (Arr : Volume_Array; Count : Natural) return String is
+   function Volume_Array_To_JSON
+     (Arr : Volume_Array; Count : Natural) return String
+   is
       Result : Unbounded_String;
       First  : Boolean := True;
    begin
@@ -170,7 +178,9 @@ package body Podmander.Controller.Service.Json_Utils is
    -- The array format is: [{...},{...},...]
    -- Count is set to the number of objects found.
 
-   procedure Parse_Env_Array (JSON_Str : String; Arr : in out Env_Array; Count : out Natural) is
+   procedure Parse_Env_Array
+     (JSON_Str : String; Arr : in out Env_Array; Count : out Natural)
+   is
       Pos : Natural := JSON_Str'First;
    begin
       Count := 0;
@@ -204,8 +214,10 @@ package body Podmander.Controller.Service.Json_Utils is
                Obj : constant String := JSON_Str (Obj_Start .. Obj_End);
             begin
                Count := Count + 1;
-               Arr (Count).Key := To_Unbounded_String (Find_String_Value (Obj, "key"));
-               Arr (Count).Value := To_Unbounded_String (Find_String_Value (Obj, "value"));
+               Arr (Count).Key :=
+                 To_Unbounded_String (Find_String_Value (Obj, "key"));
+               Arr (Count).Value :=
+                 To_Unbounded_String (Find_String_Value (Obj, "value"));
             end;
 
             Pos := Obj_End + 1;
@@ -216,7 +228,9 @@ package body Podmander.Controller.Service.Json_Utils is
       end loop;
    end Parse_Env_Array;
 
-   procedure Parse_Port_Array (JSON_Str : String; Arr : in out Port_Array; Count : out Natural) is
+   procedure Parse_Port_Array
+     (JSON_Str : String; Arr : in out Port_Array; Count : out Natural)
+   is
       Pos : Natural := JSON_Str'First;
    begin
       Count := 0;
@@ -250,7 +264,9 @@ package body Podmander.Controller.Service.Json_Utils is
                Obj : constant String := JSON_Str (Obj_Start .. Obj_End);
             begin
                Count := Count + 1;
-               Arr (Count) := (Host => Find_Int_Value (Obj, "host"), Container => Find_Int_Value (Obj, "container"));
+               Arr (Count) :=
+                 (Host      => Find_Int_Value (Obj, "host"),
+                  Container => Find_Int_Value (Obj, "container"));
             end;
 
             Pos := Obj_End + 1;
@@ -261,7 +277,9 @@ package body Podmander.Controller.Service.Json_Utils is
       end loop;
    end Parse_Port_Array;
 
-   procedure Parse_Volume_Array (JSON_Str : String; Arr : in out Volume_Array; Count : out Natural) is
+   procedure Parse_Volume_Array
+     (JSON_Str : String; Arr : in out Volume_Array; Count : out Natural)
+   is
       Pos : Natural := JSON_Str'First;
    begin
       Count := 0;
@@ -296,8 +314,11 @@ package body Podmander.Controller.Service.Json_Utils is
             begin
                Count := Count + 1;
                Arr (Count) :=
-                 (Host      => To_Unbounded_String (Find_String_Value (Obj, "host")),
-                  Container => To_Unbounded_String (Find_String_Value (Obj, "container")));
+                 (Host      =>
+                    To_Unbounded_String (Find_String_Value (Obj, "host")),
+                  Container =>
+                    To_Unbounded_String
+                      (Find_String_Value (Obj, "container")));
             end;
 
             Pos := Obj_End + 1;

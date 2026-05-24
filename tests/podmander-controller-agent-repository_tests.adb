@@ -15,6 +15,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    use Ada.Calendar;
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
+   use Podmander.Types;
 
    package DB renames Podmander.Database;
    package Repo renames Podmander.Controller.Agent.Repository;

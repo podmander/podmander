@@ -17,14 +17,17 @@ package body Podmander.Database is
       Append (Result, "[");
       Append (Result, Info.Kind'Image);
       Append (Result, "|");
-      Append (Result, Ada.Strings.Fixed.Trim (Info.Code'Image, Ada.Strings.Both));
+      Append
+        (Result, Ada.Strings.Fixed.Trim (Info.Code'Image, Ada.Strings.Both));
       Append (Result, "] ");
       Append (Result, Info.Message);
       return To_String (Result);
    end Format_Error;
 
    -- Reverse of Format_Error: parse "[Kind|code] message"
-   function Parse_Error (E : Ada.Exceptions.Exception_Occurrence) return Error_Info is
+   function Parse_Error
+     (E : Ada.Exceptions.Exception_Occurrence) return Error_Info
+   is
       Msg           : constant String := Ada.Exceptions.Exception_Message (E);
       -- Try to parse "[Kind|code] message" format
       Bracket_Start : constant Natural := Ada.Strings.Fixed.Index (Msg, "[");
@@ -37,13 +40,15 @@ package body Podmander.Database is
         or else Pipe_Pos <= Bracket_Start + 1
         or else Bracket_End <= Pipe_Pos + 1
       then
-         return (Kind => Unknown, Message => To_Unbounded_String (Msg), Code => 0);
+         return
+           (Kind => Unknown, Message => To_Unbounded_String (Msg), Code => 0);
       end if;
 
       declare
          Kind_Str : constant String := Msg (Bracket_Start + 1 .. Pipe_Pos - 1);
          Code_Str : constant String := Msg (Pipe_Pos + 1 .. Bracket_End - 1);
-         Rest     : constant String := Msg (Bracket_End + 2 .. Msg'Last);  --  skip "] "
+         Rest     : constant String :=
+           Msg (Bracket_End + 2 .. Msg'Last);  --  skip "] "
       begin
          return
            (Kind    => Error_Kind'Value (Kind_Str),
@@ -51,17 +56,24 @@ package body Podmander.Database is
             Code    => Integer'Value (Code_Str));
       exception
          when Constraint_Error =>
-            return (Kind => Unknown, Message => To_Unbounded_String (Msg), Code => 0);
+            return
+              (Kind    => Unknown,
+               Message => To_Unbounded_String (Msg),
+               Code    => 0);
       end;
    end Parse_Error;
 
    -- Parse ada_sqlite3 format: "<description> (Error code: <n>)"
    function Classify_Error (Message : String) return Error_Info is
       Prefix     : constant String := "(Error code: ";
-      Code_Start : constant Natural := Ada.Strings.Fixed.Index (Message, Prefix);
+      Code_Start : constant Natural :=
+        Ada.Strings.Fixed.Index (Message, Prefix);
    begin
       if Code_Start = 0 then
-         return (Kind => Unknown, Message => To_Unbounded_String (Message), Code => 0);
+         return
+           (Kind    => Unknown,
+            Message => To_Unbounded_String (Message),
+            Code    => 0);
       end if;
 
       declare
@@ -74,7 +86,10 @@ package body Podmander.Database is
          end loop;
 
          if Num_End > Message'Last then
-            return (Kind => Unknown, Message => To_Unbounded_String (Message), Code => 0);
+            return
+              (Kind    => Unknown,
+               Message => To_Unbounded_String (Message),
+               Code    => 0);
          end if;
 
          declare
@@ -86,20 +101,35 @@ package body Podmander.Database is
          begin
             case Code is
                when 19     =>
-                  return (Kind => Constraint_Violation, Message => To_Unbounded_String (Desc), Code => Code);
+                  return
+                    (Kind    => Constraint_Violation,
+                     Message => To_Unbounded_String (Desc),
+                     Code    => Code);
 
                when 13     =>
-                  return (Kind => Device_Full, Message => To_Unbounded_String (Desc), Code => Code);
+                  return
+                    (Kind    => Device_Full,
+                     Message => To_Unbounded_String (Desc),
+                     Code    => Code);
 
                when 17     =>
-                  return (Kind => Schema_Error, Message => To_Unbounded_String (Desc), Code => Code);
+                  return
+                    (Kind    => Schema_Error,
+                     Message => To_Unbounded_String (Desc),
+                     Code    => Code);
 
                when others =>
-                  return (Kind => Unknown, Message => To_Unbounded_String (Desc), Code => Code);
+                  return
+                    (Kind    => Unknown,
+                     Message => To_Unbounded_String (Desc),
+                     Code    => Code);
             end case;
          exception
             when Constraint_Error =>
-               return (Kind => Unknown, Message => To_Unbounded_String (Message), Code => 0);
+               return
+                 (Kind    => Unknown,
+                  Message => To_Unbounded_String (Message),
+                  Code    => 0);
          end;
       end;
    end Classify_Error;
@@ -111,7 +141,8 @@ package body Podmander.Database is
    begin
       -- Create parent directories if they don't exist
       declare
-         Parent : constant String := Ada.Directories.Containing_Directory (Path);
+         Parent : constant String :=
+           Ada.Directories.Containing_Directory (Path);
       begin
          if Parent'Length > 0 then
             Ada.Directories.Create_Path (Parent);
@@ -122,12 +153,18 @@ package body Podmander.Database is
               with
                 Format_Error
                   ((Kind    => Unknown,
-                    Message => To_Unbounded_String ("Cannot create directory for: " & Path),
+                    Message =>
+                      To_Unbounded_String
+                        ("Cannot create directory for: " & Path),
                     Code    => 0));
       end;
 
       -- Open the SQLite connection, configure, and return handle
-      return Handle : DB_Handle := (Ada.Finalization.Limited_Controlled with DB => Ada_Sqlite3.Open (Path)) do
+      return
+         Handle : DB_Handle :=
+           (Ada.Finalization.Limited_Controlled
+            with DB => Ada_Sqlite3.Open (Path))
+      do
          -- Enable foreign keys
          Handle.DB.Execute ("PRAGMA foreign_keys = ON");
 
@@ -138,7 +175,10 @@ package body Podmander.Database is
       end return;
    exception
       when E : Ada_Sqlite3.SQLite_Error =>
-         raise Database_Error with Format_Error (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+         raise Database_Error
+           with
+             Format_Error
+               (Classify_Error (Ada.Exceptions.Exception_Message (E)));
    end Open;
 
    -- Empty override: Ada auto-finalizes the Ada_Sqlite3.Database component
@@ -153,15 +193,22 @@ package body Podmander.Database is
    -- Query API
    ---------------
 
-   function Prepare (DB : in out DB_Handle; SQL : String) return Query_Handle is
+   function Prepare (DB : in out DB_Handle; SQL : String) return Query_Handle
+   is
    begin
-      return QH : constant Query_Handle := (Stmt => Ada_Sqlite3.Prepare (DB.DB, SQL));
+      return
+         QH : constant Query_Handle :=
+           (Stmt => Ada_Sqlite3.Prepare (DB.DB, SQL));
    exception
       when E : Ada_Sqlite3.SQLite_Error =>
-         raise Database_Error with Format_Error (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+         raise Database_Error
+           with
+             Format_Error
+               (Classify_Error (Ada.Exceptions.Exception_Message (E)));
    end Prepare;
 
-   procedure Bind_Text (QH : in out Query_Handle; Index : Positive; Value : String) is
+   procedure Bind_Text
+     (QH : in out Query_Handle; Index : Positive; Value : String) is
    begin
       Ada_Sqlite3.Bind_Text (QH.Stmt, Index, Value);
    end Bind_Text;
@@ -183,7 +230,10 @@ package body Podmander.Database is
          -- Build a message in the format Classify_Error expects
          -- so that SQLite error codes map to the correct Error_Kind.
          raise Database_Error
-           with Format_Error (Classify_Error ("SQLite step error (Error code: " & Result'Image & ")"));
+           with
+             Format_Error
+               (Classify_Error
+                  ("SQLite step error (Error code: " & Result'Image & ")"));
       end if;
    end Step;
 
@@ -207,7 +257,10 @@ package body Podmander.Database is
       DB.DB.Execute (SQL);
    exception
       when E : Ada_Sqlite3.SQLite_Error =>
-         raise Database_Error with Format_Error (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+         raise Database_Error
+           with
+             Format_Error
+               (Classify_Error (Ada.Exceptions.Exception_Message (E)));
    end Execute;
 
    ---------------
@@ -215,7 +268,8 @@ package body Podmander.Database is
    ---------------
 
    function Get_Setting (DB : in out DB_Handle; Key : String) return String is
-      Q : Query_Handle := Prepare (DB, "SELECT value FROM controller_settings WHERE key = ?");
+      Q : Query_Handle :=
+        Prepare (DB, "SELECT value FROM controller_settings WHERE key = ?");
    begin
       Bind_Text (Q, 1, Key);
       if Step (Q) then
@@ -224,12 +278,19 @@ package body Podmander.Database is
          raise Database_Error
            with
              Format_Error
-               ((Kind => Not_Found, Message => To_Unbounded_String ("Setting not found: " & Key), Code => 0));
+               ((Kind    => Not_Found,
+                 Message => To_Unbounded_String ("Setting not found: " & Key),
+                 Code    => 0));
       end if;
    end Get_Setting;
 
-   procedure Set_Setting (DB : in out DB_Handle; Key : String; Value : String) is
-      Q : Query_Handle := Prepare (DB, "INSERT OR REPLACE INTO controller_settings" & " (key, value) VALUES (?, ?)");
+   procedure Set_Setting (DB : in out DB_Handle; Key : String; Value : String)
+   is
+      Q : Query_Handle :=
+        Prepare
+          (DB,
+           "INSERT OR REPLACE INTO controller_settings"
+           & " (key, value) VALUES (?, ?)");
    begin
       Bind_Text (Q, 1, Key);
       Bind_Text (Q, 2, Value);

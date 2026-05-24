@@ -16,9 +16,11 @@ package Podmander.Messages.Heartbeats is
    end record;
 
    overriding
-   procedure Encode (Self : Heartbeat_Message; Msg : in out CZMQ.Messages.Message);
+   procedure Encode
+     (Self : Heartbeat_Message; Msg : in out CZMQ.Messages.Message);
 
    overriding
-   procedure Dispatch_To (Self : Heartbeat_Message; H : in out Message_Handler'Class);
+   procedure Dispatch_To
+     (Self : Heartbeat_Message; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Heartbeats;

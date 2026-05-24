@@ -6,9 +6,6 @@
 --  deploy pipeline: Parser -> Registrar -> Scheduler -> Supervisor.
 
 with Podmander.Config;
-with Podmander.Controller;
-with Podmander.Controller.Service;
-with Podmander.Controller.Service.Repository;
 with Podmander.Database;
 
 package Podmander.Controller.Registrar is
@@ -23,7 +20,9 @@ package Podmander.Controller.Registrar is
       Error   : Register_Error := None;
    end record;
 
-   function Register (DB : in out DB_Handle; ASD : Podmander.Config.Service_Definition) return Register_Result;
+   function Register
+     (DB : in out DB_Handle; ASD : Podmander.Config.Service_Definition)
+      return Register_Result;
    -- Register a service from its parsed ASD:
    -- 1. Create the services row (INSERT OR IGNORE, then SELECT)
    -- 2. Determine next version number (latest + 1, or 1 if none)

@@ -3,21 +3,17 @@
 
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
-with Podmander.Config;
-with Podmander.Controller;
 with Podmander.Controller.Service;
 with Podmander.Controller.Service.Repository;
-with Podmander.Database;
 
 package body Podmander.Controller.Registrar is
 
    use Ada.Calendar;
    use Ada.Strings.Unbounded;
-   use Podmander.Config;
-   use Podmander.Database;
 
    function To_Service_Version
-     (ASD : Service_Definition; Service_Id : Integer; Version : Positive) return Podmander.Controller.Service_Version is
+     (ASD : Service_Definition; Service_Id : Integer; Version : Positive)
+      return Podmander.Controller.Service_Version is
    begin
       return
         (Id            => 0,
@@ -39,7 +35,10 @@ package body Podmander.Controller.Registrar is
    -- Register --
    --------------
 
-   function Register (DB : in out DB_Handle; ASD : Podmander.Config.Service_Definition) return Register_Result is
+   function Register
+     (DB : in out DB_Handle; ASD : Podmander.Config.Service_Definition)
+      return Register_Result
+   is
       Name        : constant String := To_String (ASD.Name);
       Svc         : Podmander.Controller.Service.Service;
       Version_Num : Positive := 1;
@@ -52,7 +51,8 @@ package body Podmander.Controller.Registrar is
       begin
          declare
             Latest : constant Podmander.Controller.Service_Version :=
-              Podmander.Controller.Service.Repository.Get_Latest_Version (DB, Svc.Id);
+              Podmander.Controller.Service.Repository.Get_Latest_Version
+                (DB, Svc.Id);
          begin
             Version_Num := Latest.Version + 1;
          end;

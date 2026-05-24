@@ -23,7 +23,9 @@ package body Podmander.Agent.Connection is
    Poll_Interval_Ms : constant := 1000;
 
    procedure Send_Message
-     (Sock : in out CZMQ.Sockets.Socket; Payload : Podmander.Messages.Protocol_Message'Class; Log_Text : String)
+     (Sock     : in out CZMQ.Sockets.Socket;
+      Payload  : Podmander.Messages.Protocol_Message'Class;
+      Log_Text : String)
    is
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
@@ -32,20 +34,29 @@ package body Podmander.Agent.Connection is
       Podmander.Logging.Debug ("agent", Log_Text);
    end Send_Message;
 
-   procedure Send_Registration (Self : Agent_Instance; Sock : in out CZMQ.Sockets.Socket) is
+   procedure Send_Registration
+     (Self : Agent_Instance; Sock : in out CZMQ.Sockets.Socket)
+   is
       use Podmander.Messages.Registration_Requests;
    begin
       Send_Message
         (Sock,
-         Registration_Request'(Agent_Name => Self.Config.Agent_Name, Enrollment_Secret => Self.Enrollment_Secret),
+         Registration_Request'
+           (Agent_Name        => Self.Config.Agent_Name,
+            Enrollment_Secret => Self.Enrollment_Secret),
          "Sent registration request");
    end Send_Registration;
 
-   procedure Send_Heartbeat (Self : Agent_Instance; Sock : in out CZMQ.Sockets.Socket) is
+   procedure Send_Heartbeat
+     (Self : Agent_Instance; Sock : in out CZMQ.Sockets.Socket)
+   is
       use Podmander.Messages.Heartbeats;
    begin
       Send_Message
-        (Sock, Heartbeat_Message'(Node_Id => Self.Node_Id, Timestamp => Ada.Calendar.Clock), "Sent heartbeat");
+        (Sock,
+         Heartbeat_Message'
+           (Node_Id => Self.Node_Id, Timestamp => Ada.Calendar.Clock),
+         "Sent heartbeat");
    end Send_Heartbeat;
 
    procedure Run_Cycle (Self : in out Agent_Instance) is
@@ -63,7 +74,8 @@ package body Podmander.Agent.Connection is
       Self.Sock.Set_Curve_Serverkey (To_String (Self.Server_Public_Key));
       Self.Sock.Set_Identity (To_String (Self.Config.Agent_Name));
       Self.Sock.Connect (To_String (Self.Config.Controller_Address));
-      Self.Sock.Set_Receive_Timeout (Integer (Self.Config.Registration_Timeout * 1000.0));
+      Self.Sock.Set_Receive_Timeout
+        (Integer (Self.Config.Registration_Timeout * 1000.0));
 
       Send_Registration (Self, Self.Sock);
       Self.State := Podmander.Types.Enrolling;
@@ -77,9 +89,13 @@ package body Podmander.Agent.Connection is
 
          if Status = CZMQ.Messages.Timeout then
             Podmander.Logging.Warning
-              ("agent", "Registration timeout, retrying in" & Duration'Image (Self.Backoff) & "s");
+              ("agent",
+               "Registration timeout, retrying in"
+               & Duration'Image (Self.Backoff)
+               & "s");
             delay Self.Backoff;
-            Self.Backoff := Duration'Min (Self.Backoff * 2.0, Self.Config.Max_Backoff);
+            Self.Backoff :=
+              Duration'Min (Self.Backoff * 2.0, Self.Config.Max_Backoff);
             Self.State := Podmander.Types.Disconnected;
             return;
          end if;
@@ -93,16 +109,19 @@ package body Podmander.Agent.Connection is
                Self.Node_Id := Registration_Response (Decoded).Node_Id;
                Self.State := Podmander.Types.Connected;
                Self.Backoff := 1.0;
-               Podmander.Logging.Info ("agent", "Registered as " & To_String (Self.Node_Id));
+               Podmander.Logging.Info
+                 ("agent", "Registered as " & To_String (Self.Node_Id));
             else
-               Podmander.Logging.Warning ("agent", "Unexpected response during enrollment");
+               Podmander.Logging.Warning
+                 ("agent", "Unexpected response during enrollment");
                Self.State := Podmander.Types.Disconnected;
                return;
             end if;
          end;
       exception
          when Podmander.Messages.Decode_Error =>
-            Podmander.Logging.Warning ("agent", "Malformed response during enrollment");
+            Podmander.Logging.Warning
+              ("agent", "Malformed response during enrollment");
             Self.State := Podmander.Types.Disconnected;
             return;
       end;
@@ -111,7 +130,8 @@ package body Podmander.Agent.Connection is
       -- Stop, or connection error.
       Self.Sock.Set_Receive_Timeout (Poll_Interval_Ms);
       declare
-         Handler : Message_Handlers.Agent_Handler := (Agt => Self'Unchecked_Access);
+         Handler : Message_Handlers.Agent_Handler :=
+           (Agt => Self'Unchecked_Access);
       begin
          while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
             declare
@@ -119,7 +139,8 @@ package body Podmander.Agent.Connection is
                Next_Heartbeat : Ada.Calendar.Time;
             begin
                Send_Heartbeat (Self, Self.Sock);
-               Next_Heartbeat := Ada.Calendar.Clock + Self.Config.Heartbeat_Interval;
+               Next_Heartbeat :=
+                 Ada.Calendar.Clock + Self.Config.Heartbeat_Interval;
                while not CZMQ.Signals.Is_Interrupted loop
                   declare
                      Msg    : CZMQ.Messages.Message;
@@ -128,13 +149,17 @@ package body Podmander.Agent.Connection is
                      CZMQ.Messages.Receive (Self.Sock, Msg, Status);
                      if Status /= CZMQ.Messages.Timeout then
                         declare
-                           Decoded : constant Podmander.Messages.Protocol_Message'Class :=
-                             Podmander.Messages.Decode (Msg);
+                           Decoded :
+                             constant Podmander
+                                        .Messages
+                                        .Protocol_Message'Class :=
+                               Podmander.Messages.Decode (Msg);
                         begin
                            Decoded.Dispatch_To (Handler);
                         exception
                            when Podmander.Messages.Decode_Error =>
-                              Podmander.Logging.Warning ("agent", "Malformed message from controller");
+                              Podmander.Logging.Warning
+                                ("agent", "Malformed message from controller");
                         end;
                      end if;
                   end;
@@ -145,7 +170,8 @@ package body Podmander.Agent.Connection is
       end;
    exception
       when CZMQ.CZMQ_Error =>
-         Podmander.Logging.Warning ("agent", "Connection lost, reconnecting...");
+         Podmander.Logging.Warning
+           ("agent", "Connection lost, reconnecting...");
          Self.State := Podmander.Types.Disconnected;
    end Run_Cycle;
 

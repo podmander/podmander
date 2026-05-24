@@ -15,12 +15,14 @@ package body Podmander.CLI is
             Arg : constant String := Ada.Command_Line.Argument (I);
          begin
             if Arg'Length > Equal_Prefix'Length
-              and then Arg (Arg'First .. Arg'First + Equal_Prefix'Length - 1) = Equal_Prefix
+              and then Arg (Arg'First .. Arg'First + Equal_Prefix'Length - 1)
+                       = Equal_Prefix
             then
                return Arg (Arg'First + Equal_Prefix'Length .. Arg'Last);
             end if;
 
-            if Arg = Name_Prefix and then I < Ada.Command_Line.Argument_Count then
+            if Arg = Name_Prefix and then I < Ada.Command_Line.Argument_Count
+            then
                return Ada.Command_Line.Argument (I + 1);
             end if;
          end;
@@ -37,7 +39,12 @@ package body Podmander.CLI is
       return Duration'Value (Value);
    exception
       when Constraint_Error =>
-         Podmander.Logging.Warning ("cli", "Invalid value for --" & Key & ", using default" & Duration'Image (Default));
+         Podmander.Logging.Warning
+           ("cli",
+            "Invalid value for --"
+            & Key
+            & ", using default"
+            & Duration'Image (Default));
          return Default;
    end Get_Duration;
 

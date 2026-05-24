@@ -24,7 +24,8 @@ package Podmander.Agent is
    -- resources when the agent shuts down.
    type Agent_Instance is tagged limited record
       Config            : Agent_Config;
-      State             : Podmander.Types.Connection_State := Podmander.Types.Disconnected;
+      State             : Podmander.Types.Connection_State :=
+        Podmander.Types.Disconnected;
       Node_Id           : Ada.Strings.Unbounded.Unbounded_String;
       Running           : Boolean := False;
       Backoff           : Duration := 1.0;

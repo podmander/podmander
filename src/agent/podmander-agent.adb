@@ -10,7 +10,8 @@ package body Podmander.Agent is
 
    use Ada.Strings.Unbounded;
 
-   procedure Initialize (Self : in out Agent_Instance; Config : Agent_Config) is
+   procedure Initialize (Self : in out Agent_Instance; Config : Agent_Config)
+   is
    begin
       Self.Config := Config;
       Self.Running := True;
@@ -23,7 +24,8 @@ package body Podmander.Agent is
       if Config.Join_Token /= Null_Unbounded_String then
          declare
             Parsed : constant Podmander.Enrollment.Parsed_Token :=
-              Podmander.Enrollment.Parse_Join_Token (To_String (Config.Join_Token));
+              Podmander.Enrollment.Parse_Join_Token
+                (To_String (Config.Join_Token));
          begin
             Self.Server_Public_Key := Parsed.Public_Key;
             Self.Enrollment_Secret := Parsed.Secret;

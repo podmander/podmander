@@ -28,7 +28,7 @@ package Podmander.Controller.Scheduler is
    --  and clear failed. If no entry exists, create one with
    --  current_version = 0 and the given target_version.
    --  The Scheduler selects the target node by querying registered
-   --  agents: 0 agents → unscheduled (node_id NULL), otherwise
+   --  agents: 0 agents â unscheduled (node_id NULL), otherwise
    --  assigns the first registered agent found.
 
 end Podmander.Controller.Scheduler;

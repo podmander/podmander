@@ -13,8 +13,9 @@ project Podmander is
 
    package Compiler is
       for Default_Switches ("Ada") use
-        Podmander_Config.Ada_Compiler_Switches &
-         ("-gnatyM120"); --  max line length 120
+Podmander_Config.Ada_Compiler_Switches &
+          ("-gnatyM120", --  max line length 120
+           "-gnaty-c");   --  disable comment spacing check (gnatformat convention)
    end Compiler;
 
    package Binder is

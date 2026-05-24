@@ -19,7 +19,9 @@ package body Podmander.Database.Migrations is
       -- Try to read current version
       begin
          declare
-            Stmt : Ada_Sqlite3.Statement := Ada_Sqlite3.Prepare (Handle.DB, "SELECT version FROM schema_version");
+            Stmt : Ada_Sqlite3.Statement :=
+              Ada_Sqlite3.Prepare
+                (Handle.DB, "SELECT version FROM schema_version");
          begin
             if Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW then
                Current_Version := Natural (Ada_Sqlite3.Column_Int (Stmt, 0));
@@ -72,8 +74,10 @@ package body Podmander.Database.Migrations is
                else
                   Handle.DB.Execute (To_String (M.SQL));
                end if;
-               Handle.DB.Execute ("UPDATE schema_version SET version = " & M.Version'Image);
-               Podmander.Logging.Info ("database", "Applied migration " & M.Version'Image);
+               Handle.DB.Execute
+                 ("UPDATE schema_version SET version = " & M.Version'Image);
+               Podmander.Logging.Info
+                 ("database", "Applied migration " & M.Version'Image);
             end if;
          end loop;
 
@@ -88,7 +92,10 @@ package body Podmander.Database.Migrations is
                when Ada_Sqlite3.SQLite_Error =>
                   null;  --  Best-effort rollback
             end;
-            raise Database_Error with Format_Error (Classify_Error (Ada.Exceptions.Exception_Message (E)));
+            raise Database_Error
+              with
+                Format_Error
+                  (Classify_Error (Ada.Exceptions.Exception_Message (E)));
       end;
    end Run_Pending;
 

@@ -14,7 +14,8 @@ package body Podmander.Messages.Result_Codes is
       return Result_Code'Value (Upper);
    exception
       when Constraint_Error =>
-         raise Podmander.Messages.Decode_Error with "unknown result code: " & S;
+         raise Podmander.Messages.Decode_Error
+           with "unknown result code: " & S;
    end Decode_Code;
 
 end Podmander.Messages.Result_Codes;

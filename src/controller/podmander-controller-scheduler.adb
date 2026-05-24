@@ -11,6 +11,7 @@ package body Podmander.Controller.Scheduler is
 
    use Ada.Calendar;
    use Ada.Strings.Unbounded;
+   use Podmander.Types;
    use Podmander.Controller.Service_Catalog.Repository;
 
    --  Dummy entry returned in error cases where no real entry exists.
@@ -28,7 +29,8 @@ package body Podmander.Controller.Scheduler is
    ---------------
 
    function Schedule
-     (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive) return Schedule_Result
+     (DB : in out DB_Handle; Service_Id : Integer; Target_Version : Positive)
+      return Schedule_Result
    is
       --  Query registered agents to select a target node.
       --  MVP strategy: assign the first registered agent found.
@@ -58,7 +60,7 @@ package body Podmander.Controller.Scheduler is
             Updated  : Boolean;
             pragma Unreferenced (Updated);
          begin
-            --  Entry exists — update target and clear failed
+            --  Entry exists â update target and clear failed
             Updated := Set_Target (DB, Existing.Id, Target_Version);
 
             --  Assign node if one is available
@@ -66,7 +68,10 @@ package body Podmander.Controller.Scheduler is
                Updated := Assign_Node (DB, Existing.Id, Node_Id_Str);
             end if;
 
-            return (Ok => True, Catalog_Entry => Get_By_Id (DB, Existing.Id), Error => None);
+            return
+              (Ok            => True,
+               Catalog_Entry => Get_By_Id (DB, Existing.Id),
+               Error         => None);
          end;
       exception
          when E : Podmander.Database.Database_Error =>
@@ -74,16 +79,22 @@ package body Podmander.Controller.Scheduler is
                Info : constant Error_Info := Parse_Error (E);
             begin
                if Info.Kind = Not_Found then
-                  --  No existing entry — create a new one
+                  --  No existing entry â create a new one
                   return
                     (Ok            => True,
                      Catalog_Entry =>
                        Create_Entry
-                         (DB, Service_Id => Service_Id, Node_Id => Node_Id_Str, Target_Version => Target_Version),
+                         (DB,
+                          Service_Id     => Service_Id,
+                          Node_Id        => Node_Id_Str,
+                          Target_Version => Target_Version),
                      Error         => None);
                end if;
             end;
-            return (Ok => False, Catalog_Entry => Dummy_Entry, Error => Database_Error);
+            return
+              (Ok            => False,
+               Catalog_Entry => Dummy_Entry,
+               Error         => Database_Error);
       end;
    end Schedule;
 

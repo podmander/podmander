@@ -40,8 +40,10 @@ package body Podmander.Generators.Quadlet is
       -- Port mappings
       for I in 1 .. Service.Ports_Count loop
          declare
-            Host_Port      : constant String := Positive'Image (Service.Ports (I).Host);
-            Container_Port : constant String := Positive'Image (Service.Ports (I).Container);
+            Host_Port      : constant String :=
+              Positive'Image (Service.Ports (I).Host);
+            Container_Port : constant String :=
+              Positive'Image (Service.Ports (I).Container);
          begin
             -- Positive'Image includes a leading space; strip it
             Append (Buffer, "PublishPort=");
@@ -76,8 +78,11 @@ package body Podmander.Generators.Quadlet is
    -- Write_File  --
    -----------------
 
-   procedure Write_File (Service : Service_Definition; Output_Dir : String; Service_Name : String) is
-      File_Path : constant String := Output_Dir & "/" & Service_Name & ".container";
+   procedure Write_File
+     (Service : Service_Definition; Output_Dir : String; Service_Name : String)
+   is
+      File_Path : constant String :=
+        Output_Dir & "/" & Service_Name & ".container";
       Content   : constant String := Render (Service);
       File      : Ada.Text_IO.File_Type;
    begin
