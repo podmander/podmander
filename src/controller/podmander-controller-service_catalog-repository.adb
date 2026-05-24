@@ -30,7 +30,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
             then Null_Unbounded_String
             else To_Unbounded_String (Node_Text)),
          Current_Version => Column_Int (QH, 3),
-         Target_Version  => Podmander.Controller.Service_Version_Type'Value (Column_Text (QH, 4)),
+         Target_Version  => Podmander.Controller.Service_Version_Type (Column_Int (QH, 4)),
           State           => Catalog_Entry_State'Val (Column_Int (QH, 5)),
          Updated_At      => ISO8601_To_Time (Column_Text (QH, 6)));
    exception
@@ -70,17 +70,13 @@ package body Podmander.Controller.Service_Catalog.Repository is
             & "target_version, state, updated_at "
             & "FROM service_catalog WHERE id = last_insert_rowid()");
    begin
-      Bind_Text
-        (QH, 1, Ada.Strings.Fixed.Trim (Service_Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Service_Id));
       if Node_Id = "" then
          Bind_Null (QH, 2);
       else
          Bind_Text (QH, 2, Node_Id);
       end if;
-      Bind_Text
-        (QH,
-         3,
-         Ada.Strings.Fixed.Trim (Target_Version'Image, Ada.Strings.Left));
+      Bind_Int (QH, 3, Integer (Target_Version));
       Bind_Text (QH, 4, Now_Str);
       while Step (QH) loop
          null;
@@ -115,7 +111,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
            & "target_version, state, updated_at "
            & "FROM service_catalog WHERE id = ?");
    begin
-      Bind_Text (QH, 1, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Id);
       if Step (QH) then
          return Row_To_Entry (DB, QH);
       else
@@ -146,8 +142,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
            & "target_version, state, updated_at "
            & "FROM service_catalog WHERE service_id = ? LIMIT 1");
    begin
-      Bind_Text
-        (QH, 1, Ada.Strings.Fixed.Trim (Service_Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Service_Id));
       if Step (QH) then
          return Row_To_Entry (DB, QH);
       else
@@ -225,12 +220,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
            & "SET current_version = ?, state = 3, updated_at = ? "
            & "WHERE id = ?");
    begin
-      Bind_Text
-        (QH,
-         1,
-         Ada.Strings.Fixed.Trim (Current_Version'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Current_Version));
       Bind_Text (QH, 2, Now_Str);
-      Bind_Text (QH, 3, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 3, Id);
       while Step (QH) loop
          null;
       end loop;
@@ -253,7 +245,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
             & "WHERE id = ?");
    begin
       Bind_Text (QH, 1, Now_Str);
-      Bind_Text (QH, 2, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 2, Id);
       while Step (QH) loop
          null;
       end loop;
@@ -281,7 +273,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
          Bind_Text (QH, 1, Node_Id);
       end if;
       Bind_Text (QH, 2, Now_Str);
-      Bind_Text (QH, 3, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 3, Id);
       while Step (QH) loop
          null;
       end loop;
@@ -304,11 +296,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
            & "SET state = ?, updated_at = ? "
            & "WHERE id = ?");
    begin
-      Bind_Text
-        (QH, 1,
-         Ada.Strings.Fixed.Trim (Catalog_Entry_State'Pos (State)'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Catalog_Entry_State'Pos (State));
       Bind_Text (QH, 2, Now_Str);
-      Bind_Text (QH, 3, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 3, Id);
       while Step (QH) loop
          null;
       end loop;
@@ -373,12 +363,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
            & "SET target_version = ?, state = 0, updated_at = ? "
            & "WHERE id = ?");
    begin
-      Bind_Text
-        (QH,
-         1,
-         Ada.Strings.Fixed.Trim (Target_Version'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Target_Version));
       Bind_Text (QH, 2, Now_Str);
-      Bind_Text (QH, 3, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 3, Id);
       while Step (QH) loop
          null;
       end loop;

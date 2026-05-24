@@ -25,7 +25,7 @@ package body Podmander.Controller.Service.Repository is
    begin
       Result.Id := Column_Int (QH, 0);
       Result.Service_Id := Podmander.Controller.Service_Id_Type (Column_Int (QH, 1));
-      Result.Version := Podmander.Controller.Service_Version_Type'Value (Column_Text (QH, 2));
+      Result.Version := Podmander.Controller.Service_Version_Type (Column_Int (QH, 2));
       Result.Image := To_Unbounded_String (Column_Text (QH, 3));
       Parse_Env_Array (Column_Text (QH, 4), Result.Env, Result.Env_Count);
       Parse_Port_Array (Column_Text (QH, 5), Result.Ports, Result.Ports_Count);
@@ -112,7 +112,7 @@ package body Podmander.Controller.Service.Repository is
       QH : Query_Handle :=
         Prepare (DB, "SELECT id, name FROM services WHERE id = ?");
    begin
-      Bind_Text (QH, 1, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Id));
       if Step (QH) then
          return
             (Id   => Podmander.Controller.Service_Id_Type (Column_Int (QH, 0)),
@@ -145,14 +145,8 @@ package body Podmander.Controller.Service.Repository is
            & "description, wanted_by, created_at) "
            & "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
    begin
-      Bind_Text
-        (QH,
-         1,
-         Ada.Strings.Fixed.Trim (Version.Service_Id'Image, Ada.Strings.Left));
-      Bind_Text
-        (QH,
-         2,
-         Ada.Strings.Fixed.Trim (Version.Version'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Version.Service_Id));
+      Bind_Int (QH, 2, Integer (Version.Version));
       Bind_Text (QH, 3, To_String (Version.Image));
       Bind_Text (QH, 4, Env_Array_To_JSON (Version.Env, Version.Env_Count));
       Bind_Text
@@ -185,10 +179,8 @@ package body Podmander.Controller.Service.Repository is
            & "FROM service_versions "
            & "WHERE service_id = ? AND version = ?");
    begin
-      Bind_Text
-        (QH, 1, Ada.Strings.Fixed.Trim (Service_Id'Image, Ada.Strings.Left));
-      Bind_Text
-        (QH, 2, Ada.Strings.Fixed.Trim (Version'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Service_Id));
+      Bind_Int (QH, 2, Integer (Version));
       if Step (QH) then
          return Row_To_Service_Version (DB, QH);
       else
@@ -225,8 +217,7 @@ package body Podmander.Controller.Service.Repository is
            & "WHERE service_id = ? "
            & "ORDER BY version DESC LIMIT 1");
    begin
-      Bind_Text
-        (QH, 1, Ada.Strings.Fixed.Trim (Service_Id'Image, Ada.Strings.Left));
+      Bind_Int (QH, 1, Integer (Service_Id));
       if Step (QH) then
          return Row_To_Service_Version (DB, QH);
       else
