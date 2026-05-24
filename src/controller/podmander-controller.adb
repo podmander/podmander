@@ -1,12 +1,10 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
-with Ada.Calendar;
 with Ada.Directories;
 with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
-with Podmander.Config;
 with Podmander.Config.Parser;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
@@ -209,25 +207,6 @@ package body Podmander.Controller is
          WantedBy      => SV.Wanted_By);
    end To_Service_Definition;
 
-   function To_Service_Version
-     (SD : Service_Definition; Version_Num : Positive; Service_Id : Integer) return Service_Version is
-   begin
-      return
-        (Id            => 0,
-         Service_Id    => Service_Id,
-         Version       => Version_Num,
-         Image         => SD.Image,
-         Env           => SD.Env,
-         Env_Count     => SD.Env_Count,
-         Ports         => SD.Ports,
-         Ports_Count   => SD.Ports_Count,
-         Volumes       => SD.Volumes,
-         Volumes_Count => SD.Volumes_Count,
-         Description   => SD.Description,
-         Wanted_By     => SD.WantedBy,
-         Created_At    => Ada.Calendar.Clock);
-   end To_Service_Version;
-
    procedure Reconcile_State (Self : in out Controller_Instance) is
       use Podmander.Controller.Service_Catalog.Repository;
       use Podmander.Messages.Deploy_Commands;
@@ -353,31 +332,31 @@ package body Podmander.Controller is
             return False;
          end if;
 
--- Schedule the service for deployment
-          declare
-             Sched_Result : constant Scheduler.Schedule_Result :=
-               Scheduler.Schedule
-                 (Self.DB,
-                  Service_Id     => Reg_Result.Version.Service_Id,
-                  Target_Version => Reg_Result.Version.Version);
-          begin
-             if not Sched_Result.Ok then
-                if Sched_Result.Error = Scheduler.Multiple_Agents then
-                   Podmander.Logging.Error
-                     ("controller",
-                      "Multiple agents connected; cannot select target"
-                      & " for --test-config."
-                      & " Use podctl deploy for multi-node deploys.");
-                else
-                   Podmander.Logging.Error ("controller", "Failed to schedule " & To_String (Result.Config.Name));
-                end if;
-                return False;
-             end if;
-          end;
+--  Schedule the service for deployment
+         declare
+            Sched_Result : constant Scheduler.Schedule_Result :=
+              Scheduler.Schedule
+                (Self.DB,
+                 Service_Id     => Reg_Result.Version.Service_Id,
+                 Target_Version => Reg_Result.Version.Version);
+         begin
+            if not Sched_Result.Ok then
+               if Sched_Result.Error = Scheduler.Multiple_Agents then
+                  Podmander.Logging.Error
+                    ("controller",
+                     "Multiple agents connected; cannot select target"
+                     & " for --test-config."
+                     & " Use podctl deploy for multi-node deploys.");
+               else
+                  Podmander.Logging.Error ("controller", "Failed to schedule " & To_String (Result.Config.Name));
+               end if;
+               return False;
+            end if;
+         end;
 
-          Podmander.Logging.Info ("controller", "Scheduled " & To_String (Result.Config.Name) & " from " & Path);
-          return True;
-       end;
+         Podmander.Logging.Info ("controller", "Scheduled " & To_String (Result.Config.Name) & " from " & Path);
+         return True;
+      end;
    end Load_Test_Deploy;
 
 end Podmander.Controller;

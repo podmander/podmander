@@ -13,7 +13,7 @@ package body Podmander.Controller.Scheduler is
    use Ada.Strings.Unbounded;
    use Podmander.Controller.Service_Catalog.Repository;
 
-   -- Dummy entry returned in error cases where no real entry exists.
+   --  Dummy entry returned in error cases where no real entry exists.
    Dummy_Entry : constant Podmander.Controller.Service_Catalog_Entry :=
      (Id              => 0,
       Service_Id      => 0,
@@ -24,7 +24,7 @@ package body Podmander.Controller.Scheduler is
       Updated_At      => Clock);
 
    ---------------
-   -- Schedule
+   -- Schedule --
    ---------------
 
    function Schedule
