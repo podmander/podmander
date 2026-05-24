@@ -15,3 +15,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - service_versions table now uses service_id FK instead of service_name (#82)
+- service_catalog.node_id TEXT replaced with agent_id INTEGER FK to agents.id (#79)
