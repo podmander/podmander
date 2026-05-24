@@ -25,6 +25,11 @@ package Podmander.Controller is
    --  Semantic version number for a service deployment (always >= 1).
    --  Used for both Service_Version.Version and catalog Target_Version.
 
+   type Agent_Id_Type is new Integer;
+   --  Row identifier in the agents table. 0 means unassigned (no agent
+   --  has been scheduled for this catalog entry). Distinct from Integer
+   --  so a generic integer cannot be passed by mistake.
+
    -- State tracking types
 
    type Service_Version is record
@@ -57,7 +62,7 @@ package Podmander.Controller is
    type Service_Catalog_Entry is record
       Id              : Integer;
       Service_Id      : Service_Id_Type;
-      Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
+      Agent_Id        : Agent_Id_Type := 0;
       Current_Version : Natural := 0;
       Target_Version  : Service_Version_Type;
       State           : Catalog_Entry_State := Pending;
