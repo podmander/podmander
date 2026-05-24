@@ -25,7 +25,7 @@ package body Podmander.Controller.Service.Repository is
    begin
       Result.Id := Column_Int (QH, 0);
       Result.Service_Id := Podmander.Controller.Service_Id_Type (Column_Int (QH, 1));
-      Result.Version := Podmander.Controller.Service_Version_No'Value (Column_Text (QH, 2));
+      Result.Version := Podmander.Controller.Service_Version_Type'Value (Column_Text (QH, 2));
       Result.Image := To_Unbounded_String (Column_Text (QH, 3));
       Parse_Env_Array (Column_Text (QH, 4), Result.Env, Result.Env_Count);
       Parse_Port_Array (Column_Text (QH, 5), Result.Ports, Result.Ports_Count);
@@ -174,7 +174,7 @@ return
 function Get_Version
       (DB             : in out DB_Handle;
        Service_Id     : Podmander.Controller.Service_Id_Type;
-       Version        : Podmander.Controller.Service_Version_No)
+       Version        : Podmander.Controller.Service_Version_Type)
        return Podmander.Controller.Service_Version
    is
       QH : Query_Handle :=

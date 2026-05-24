@@ -21,7 +21,7 @@ package Podmander.Controller is
    --  Row identifier in the services table. Distinct from Integer so
    --  a catalog-entry ID or version number cannot be passed by mistake.
 
-   type Service_Version_No is new Positive;
+   type Service_Version_Type is new Positive;
    --  Semantic version number for a service deployment (always >= 1).
    --  Used for both Service_Version.Version and catalog Target_Version.
 
@@ -30,7 +30,7 @@ package Podmander.Controller is
    type Service_Version is record
       Id            : Integer;
       Service_Id    : Service_Id_Type;
-      Version       : Service_Version_No;
+      Version       : Service_Version_Type;
       Image         : Ada.Strings.Unbounded.Unbounded_String;
       Env           : Env_Array (1 .. MAX_ENV_ENTRIES);
       Env_Count     : Natural := 0;
@@ -59,7 +59,7 @@ package Podmander.Controller is
       Service_Id      : Service_Id_Type;
       Node_Id         : Ada.Strings.Unbounded.Unbounded_String;
       Current_Version : Natural := 0;
-      Target_Version  : Service_Version_No;
+      Target_Version  : Service_Version_Type;
       State           : Catalog_Entry_State := Pending;
       Updated_At      : Ada.Calendar.Time;
    end record;

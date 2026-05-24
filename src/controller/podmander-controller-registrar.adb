@@ -14,7 +14,7 @@ package body Podmander.Controller.Registrar is
 function To_Service_Version
       (ASD : Service_Definition;
        Service_Id : Podmander.Controller.Service_Id_Type;
-       Version    : Podmander.Controller.Service_Version_No)
+       Version    : Podmander.Controller.Service_Version_Type)
        return Podmander.Controller.Service_Version is
    begin
       return
@@ -43,7 +43,7 @@ function To_Service_Version
    is
       Name        : constant String := To_String (ASD.Name);
       Svc         : Podmander.Controller.Service.Service;
-      Version_Num : Podmander.Controller.Service_Version_No := 1;
+      Version_Num : Podmander.Controller.Service_Version_Type := 1;
       SV          : Podmander.Controller.Service_Version;
    begin
       -- Step 1: Create or get existing service row

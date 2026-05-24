@@ -35,7 +35,7 @@ function Get_By_Id
    function Get_Version
       (DB             : in out DB_Handle;
        Service_Id     : Podmander.Controller.Service_Id_Type;
-       Version        : Podmander.Controller.Service_Version_No)
+       Version        : Podmander.Controller.Service_Version_Type)
        return Podmander.Controller.Service_Version;
    -- Return a specific Service_Version by (service_id, version).
    -- Raises Database_Error with Not_Found if no matching version exists.

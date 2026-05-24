@@ -30,7 +30,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
             then Null_Unbounded_String
             else To_Unbounded_String (Node_Text)),
          Current_Version => Column_Int (QH, 3),
-         Target_Version  => Podmander.Controller.Service_Version_No'Value (Column_Text (QH, 4)),
+         Target_Version  => Podmander.Controller.Service_Version_Type'Value (Column_Text (QH, 4)),
           State           => Catalog_Entry_State'Val (Column_Int (QH, 5)),
          Updated_At      => ISO8601_To_Time (Column_Text (QH, 6)));
    exception
@@ -53,7 +53,7 @@ function Create_Entry
       (DB             : in out DB_Handle;
        Service_Id     : Podmander.Controller.Service_Id_Type;
        Node_Id        : String;
-       Target_Version : Podmander.Controller.Service_Version_No)
+       Target_Version : Podmander.Controller.Service_Version_Type)
        return Podmander.Controller.Service_Catalog_Entry
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
@@ -362,7 +362,7 @@ function Get_By_Service_Id
 
 function Set_Target
        (DB : in out DB_Handle; Id : Integer;
-        Target_Version : Podmander.Controller.Service_Version_No)
+        Target_Version : Podmander.Controller.Service_Version_Type)
         return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);

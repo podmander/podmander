@@ -40,7 +40,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       for V in 1 .. Versions loop
          SV.Id := 0;
          SV.Service_Id := Svc_Rec.Id;
-         SV.Version := Podmander.Controller.Service_Version_No (V);
+         SV.Version := Podmander.Controller.Service_Version_Type (V);
          SV.Image := To_Unbounded_String ("test:latest");
          SV.Created_At := Ada.Calendar.Clock;
          Svc_Repo.Create_Version (Handle, SV);
@@ -63,7 +63,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
       Assert (To_String (Cat_Ent.Node_Id) = "node-1", "Node_Id should be 'node-1'");
       Assert (Cat_Ent.Current_Version = 0, "Current_Version should be 0");
-      Assert (Cat_Ent.Target_Version = Podmander.Controller.Service_Version_No (2), "Target_Version should be 2");
+      Assert (Cat_Ent.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should be 2");
       Assert (Cat_Ent.State = Podmander.Controller.Pending, "State should be Pending");
    end Test_Create_Entry;
 
@@ -97,7 +97,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
       Assert (To_String (Loaded.Node_Id) = "node-1", "Node_Id should match");
-      Assert (Loaded.Target_Version = Podmander.Controller.Service_Version_No (2), "Target_Version should match");
+      Assert (Loaded.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should match");
    end Test_Get_By_Id;
 
    ---------------------------
@@ -300,7 +300,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Updated, "Set_Target should return True");
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
-      Assert (Loaded.Target_Version = Podmander.Controller.Service_Version_No (3), "Target_Version should be 3");
+      Assert (Loaded.Target_Version = Podmander.Controller.Service_Version_Type (3), "Target_Version should be 3");
       Assert (Loaded.State = Podmander.Controller.Pending, "State should be Pending after Set_Target");
    end Test_Set_Target;
 

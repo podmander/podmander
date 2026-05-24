@@ -14,7 +14,7 @@ function Create_Entry
       (DB             : in out DB_Handle;
        Service_Id     : Podmander.Controller.Service_Id_Type;
        Node_Id        : String;
-       Target_Version : Podmander.Controller.Service_Version_No)
+       Target_Version : Podmander.Controller.Service_Version_Type)
        return Podmander.Controller.Service_Catalog_Entry;
    -- Insert a new catalog entry. Node_Id may be empty (not yet scheduled).
    -- Returns the created entry with its auto-generated id.
@@ -60,7 +60,7 @@ function Create_Entry
 
 function Set_Target
        (DB : in out DB_Handle; Id : Integer;
-        Target_Version : Podmander.Controller.Service_Version_No)
+        Target_Version : Podmander.Controller.Service_Version_Type)
         return Boolean;
    -- Set target_version = Target_Version, state = Pending,
    -- update updated_at.  Returns True if a row was updated, False otherwise.

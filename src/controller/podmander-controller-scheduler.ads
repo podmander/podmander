@@ -22,7 +22,7 @@ package Podmander.Controller.Scheduler is
 
 function Schedule
       (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type;
-       Target_Version : Podmander.Controller.Service_Version_No)
+       Target_Version : Podmander.Controller.Service_Version_Type)
        return Schedule_Result;
    --  Create or update a catalog entry for the given service.
    --  If an entry already exists for this service, update target_version

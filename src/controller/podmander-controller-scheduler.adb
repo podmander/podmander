@@ -20,7 +20,7 @@ package body Podmander.Controller.Scheduler is
       Service_Id      => Podmander.Controller.Service_Id_Type'First,
       Node_Id         => Null_Unbounded_String,
       Current_Version => 0,
-      Target_Version  => Podmander.Controller.Service_Version_No'First,
+      Target_Version  => Podmander.Controller.Service_Version_Type'First,
       State           => Pending,
       Updated_At      => Clock);
 
@@ -30,7 +30,7 @@ package body Podmander.Controller.Scheduler is
 
 function Schedule
       (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type;
-       Target_Version : Podmander.Controller.Service_Version_No)
+       Target_Version : Podmander.Controller.Service_Version_Type)
        return Schedule_Result
    is
       --  Query registered agents to select a target node.
