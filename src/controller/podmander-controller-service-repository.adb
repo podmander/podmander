@@ -63,7 +63,7 @@ package body Podmander.Controller.Service.Repository is
 
       Bind_Text (SEL, 1, Name);
       if Step (SEL) then
-return
+         return
             (Id   => Podmander.Controller.Service_Id_Type (Column_Int (SEL, 0)),
              Name => To_Unbounded_String (Column_Text (SEL, 1)));
       else
@@ -89,7 +89,7 @@ return
    begin
       Bind_Text (QH, 1, Name);
       if Step (QH) then
-return
+         return
             (Id   => Podmander.Controller.Service_Id_Type (Column_Int (QH, 0)),
              Name => To_Unbounded_String (Column_Text (QH, 1)));
       else
@@ -114,7 +114,7 @@ return
    begin
       Bind_Text (QH, 1, Ada.Strings.Fixed.Trim (Id'Image, Ada.Strings.Left));
       if Step (QH) then
-return
+         return
             (Id   => Podmander.Controller.Service_Id_Type (Column_Int (QH, 0)),
              Name => To_Unbounded_String (Column_Text (QH, 1)));
       else
@@ -171,7 +171,7 @@ return
    -- Get_Version --
    -----------------
 
-function Get_Version
+   function Get_Version
       (DB             : in out DB_Handle;
        Service_Id     : Podmander.Controller.Service_Id_Type;
        Version        : Podmander.Controller.Service_Version_Type)
@@ -212,7 +212,7 @@ function Get_Version
    -- Get_Latest_Version --
    ------------------------
 
-function Get_Latest_Version
+   function Get_Latest_Version
       (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
        return Podmander.Controller.Service_Version
    is

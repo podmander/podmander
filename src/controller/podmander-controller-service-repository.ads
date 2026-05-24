@@ -21,7 +21,7 @@ package Podmander.Controller.Service.Repository is
    -- Return a Service by name. Raises Database_Error with Not_Found
    -- if no matching service exists.
 
-function Get_By_Id
+   function Get_By_Id
       (DB : in out DB_Handle; Id : Podmander.Controller.Service_Id_Type)
        return Service;
    -- Return a Service by id. Raises Database_Error with Not_Found

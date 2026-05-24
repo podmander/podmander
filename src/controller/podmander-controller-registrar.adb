@@ -11,7 +11,7 @@ package body Podmander.Controller.Registrar is
    use Ada.Calendar;
    use Ada.Strings.Unbounded;
 
-function To_Service_Version
+   function To_Service_Version
       (ASD : Service_Definition;
        Service_Id : Podmander.Controller.Service_Id_Type;
        Version    : Podmander.Controller.Service_Version_Type)

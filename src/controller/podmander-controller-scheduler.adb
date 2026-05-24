@@ -28,7 +28,7 @@ package body Podmander.Controller.Scheduler is
    -- Schedule --
    ---------------
 
-function Schedule
+   function Schedule
       (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type;
        Target_Version : Podmander.Controller.Service_Version_Type)
        return Schedule_Result

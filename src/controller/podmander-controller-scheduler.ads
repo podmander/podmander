@@ -20,7 +20,7 @@ package Podmander.Controller.Scheduler is
       Error         : Schedule_Error := None;
    end record;
 
-function Schedule
+   function Schedule
       (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type;
        Target_Version : Podmander.Controller.Service_Version_Type)
        return Schedule_Result;
