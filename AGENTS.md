@@ -99,9 +99,15 @@ These recur whenever we touch the database layer.
 
 ### Anti-patterns to avoid
 
+- **Copy-paste delegation**: Never write exact code in a fixer prompt and
+  expect it to paste it into files. Markdown code blocks lose indentation,
+  and the fixer can't match GNAT style from markdown. If you've already
+  designed the exact code, edit the files directly — no subagent needed.
 - **Orchestrator doing implementation work**: If the spec is clear and the
-  work is more than ~20 lines, delegate to @fixer. The orchestrator lacks
-  the execution speed and makes more compilation errors than @fixer.
+  work is more than ~20 lines, delegate to @fixer with *design guidance*
+  (what to change, where, constraints, patterns to follow from existing
+  code), not exact code. The fixer reads the actual files and matches the
+  existing style.
 - **Tests as a separate phase**: @fixer must follow TDD Red-Green — write
   the failing test first, then make it pass. Never batch all tests at the
   end.
