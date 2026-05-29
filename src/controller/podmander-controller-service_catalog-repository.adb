@@ -16,19 +16,21 @@ package body Podmander.Controller.Service_Catalog.Repository is
    ---------------
 
    function Row_To_Entry
-      (DB : in out DB_Handle; QH : in out Query_Handle)
-       return Podmander.Controller.Service_Catalog_Entry
-    is
-       pragma Unreferenced (DB);
-    begin
-       return
-         (Id              => Column_Int (QH, 0),
-          Service_Id      => Podmander.Controller.Service_Id_Type (Column_Int (QH, 1)),
-          Agent_Id        => Agent_Id_Type (Column_Int (QH, 2)),
-          Current_Version => Column_Int (QH, 3),
-          Target_Version  => Podmander.Controller.Service_Version_Type (Column_Int (QH, 4)),
-           State           => Catalog_Entry_State'Val (Column_Int (QH, 5)),
-          Updated_At      => ISO8601_To_Time (Column_Text (QH, 6)));
+     (DB : in out DB_Handle; QH : in out Query_Handle)
+      return Podmander.Controller.Service_Catalog_Entry
+   is
+      pragma Unreferenced (DB);
+   begin
+      return
+        (Id              => Column_Int (QH, 0),
+         Service_Id      =>
+           Podmander.Controller.Service_Id_Type (Column_Int (QH, 1)),
+         Agent_Id        => Agent_Id_Type (Column_Int (QH, 2)),
+         Current_Version => Column_Int (QH, 3),
+         Target_Version  =>
+           Podmander.Controller.Service_Version_Type (Column_Int (QH, 4)),
+         State           => Catalog_Entry_State'Val (Column_Int (QH, 5)),
+         Updated_At      => ISO8601_To_Time (Column_Text (QH, 6)));
    exception
       when Constraint_Error =>
          raise Database_Error
@@ -46,11 +48,11 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -----------------
 
    function Create_Entry
-      (DB             : in out DB_Handle;
-       Service_Id     : Podmander.Controller.Service_Id_Type;
-       Agent_Id       : Podmander.Controller.Agent_Id_Type := 0;
-       Target_Version : Podmander.Controller.Service_Version_Type)
-       return Podmander.Controller.Service_Catalog_Entry
+     (DB             : in out DB_Handle;
+      Service_Id     : Podmander.Controller.Service_Id_Type;
+      Agent_Id       : Podmander.Controller.Agent_Id_Type := 0;
+      Target_Version : Podmander.Controller.Service_Version_Type)
+      return Podmander.Controller.Service_Catalog_Entry
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=
@@ -63,8 +65,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "SELECT id, service_id, agent_id, current_version, "
-            & "target_version, state, updated_at "
-            & "FROM service_catalog WHERE id = last_insert_rowid()");
+           & "target_version, state, updated_at "
+           & "FROM service_catalog WHERE id = last_insert_rowid()");
    begin
       Bind_Int (QH, 1, Integer (Service_Id));
       if Agent_Id = 0 then
@@ -128,15 +130,15 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -----------------------
 
    function Get_By_Service_Id
-      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
-       return Podmander.Controller.Service_Catalog_Entry
+     (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
+      return Podmander.Controller.Service_Catalog_Entry
    is
       QH : Query_Handle :=
-         Prepare
-           (DB,
-            "SELECT id, service_id, agent_id, current_version, "
-            & "target_version, state, updated_at "
-            & "FROM service_catalog WHERE service_id = ? LIMIT 1");
+        Prepare
+          (DB,
+           "SELECT id, service_id, agent_id, current_version, "
+           & "target_version, state, updated_at "
+           & "FROM service_catalog WHERE service_id = ? LIMIT 1");
    begin
       Bind_Int (QH, 1, Integer (Service_Id));
       if Step (QH) then
@@ -237,8 +239,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
         Prepare
           (DB,
            "UPDATE service_catalog "
-            & "SET state = 2, updated_at = ? "
-            & "WHERE id = ?");
+           & "SET state = 2, updated_at = ? "
+           & "WHERE id = ?");
    begin
       Bind_Text (QH, 1, Now_Str);
       Bind_Int (QH, 2, Id);
@@ -253,7 +255,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -----------------
 
    function Assign_Agent
-     (DB : in out DB_Handle; Id : Integer;
+     (DB       : in out DB_Handle;
+      Id       : Integer;
       Agent_Id : Podmander.Controller.Agent_Id_Type) return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
@@ -344,9 +347,10 @@ package body Podmander.Controller.Service_Catalog.Repository is
    ---------------
 
    function Set_Target
-       (DB : in out DB_Handle; Id : Integer;
-        Target_Version : Podmander.Controller.Service_Version_Type)
-        return Boolean
+     (DB             : in out DB_Handle;
+      Id             : Integer;
+      Target_Version : Podmander.Controller.Service_Version_Type)
+      return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=

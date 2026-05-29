@@ -56,12 +56,12 @@ package body Podmander.Controller.Message_Handlers is
       end if;
 
       declare
-          Info : constant Podmander.Types.Agent_Info :=
-            (Id        => 0,
-             Name      => Req.Agent_Name,
-             Node_Id   => To_Unbounded_String (Node_Id),
-             State     => Podmander.Types.Registered,
-             Last_Seen => Ada.Calendar.Clock);
+         Info : constant Podmander.Types.Agent_Info :=
+           (Id        => 0,
+            Name      => Req.Agent_Name,
+            Node_Id   => To_Unbounded_String (Node_Id),
+            State     => Podmander.Types.Registered,
+            Last_Seen => Ada.Calendar.Clock);
       begin
          -- Persist to DB
          begin
@@ -178,7 +178,9 @@ package body Podmander.Controller.Message_Handlers is
                    Get_By_Id (H.Ctrl.DB, Result.Catalog_Id);
                Ok        : constant Boolean :=
                  Update_On_Success
-                   (H.Ctrl.DB, Cat_Entry.Id, Natural (Cat_Entry.Target_Version));
+                   (H.Ctrl.DB,
+                    Cat_Entry.Id,
+                    Natural (Cat_Entry.Target_Version));
                pragma Unreferenced (Ok);
             begin
                Podmander.Logging.Info
