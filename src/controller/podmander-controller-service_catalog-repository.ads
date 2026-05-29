@@ -37,7 +37,7 @@ package Podmander.Controller.Service_Catalog.Repository is
       return Podmander.Controller.Catalog_Entry_Vectors.Vector;
    -- Return all catalog entries where agent_id IS NULL.
 
-   function Get_Drift
+   function Get_Pending
       (DB : in out DB_Handle)
        return Podmander.Controller.Catalog_Entry_Vectors.Vector;
    -- Return all catalog entries where state = Pending.

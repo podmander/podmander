@@ -287,11 +287,11 @@ package body Podmander.Controller is
          end;
       end loop;
 
-      -- Step 2: Deploy drifted entries
+      -- Step 2: Deploy pending entries
       declare
-         Drift : constant Catalog_Entry_Vectors.Vector := Get_Drift (Self.DB);
+         Pending_Entries : constant Catalog_Entry_Vectors.Vector := Get_Pending (Self.DB);
       begin
-         for Cursor in Drift.Iterate loop
+         for Cursor in Pending_Entries.Iterate loop
              declare
                 Cat_Entry : constant Service_Catalog_Entry :=
                   Catalog_Entry_Vectors.Element (Cursor);

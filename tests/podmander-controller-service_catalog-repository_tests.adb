@@ -170,28 +170,25 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       end if;
    end Test_Get_Unscheduled;
 
-   ----------------
-   -- Test_Get_Drift
-   ----------------
+------------------
+   -- Test_Get_Pending
+   ------------------
 
-   procedure Test_Get_Drift (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Get_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D     : DB.DB_Handle := DB.Open (":memory:");
-      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
+      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Agent : constant Podmander.Controller.Agent_Id_Type := Seed_Agent (D, "agent-1", "node-1");
-      -- Entry with matching versions (no drift)
-      E1    : Podmander.Controller.Service_Catalog_Entry :=
-        Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 3);
-      -- Entry with drift: current 0 != target 2
-      E2    : Podmander.Controller.Service_Catalog_Entry :=
+      --  Entry with pending deployment: current_version defaults to 0, target is 2
+      E     : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
-      Drift : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Drift (D);
+      Pending : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Pending (D);
    begin
-      pragma Unreferenced (E1);
-      Assert (Natural (Drift.Length) = 2, "Should find 2 drift entries (both are current 0 != target)");
-   end Test_Get_Drift;
+      pragma Unreferenced (E);
+      Assert (Natural (Pending.Length) = 1, "Should find 1 pending entry");
+   end Test_Get_Pending;
 
-   procedure Test_Get_Drift_Excludes_Non_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Get_Pending_Excludes_Non_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D     : DB.DB_Handle := DB.Open (":memory:");
       Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
@@ -199,14 +196,14 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       E1    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 2);
       Ignored : Boolean;
-      Drift   : Podmander.Controller.Catalog_Entry_Vectors.Vector;
+      Pending : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
       -- Mark entry as failed
       Ignored := Repo.Update_On_Failure (D, E1.Id);
       pragma Unreferenced (Ignored);
-      Drift := Repo.Get_Drift (D);
-      Assert (Natural (Drift.Length) = 0, "Should find 0 drift entries when the only one has failed");
-   end Test_Get_Drift_Excludes_Non_Pending;
+      Pending := Repo.Get_Pending (D);
+      Assert (Natural (Pending.Length) = 0, "Should find 0 pending entries when the only one has failed");
+   end Test_Get_Pending_Excludes_Non_Pending;
 
    --------------------------
    -- Test_Update_On_Success
@@ -350,8 +347,9 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Register_Routine (T, Test_Get_By_Id'Access, "Get a catalog entry by id");
       Register_Routine (T, Test_Get_By_Id_Not_Found'Access, "Get by unknown id raises Not_Found");
       Register_Routine (T, Test_Get_Unscheduled'Access, "Get_Unscheduled returns only entries without a agent");
-      Register_Routine (T, Test_Get_Drift'Access, "Get_Drift returns entries where versions differ");
-      Register_Routine (T, Test_Get_Drift_Excludes_Non_Pending'Access, "Get_Drift excludes non-Pending entries");
+      Register_Routine (T, Test_Get_Pending'Access, "Get_Pending returns pending entries");
+      Register_Routine
+        (T, Test_Get_Pending_Excludes_Non_Pending'Access, "Get_Pending excludes non-Pending entries");
       Register_Routine (T, Test_Update_On_Success'Access, "Update_On_Success sets current_version and state = Deployed");
       Register_Routine (T, Test_Update_On_Success_Not_Found'Access, "Update_On_Success returns False for unknown id");
       Register_Routine (T, Test_Update_On_Failure'Access, "Update_On_Failure sets state = Failed");

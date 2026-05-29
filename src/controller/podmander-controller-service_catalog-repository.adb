@@ -178,10 +178,10 @@ package body Podmander.Controller.Service_Catalog.Repository is
    end Get_Unscheduled;
 
    ---------------
-   -- Get_Drift
+   -- Get_Pending
    ---------------
 
-   function Get_Drift
+   function Get_Pending
      (DB : in out DB_Handle)
       return Podmander.Controller.Catalog_Entry_Vectors.Vector
    is
@@ -198,7 +198,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
          Result.Append (Row_To_Entry (DB, QH));
       end loop;
       return Result;
-   end Get_Drift;
+   end Get_Pending;
 
    ----------------------
    -- Update_On_Success
