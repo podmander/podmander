@@ -2,7 +2,6 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
-with Ada.Strings.Unbounded;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Types;
@@ -10,7 +9,6 @@ with Podmander.Types;
 package body Podmander.Controller.Scheduler is
 
    use Ada.Calendar;
-   use Ada.Strings.Unbounded;
    use Podmander.Types;
    use Podmander.Controller.Service_Catalog.Repository;
 
