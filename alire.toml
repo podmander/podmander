@@ -22,7 +22,4 @@ command = ["scripts/run_tests.sh"]
 
 [[depends-on]]
 ada_toml = "~0.5.0"
-json = "~6.0.0"
-
-[[pins]]
-json = { url='ssh://git@code.monospacementor.com:222/podmander/json-ada.git', subdir='json', branch='v6.0.0-profile-fix' }
+gnatcoll = "~26.0.0"
