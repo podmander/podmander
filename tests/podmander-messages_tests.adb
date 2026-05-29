@@ -17,6 +17,8 @@ with Podmander.Messages.Registration_Responses;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
+with GNATCOLL.JSON;
+with Podmander.Messages.JSON_Utils;
 
 package body Podmander.Messages_Tests is
 
@@ -330,6 +332,211 @@ package body Podmander.Messages_Tests is
          null;  --  Expected
    end Test_Decode_Unknown_Kind;
 
+   -- JSON_Utils tests
+
+   -- Test: Get_Kind returns the same value that was set
+   procedure Test_Get_Kind (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Kind (Obj, "deploy");
+      Assert
+        (Podmander.Messages.JSON_Utils.Get_Kind (Obj) = "deploy",
+         "Get_Kind did not return the expected value");
+   end Test_Get_Kind;
+
+   -- Test: Get_Kind raises Decode_Error on missing field
+   procedure Test_Get_Kind_Missing (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      declare
+         Ignored : constant String := Podmander.Messages.JSON_Utils.Get_Kind (Obj);
+         pragma Unreferenced (Ignored);
+      begin
+         Assert (False, "Expected Decode_Error for missing kind field");
+      end;
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;  --  Expected
+   end Test_Get_Kind_Missing;
+
+   -- Test: Set_Kind then Get_Kind round-trip
+   procedure Test_Set_Kind_And_Get_Kind (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Kind (Obj, "deploy");
+      Assert
+        (Podmander.Messages.JSON_Utils.Get_Kind (Obj) = "deploy",
+         "Set_Kind then Get_Kind did not round-trip correctly");
+   end Test_Set_Kind_And_Get_Kind;
+
+   -- Test: Get_Field (String) returns the value that was set
+   procedure Test_Get_Field_String (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Field (Obj, "name", "web-1");
+      Assert
+        (Podmander.Messages.JSON_Utils.Get_Field (Obj, "name") = "web-1",
+         "Get_Field (String) did not return the expected value");
+   end Test_Get_Field_String;
+
+   -- Test: Get_Field (String) raises Decode_Error on missing field
+   procedure Test_Get_Field_String_Missing (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      declare
+         Ignored : constant String :=
+           Podmander.Messages.JSON_Utils.Get_Field (Obj, "name");
+         pragma Unreferenced (Ignored);
+      begin
+         Assert (False, "Expected Decode_Error for missing string field");
+      end;
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;  --  Expected
+   end Test_Get_Field_String_Missing;
+
+   -- Test: Get_Field (Integer) returns the value that was set
+   procedure Test_Get_Field_Integer (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Field (Obj, "catalog_id", 42);
+      Assert
+        (Podmander.Messages.JSON_Utils.Get_Field (Obj, "catalog_id") = 42,
+         "Get_Field (Integer) did not return the expected value");
+   end Test_Get_Field_Integer;
+
+   -- Test: Get_Field (Integer) raises Decode_Error on missing field
+   procedure Test_Get_Field_Integer_Missing (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Ignored : Integer;
+      pragma Unreferenced (Ignored);
+   begin
+      Ignored := Podmander.Messages.JSON_Utils.Get_Field (Obj, "catalog_id");
+      Assert (False, "Expected Decode_Error for missing integer field");
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;  --  Expected
+   end Test_Get_Field_Integer_Missing;
+
+   -- Test: Get_Field (Time) returns a value within 1 second of the original
+   procedure Test_Get_Field_Time (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Field (Obj, "ts", Now);
+      declare
+         use type Ada.Calendar.Time;
+         Result : constant Ada.Calendar.Time :=
+           Podmander.Messages.JSON_Utils.Get_Field (Obj, "ts");
+      begin
+         Assert
+           (abs (Result - Now) < 1.0,
+            "Timestamp drift exceeds 1 second");
+      end;
+   end Test_Get_Field_Time;
+
+   -- Test: Get_Field (Time) raises Decode_Error on missing field
+   procedure Test_Get_Field_Time_Missing (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Ignored : Ada.Calendar.Time;
+      pragma Unreferenced (Ignored);
+   begin
+      Ignored := Podmander.Messages.JSON_Utils.Get_Field (Obj, "ts");
+      Assert (False, "Expected Decode_Error for missing timestamp field");
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;  --  Expected
+   end Test_Get_Field_Time_Missing;
+
+   -- Test: Set_Field (String) stores value accessible via GNATCOLL directly
+   procedure Test_Set_Field_String (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Field (Obj, "name", "test");
+      declare
+         Name : constant String := Obj.Get ("name");
+      begin
+         Assert
+           (Name = "test",
+            "Set_Field (String) did not store the correct value");
+      end;
+   end Test_Set_Field_String;
+
+   -- Test: Set_Field (Integer) stores value accessible via GNATCOLL directly
+   procedure Test_Set_Field_Integer (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Field (Obj, "count", 7);
+      declare
+         Count : constant Integer := Obj.Get ("count");
+      begin
+         Assert
+           (Count = 7,
+            "Set_Field (Integer) did not store the correct value");
+      end;
+   end Test_Set_Field_Integer;
+
+   -- Test: Set_Field (Time) creates a string field accessible via GNATCOLL
+   procedure Test_Set_Field_Time (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      use type GNATCOLL.JSON.JSON_Value_Type;
+      Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+   begin
+      Podmander.Messages.JSON_Utils.Set_Field (Obj, "ts", Now);
+      Assert
+        (Obj.Has_Field ("ts"),
+         "Set_Field (Time) did not create the field");
+      Assert
+        (Obj.Get ("ts").Kind = GNATCOLL.JSON.JSON_String_Type,
+         "Set_Field (Time) did not store a string value");
+   end Test_Set_Field_Time;
+
+   -- Test: Result_Code JSON encode/decode round-trip
+   procedure Test_Result_Code_Round_Trip_JSON
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Result_Codes;
+   begin
+      for Code in Result_Code loop
+         Assert
+           (Podmander.Messages.JSON_Utils.Decode_Code
+              (Podmander.Messages.JSON_Utils.Encode_Code (Code)) = Code,
+            "JSON round-trip failed for " & Result_Code'Image (Code));
+      end loop;
+   end Test_Result_Code_Round_Trip_JSON;
+
+   -- Test: JSON_Utils.Decode_Code raises Decode_Error for unknown string
+   procedure Test_Decode_Code_Unknown_JSON
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use Podmander.Messages.Result_Codes;
+   begin
+      declare
+         Ignored : Result_Code;
+         pragma Unreferenced (Ignored);
+      begin
+         Ignored := Podmander.Messages.JSON_Utils.Decode_Code ("BOGUS");
+         Assert (False, "Expected Decode_Error for unknown code");
+      end;
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;  --  Expected
+   end Test_Decode_Code_Unknown_JSON;
+
    overriding
    procedure Register_Tests (T : in out Message_Test) is
       use AUnit.Test_Cases.Registration;
@@ -354,6 +561,34 @@ package body Podmander.Messages_Tests is
       Register_Routine (T, Test_Decode_Unknown_Kind'Access, "Decode of unknown message kind raises Decode_Error");
       Register_Routine
         (T, Test_Register_Duplicate_Kind'Access, "Registering an existing kind raises Already_Registered");
+      -- JSON_Utils tests
+      Register_Routine (T, Test_Get_Kind'Access, "Get_Kind returns set value");
+      Register_Routine
+        (T, Test_Get_Kind_Missing'Access, "Get_Kind raises Decode_Error for missing field");
+      Register_Routine
+        (T, Test_Set_Kind_And_Get_Kind'Access, "Set_Kind then Get_Kind round-trip");
+      Register_Routine
+        (T, Test_Get_Field_String'Access, "Get_Field (String) returns set value");
+      Register_Routine
+        (T, Test_Get_Field_String_Missing'Access, "Get_Field (String) raises Decode_Error for missing field");
+      Register_Routine
+        (T, Test_Get_Field_Integer'Access, "Get_Field (Integer) returns set value");
+      Register_Routine
+        (T, Test_Get_Field_Integer_Missing'Access, "Get_Field (Integer) raises Decode_Error for missing field");
+      Register_Routine
+        (T, Test_Get_Field_Time'Access, "Get_Field (Time) returns value within 1 second");
+      Register_Routine
+        (T, Test_Get_Field_Time_Missing'Access, "Get_Field (Time) raises Decode_Error for missing field");
+      Register_Routine
+        (T, Test_Set_Field_String'Access, "Set_Field (String) stores value via GNATCOLL");
+      Register_Routine
+        (T, Test_Set_Field_Integer'Access, "Set_Field (Integer) stores value via GNATCOLL");
+      Register_Routine
+        (T, Test_Set_Field_Time'Access, "Set_Field (Time) stores string field via GNATCOLL");
+      Register_Routine
+        (T, Test_Result_Code_Round_Trip_JSON'Access, "Result_Code JSON encode/decode round-trip");
+      Register_Routine
+        (T, Test_Decode_Code_Unknown_JSON'Access, "JSON_Utils.Decode_Code raises Decode_Error for unknown code");
    end Register_Tests;
 
    -- Suite setup
