@@ -7,5 +7,6 @@ alire/flags/
 alire/settings.toml
 alire/*.prev
 alire/alr_test_local.*
+alire/cache/
 *.crt
 *_secret

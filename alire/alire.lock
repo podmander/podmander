@@ -180,6 +180,18 @@ website = "https://github.com/geewiz/czmq_ada"
 commit = "83b0ba41f60d82617e759478333914ac3d0a82af"
 url = "git+https://github.com/geewiz/czmq_ada.git"
 [[solution.state]]
+crate = "json"
+fulfilment = "linked"
+pinned = false
+transitivity = "direct"
+versions = "~6.0.0"
+[solution.state.link]
+branch = "v6.0.0-profile-fix"
+lockfiled = true
+path = "alire/cache/pins/json"
+subdir = "json"
+url = "ssh://git@code.monospacementor.com:222/podmander/json-ada.git"
+[[solution.state]]
 crate = "spoon"
 fulfilment = "solved"
 pinned = false
