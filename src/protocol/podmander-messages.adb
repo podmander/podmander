@@ -3,6 +3,7 @@
 
 with Ada.Containers.Indefinite_Hashed_Maps;
 with Ada.Strings.Hash;
+with Podmander.Messages.JSON_Utils;
 
 package body Podmander.Messages is
 
@@ -14,9 +15,15 @@ package body Podmander.Messages is
         Equivalent_Keys => "=");
 
    Decoders : Decoder_Maps.Map;
+   Initialized : Boolean := False;
 
    procedure Register (Kind : String; Decoder : Decoder_Access) is
    begin
+      if not Initialized then
+         raise Program_Error with
+           "Decoder registry not yet initialized; "
+           & "missing pragma Elaborate(Podmander.Messages)?";
+      end if;
       if Decoders.Contains (Kind) then
          raise Already_Registered with "kind already registered: " & Kind;
       end if;
@@ -26,12 +33,23 @@ package body Podmander.Messages is
    function Decode
      (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class
    is
-      Kind : constant String := Msg.Pop_String;
+      Raw : constant String := Msg.Pop_String;
+      Obj : GNATCOLL.JSON.JSON_Value;
    begin
-      if Decoders.Contains (Kind) then
-         return Decoders (Kind).all (Msg);
-      end if;
-      raise Decode_Error with "unknown message kind: " & Kind;
+      Obj := GNATCOLL.JSON.Read (Raw);
+      declare
+         Kind : constant String := JSON_Utils.Get_Kind (Obj);
+      begin
+         if Decoders.Contains (Kind) then
+            return Decoders (Kind).all (Obj);
+         end if;
+         raise Decode_Error with "unknown message kind: " & Kind;
+      end;
+   exception
+      when GNATCOLL.JSON.Invalid_JSON_Stream =>
+         raise Decode_Error with "malformed JSON in message";
    end Decode;
 
+begin
+   Initialized := True;
 end Podmander.Messages;

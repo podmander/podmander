@@ -6,19 +6,19 @@ with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with CZMQ.Messages;
+with GNATCOLL.JSON;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Deploy_Commands;
 with Podmander.Messages.Deploy_Results;
 with Podmander.Messages.Heartbeats;
+with Podmander.Messages.JSON_Utils;
 with Podmander.Messages.Registration_Requests;
 with Podmander.Messages.Registration_Responses;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
-with GNATCOLL.JSON;
-with Podmander.Messages.JSON_Utils;
 
 package body Podmander.Messages_Tests is
 
@@ -44,7 +44,7 @@ package body Podmander.Messages_Tests is
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 3, "Expected 3 frames, got" & Msg.Size'Image);
+      Assert (Msg.Size = 1, "Expected 1 frame (JSON), got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -65,7 +65,7 @@ package body Podmander.Messages_Tests is
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 2, "Expected 2 frames, got" & Msg.Size'Image);
+      Assert (Msg.Size = 1, "Expected 1 frame (JSON), got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -85,7 +85,7 @@ package body Podmander.Messages_Tests is
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 3, "Expected 3 frames, got" & Msg.Size'Image);
+      Assert (Msg.Size = 1, "Expected 1 frame (JSON), got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -111,7 +111,7 @@ package body Podmander.Messages_Tests is
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 4, "Expected 4 frames, got" & Msg.Size'Image);
+      Assert (Msg.Size = 1, "Expected 1 frame (JSON), got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -202,7 +202,7 @@ package body Podmander.Messages_Tests is
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
-      Assert (Msg.Size = 1, "Expected 1 frame, got" & Msg.Size'Image);
+      Assert (Msg.Size = 1, "Expected 1 frame (JSON), got" & Msg.Size'Image);
 
       declare
          use Podmander.Messages;
@@ -293,10 +293,10 @@ package body Podmander.Messages_Tests is
    end Test_Decode_Code_Unknown;
 
    -- Stub decoder for Registration test (library-level so 'Access is valid).
-   function Stub_Decoder (Msg : in out CZMQ.Messages.Message) return Podmander.Messages.Protocol_Message'Class;
+   function Stub_Decoder (Obj : GNATCOLL.JSON.JSON_Value) return Podmander.Messages.Protocol_Message'Class;
 
-   function Stub_Decoder (Msg : in out CZMQ.Messages.Message) return Podmander.Messages.Protocol_Message'Class is
-      pragma Unreferenced (Msg);
+   function Stub_Decoder (Obj : GNATCOLL.JSON.JSON_Value) return Podmander.Messages.Protocol_Message'Class is
+      pragma Unreferenced (Obj);
    begin
       return
         Podmander.Messages.Registration_Requests.Registration_Request'
@@ -319,7 +319,7 @@ package body Podmander.Messages_Tests is
       pragma Unreferenced (T);
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      Msg.Add_String ("bogus");
+      Msg.Add_String ("""{""""kind"""": """"bogus""""}""");
       declare
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
@@ -331,6 +331,24 @@ package body Podmander.Messages_Tests is
       when Podmander.Messages.Decode_Error =>
          null;  --  Expected
    end Test_Decode_Unknown_Kind;
+
+   -- Test: Decode of malformed JSON raises Decode_Error
+   procedure Test_Decode_Malformed_JSON (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Msg.Add_String ("not json at all");
+      declare
+         use Podmander.Messages;
+         Decoded : constant Protocol_Message'Class := Decode (Msg);
+         pragma Unreferenced (Decoded);
+      begin
+         Assert (False, "Expected Decode_Error for malformed JSON");
+      end;
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;  --  Expected
+   end Test_Decode_Malformed_JSON;
 
    -- JSON_Utils tests
 
@@ -559,6 +577,7 @@ package body Podmander.Messages_Tests is
       Register_Routine (T, Test_Result_Code_Round_Trip'Access, "Result_Code round-trip encode/decode");
       Register_Routine (T, Test_Decode_Code_Unknown'Access, "Decode_Code raises Decode_Error for unknown string");
       Register_Routine (T, Test_Decode_Unknown_Kind'Access, "Decode of unknown message kind raises Decode_Error");
+      Register_Routine (T, Test_Decode_Malformed_JSON'Access, "Decode of malformed JSON raises Decode_Error");
       Register_Routine
         (T, Test_Register_Duplicate_Kind'Access, "Registering an existing kind raises Already_Registered");
       -- JSON_Utils tests

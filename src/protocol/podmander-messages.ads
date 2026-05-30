@@ -2,17 +2,18 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with CZMQ.Messages;
+with GNATCOLL.JSON;
 
 package Podmander.Messages is
 
-   pragma Elaborate_Body;
-   -- Force the body to elaborate immediately after this spec so child
-   -- packages can safely call Register during their own elaboration.
+   -- Child package bodies that call Register during elaboration MUST
+   -- include pragma Elaborate(Podmander.Messages) to ensure the decoder
+   -- registry is initialized before their begin blocks execute.
 
    Decode_Error       : exception;
    Already_Registered : exception;
 
-   -- Message kind discriminator strings used as the first frame
+   -- Message kind discriminator strings used as the JSON "kind" field
    Registration_Request_Kind  : constant String := "registration";
    Registration_Response_Kind : constant String := "registered";
    Heartbeat_Kind             : constant String := "heartbeat";
@@ -86,13 +87,14 @@ package Podmander.Messages is
    -- keyed by its kind string at child-package elaboration.
    type Decoder_Access is
      access function
-       (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class;
+       (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class;
 
    procedure Register (Kind : String; Decoder : Decoder_Access);
 
    -- Decode a CZMQ message into the appropriate protocol message.
-   -- Raises Decode_Error if the message is malformed or the kind is not
-   -- registered.
+   -- Parses the single ZMQ frame as a JSON object and routes by the
+   -- "kind" field. Raises Decode_Error if the JSON is malformed or
+   -- the kind is not registered.
    function Decode
      (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class;
 
