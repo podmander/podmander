@@ -1,14 +1,22 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with GNATCOLL.JSON;
+with Podmander.Messages.JSON_Utils;
+
+pragma Elaborate (Podmander.Messages);
+
 package body Podmander.Messages.Registration_Responses is
 
    overriding
    procedure Encode
-     (Self : Registration_Response; Msg : in out CZMQ.Messages.Message) is
+     (Self : Registration_Response; Msg : in out CZMQ.Messages.Message)
+   is
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
-      Msg.Add_String (Registration_Response_Kind);
-      Msg.Add_String (To_String (Self.Node_Id));
+      JSON_Utils.Set_Kind (Obj, Registration_Response_Kind);
+      JSON_Utils.Set_Field (Obj, "node_id", To_String (Self.Node_Id));
+      Msg.Add_String (GNATCOLL.JSON.Write (Obj));
    end Encode;
 
    overriding
@@ -21,14 +29,12 @@ package body Podmander.Messages.Registration_Responses is
    end Dispatch_To;
 
    function Decode_Impl
-     (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
+     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class is
+      Node_Id : constant String := JSON_Utils.Get_Field (Obj, "node_id");
    begin
-      if Msg.Size < 1 then
-         raise Decode_Error with "registered: missing node_id frame";
-      end if;
       return
         Registration_Response'
-          (Node_Id => To_Unbounded_String (Msg.Pop_String));
+          (Node_Id => To_Unbounded_String (Node_Id));
    end Decode_Impl;
 
 begin

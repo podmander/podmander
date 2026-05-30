@@ -1,17 +1,24 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with GNATCOLL.JSON;
+with Podmander.Messages.JSON_Utils;
+
+pragma Elaborate (Podmander.Messages);
+
 package body Podmander.Messages.Deploy_Results is
 
    overriding
    procedure Encode (Self : Deploy_Result; Msg : in out CZMQ.Messages.Message)
    is
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
-      Msg.Add_String (Deploy_Ack_Kind);
-      Msg.Add_String (Integer'Image (Self.Catalog_Id));
-      Msg.Add_String (RC.Encode_Code (Self.Code));
-      Msg.Add_String (SU.To_String (Self.Service_Name));
-      Msg.Add_String (SU.To_String (Self.Error_Message));
+      JSON_Utils.Set_Kind (Obj, Deploy_Ack_Kind);
+      JSON_Utils.Set_Field (Obj, "catalog_id", Self.Catalog_Id);
+      JSON_Utils.Set_Field (Obj, "code", RC.Encode_Code (Self.Code));
+      JSON_Utils.Set_Field (Obj, "service_name", SU.To_String (Self.Service_Name));
+      JSON_Utils.Set_Field (Obj, "error_message", SU.To_String (Self.Error_Message));
+      Msg.Add_String (GNATCOLL.JSON.Write (Obj));
    end Encode;
 
    overriding
@@ -22,25 +29,16 @@ package body Podmander.Messages.Deploy_Results is
    end Dispatch_To;
 
    function Decode_Impl
-     (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class is
+     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class is
+      Service_Name : constant String := JSON_Utils.Get_Field (Obj, "service_name");
+      Error_Msg    : constant String := JSON_Utils.Get_Field (Obj, "error_message");
    begin
-      if Msg.Size < 4 then
-         raise Decode_Error with "deploy_ack: missing payload frames";
-      end if;
-      declare
-         Catalog_Id   : constant Integer := Integer'Value (Msg.Pop_String);
-         Code         : constant RC.Result_Code :=
-           RC.Decode_Code (Msg.Pop_String);
-         Service_Name : constant String := Msg.Pop_String;
-         Error_Msg    : constant String := Msg.Pop_String;
-      begin
-         return
-           Deploy_Result'
-             (Catalog_Id    => Catalog_Id,
-              Code          => Code,
-              Service_Name  => SU.To_Unbounded_String (Service_Name),
-              Error_Message => SU.To_Unbounded_String (Error_Msg));
-      end;
+      return
+        Deploy_Result'
+          (Catalog_Id    => JSON_Utils.Get_Field (Obj, "catalog_id"),
+           Code          => RC.Decode_Code (JSON_Utils.Get_Field (Obj, "code")),
+           Service_Name  => SU.To_Unbounded_String (Service_Name),
+           Error_Message => SU.To_Unbounded_String (Error_Msg));
    end Decode_Impl;
 
 begin

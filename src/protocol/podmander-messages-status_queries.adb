@@ -1,14 +1,21 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with GNATCOLL.JSON;
+with Podmander.Messages.JSON_Utils;
+
+pragma Elaborate (Podmander.Messages);
+
 package body Podmander.Messages.Status_Queries is
 
    overriding
    procedure Encode (Self : Status_Query; Msg : in out CZMQ.Messages.Message)
    is
       pragma Unreferenced (Self);
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
-      Msg.Add_String (Status_Kind);
+      JSON_Utils.Set_Kind (Obj, Status_Kind);
+      Msg.Add_String (GNATCOLL.JSON.Write (Obj));
    end Encode;
 
    overriding
@@ -19,9 +26,9 @@ package body Podmander.Messages.Status_Queries is
    end Dispatch_To;
 
    function Decode_Impl
-     (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class
+     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class
    is
-      pragma Unreferenced (Msg);
+      pragma Unreferenced (Obj);
    begin
       return Status_Query'(null record);
    end Decode_Impl;
