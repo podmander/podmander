@@ -14,5 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- ZMQ protocol migrated from positional multi-frame messages to single-frame JSON payloads with a `kind` field for dispatch (#70)
+- Switched JSON library from json-ada to GNATCOLL.JSON (#107)
 - service_versions table now uses service_id FK instead of service_name (#82)
 - service_catalog.node_id TEXT replaced with agent_id INTEGER FK to agents.id (#79)
