@@ -77,26 +77,6 @@ These recur whenever we touch the database layer.
 
 ## Subagent Delegation Strategy
 
-### When to delegate
-
-- **@fixer** for bounded implementation work: writing production code and
-  tests when the spec is clear. Give precise, scoped instructions with file
-  paths and expected patterns. Keep prompts under ~2000 words — if longer,
-  split into multiple @fixer calls.
-- **@oracle** for architectural review of plans and code, *between planning
-  and implementation*. High-value for catching design issues before code is
-  written.
-- **@librarian** (not @explorer) for external library API research. @explorer
-  searches the local codebase; @librarian searches documentation and examples.
-- **@explorer** for local codebase discovery: finding files, patterns, and
-  existing code locations.
-
-### When NOT to delegate
-
-- Single-file changes under ~20 lines.
-- Work tightly coupled to your current train of thought.
-- Decisions that need user approval first (e.g., package renames).
-
 ### Anti-patterns to avoid
 
 - **Copy-paste delegation**: Never write exact code in a fixer prompt and
