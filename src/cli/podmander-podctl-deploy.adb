@@ -3,17 +3,16 @@
 
 with Ada.IO_Exceptions;
 with Ada.Text_IO;
-with CZMQ.Certificates;
 with CZMQ.Messages;
-with CZMQ.Sockets;
 with Podmander.Enrollment;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Stack_Submissions;
 with Podmander.Messages.Stack_Submission_Results;
+with Podmander.Podctl.Connection;
 
-package body Podmander.Podctl.Client is
+package body Podmander.Podctl.Deploy is
 
    use type CZMQ.Messages.Receive_Status;
 
@@ -57,7 +56,7 @@ package body Podmander.Podctl.Client is
       return To_String (Result);
    end Read_File;
 
-   function Deploy
+   function Submit
      (TOML_Path : String;
       Cfg       : Podmander.Podctl.Config.Connection_Config)
       return Deploy_Result
@@ -91,37 +90,28 @@ package body Podmander.Podctl.Client is
       end case;
 
       declare
-         TOML_Content : constant String := Read_File (TOML_Path);
-         Cert         : CZMQ.Certificates.Certificate;
-         Sock         : CZMQ.Sockets.Socket;
-         Result       : Deploy_Result :=
+         Conn   : Connection.Controller_Connection;
+         Result : Deploy_Result :=
            (Outcome => Timeout,
             Message => To_Unbounded_String ("no reply from controller (timeout)"));
       begin
-         CZMQ.Certificates.Generate (Cert);
-         CZMQ.Sockets.Open_Dealer (Sock);
-         Cert.Apply (Sock);
-         Sock.Set_Curve_Serverkey (To_String (Parsed.Public_Key));
-         Sock.Set_Identity ("podctl");
-         Sock.Connect (To_String (Cfg.Controller));
-         Sock.Set_Receive_Timeout (Reply_Timeout_Ms);
+         Connection.Open
+           (Conn       => Conn,
+            Address    => To_String (Cfg.Controller),
+            Server_Key => To_String (Parsed.Public_Key));
 
-         declare
-            Out_Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-            Sub     : constant Stack_Submission :=
-              (TOML              => To_Unbounded_String (TOML_Content),
-               Enrollment_Secret => Parsed.Secret);
-         begin
-            Sub.Encode (Out_Msg);
-            Out_Msg.Send (Sock);
-         end;
+         Connection.Send
+           (Conn,
+            Stack_Submission'
+              (TOML              => To_Unbounded_String (Read_File (TOML_Path)),
+               Enrollment_Secret => Parsed.Secret));
 
          declare
             use Podmander.Messages;
             In_Msg : CZMQ.Messages.Message;
             Status : CZMQ.Messages.Receive_Status;
          begin
-            CZMQ.Messages.Receive (Sock, In_Msg, Status);
+            Connection.Receive (Conn, In_Msg, Status);
             if Status /= CZMQ.Messages.Timeout then
                begin
                   declare
@@ -143,7 +133,8 @@ package body Podmander.Podctl.Client is
                         Result :=
                           (Outcome => Rejected,
                            Message =>
-                             To_Unbounded_String ("unexpected response from controller"));
+                             To_Unbounded_String
+                               ("unexpected response from controller"));
                      end if;
                   end;
                exception
@@ -151,22 +142,21 @@ package body Podmander.Podctl.Client is
                      Result :=
                        (Outcome => Rejected,
                         Message =>
-                          To_Unbounded_String ("malformed response from controller"));
+                          To_Unbounded_String
+                            ("malformed response from controller"));
                end;
             end if;
          end;
 
-         CZMQ.Sockets.Close (Sock);
-         CZMQ.Certificates.Close (Cert);
+         Connection.Close (Conn);
          return Result;
       exception
          when CZMQ.CZMQ_Error =>
-            CZMQ.Sockets.Close (Sock);
-            CZMQ.Certificates.Close (Cert);
+            Connection.Close (Conn);
             return
               (Outcome => Timeout,
                Message => To_Unbounded_String ("connection refused"));
       end;
-   end Deploy;
+   end Submit;
 
-end Podmander.Podctl.Client;
+end Podmander.Podctl.Deploy;

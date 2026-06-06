@@ -4,23 +4,23 @@
 with Ada.Strings.Unbounded;
 with AUnit.Assertions;
 with AUnit.Test_Cases;
-with Podmander.Podctl.Client;
 with Podmander.Podctl.Config;
+with Podmander.Podctl.Deploy;
 
-package body Podmander.Podctl.Client_Tests is
+package body Podmander.Podctl.Deploy_Tests is
 
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
-   use Podmander.Podctl.Client;
+   use Podmander.Podctl.Deploy;
 
-   type Client_Test is new AUnit.Test_Cases.Test_Case with null record;
-
-   overriding
-   function Name (T : Client_Test) return AUnit.Message_String
-   is (AUnit.Format ("Podmander.Podctl.Client"));
+   type Deploy_Test is new AUnit.Test_Cases.Test_Case with null record;
 
    overriding
-   procedure Register_Tests (T : in out Client_Test);
+   function Name (T : Deploy_Test) return AUnit.Message_String
+   is (AUnit.Format ("Podmander.Podctl.Deploy"));
+
+   overriding
+   procedure Register_Tests (T : in out Deploy_Test);
 
    Fixture_Dir : constant String := "tests/fixtures/";
 
@@ -29,7 +29,7 @@ package body Podmander.Podctl.Client_Tests is
      "PTKN-0123456789012345678901234567890123456789-"
      & "00000000000000000000000000000000";
 
-   --  Token parsing: malformed token stops Deploy before opening a socket.
+   --  Token parsing: malformed token stops Submit before opening a socket.
    procedure Test_Invalid_Token_Returns_Token_Error
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -38,7 +38,7 @@ package body Podmander.Podctl.Client_Tests is
         (Controller => To_Unbounded_String ("tcp://localhost:5555"),
          Token      => To_Unbounded_String ("not-a-valid-token"));
       Result : constant Deploy_Result :=
-        Deploy (TOML_Path => Fixture_Dir & "valid.toml", Cfg => Cfg);
+        Submit (TOML_Path => Fixture_Dir & "valid.toml", Cfg => Cfg);
    begin
       Assert
         (Result.Outcome = Token_Error,
@@ -46,7 +46,7 @@ package body Podmander.Podctl.Client_Tests is
          & Deploy_Outcome'Image (Result.Outcome));
    end Test_Invalid_Token_Returns_Token_Error;
 
-   --  File liveness via Deploy: missing file is caught before the socket opens.
+   --  File liveness via Submit: missing file is caught before the socket opens.
    procedure Test_Missing_File_Returns_File_Error
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -55,9 +55,7 @@ package body Podmander.Podctl.Client_Tests is
         (Controller => To_Unbounded_String ("tcp://localhost:5555"),
          Token      => To_Unbounded_String (Valid_Token));
       Result : constant Deploy_Result :=
-        Deploy
-          (TOML_Path => "/nonexistent/stack.toml",
-           Cfg       => Cfg);
+        Submit (TOML_Path => "/nonexistent/stack.toml", Cfg => Cfg);
    begin
       Assert
         (Result.Outcome = File_Error,
@@ -65,7 +63,7 @@ package body Podmander.Podctl.Client_Tests is
          & Deploy_Outcome'Image (Result.Outcome));
    end Test_Missing_File_Returns_File_Error;
 
-   --  File liveness via Deploy: empty file is caught before the socket opens.
+   --  File liveness via Submit: empty file is caught before the socket opens.
    procedure Test_Empty_File_Returns_File_Error
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -74,9 +72,7 @@ package body Podmander.Podctl.Client_Tests is
         (Controller => To_Unbounded_String ("tcp://localhost:5555"),
          Token      => To_Unbounded_String (Valid_Token));
       Result : constant Deploy_Result :=
-        Deploy
-          (TOML_Path => Fixture_Dir & "empty.toml",
-           Cfg       => Cfg);
+        Submit (TOML_Path => Fixture_Dir & "empty.toml", Cfg => Cfg);
    begin
       Assert
         (Result.Outcome = File_Error,
@@ -166,7 +162,7 @@ package body Podmander.Podctl.Client_Tests is
    end Test_Failure_Exit_Codes_Are_Distinct;
 
    overriding
-   procedure Register_Tests (T : in out Client_Test) is
+   procedure Register_Tests (T : in out Deploy_Test) is
       use AUnit.Test_Cases.Registration;
    begin
       Register_Routine
@@ -204,7 +200,7 @@ package body Podmander.Podctl.Client_Tests is
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
-   TC     : aliased Client_Test;
+   TC     : aliased Deploy_Test;
 
    function Suite return AUnit.Test_Suites.Access_Test_Suite is
    begin
@@ -212,4 +208,4 @@ package body Podmander.Podctl.Client_Tests is
       return Result'Access;
    end Suite;
 
-end Podmander.Podctl.Client_Tests;
+end Podmander.Podctl.Deploy_Tests;

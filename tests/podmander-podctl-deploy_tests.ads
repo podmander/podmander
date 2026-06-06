@@ -3,8 +3,8 @@
 
 with AUnit.Test_Suites;
 
-package Podmander.Podctl.Client_Tests is
+package Podmander.Podctl.Deploy_Tests is
 
    function Suite return AUnit.Test_Suites.Access_Test_Suite;
 
-end Podmander.Podctl.Client_Tests;
+end Podmander.Podctl.Deploy_Tests;

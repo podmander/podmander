@@ -5,8 +5,8 @@ with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with GNAT.OS_Lib;
 with GNAT.Strings;
-with Podmander.Podctl.Client;
 with Podmander.Podctl.Config;
+with Podmander.Podctl.Deploy;
 
 package body Podmander.Podctl.Commands.Deploy is
 
@@ -58,9 +58,9 @@ package body Podmander.Podctl.Commands.Deploy is
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
       pragma Unreferenced (Cmd);
       --  Rename avoids ambiguity between the package name "Deploy" and
-      --  Podmander.Podctl.Client.Deploy.
-      package Client renames Podmander.Podctl.Client;
-      use type Client.Deploy_Outcome;
+      --  Podmander.Podctl.Deploy.Submit.
+      package D renames Podmander.Podctl.Deploy;
+      use type D.Deploy_Outcome;
       use type GNAT.Strings.String_Access;
    begin
       if Args.Is_Empty then
@@ -89,18 +89,18 @@ package body Podmander.Podctl.Commands.Deploy is
          end if;
 
          declare
-            Result : constant Client.Deploy_Result :=
-              Client.Deploy
+            Result : constant D.Deploy_Result :=
+              D.Submit
                 (TOML_Path => Args.First_Element,
                  Cfg       => Cfg_Result.Value);
          begin
-            if Result.Outcome = Client.Accepted then
+            if Result.Outcome = D.Accepted then
                Ada.Text_IO.Put_Line (To_String (Result.Message));
             else
                Ada.Text_IO.Put_Line
                  (Ada.Text_IO.Standard_Error,
                   "Error: " & To_String (Result.Message));
-               GNAT.OS_Lib.OS_Exit (Client.Exit_Code_For (Result.Outcome));
+               GNAT.OS_Lib.OS_Exit (D.Exit_Code_For (Result.Outcome));
             end if;
          end;
       end;

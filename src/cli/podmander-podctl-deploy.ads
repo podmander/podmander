@@ -4,11 +4,9 @@
 with Ada.Strings.Unbounded;
 with Podmander.Podctl.Config;
 
-package Podmander.Podctl.Client is
+package Podmander.Podctl.Deploy is
 
    use Ada.Strings.Unbounded;
-
-   Reply_Timeout_Ms : constant := 5_000;
 
    type Deploy_Outcome is
      (Accepted,     --  Controller accepted the stack
@@ -24,7 +22,7 @@ package Podmander.Podctl.Client is
 
    type File_Check is (Ok, Not_Found, Empty);
 
-   function Deploy
+   function Submit
      (TOML_Path : String;
       Cfg       : Podmander.Podctl.Config.Connection_Config)
       return Deploy_Result;
@@ -35,4 +33,4 @@ package Podmander.Podctl.Client is
    --  Exposed for testing: map outcome to a process exit code.
    function Exit_Code_For (Outcome : Deploy_Outcome) return Integer;
 
-end Podmander.Podctl.Client;
+end Podmander.Podctl.Deploy;
