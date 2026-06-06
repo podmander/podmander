@@ -91,6 +91,28 @@ package body Podmander.Agent.Message_Handlers is
         ("agent", "Status_Response is agent-to-controller only");
    end Handle_Status_Response;
 
+   overriding
+   procedure Handle_Submit_Stack
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Submit_Stack_Type'Class)
+   is
+      pragma Unreferenced (H, M);
+   begin
+      Podmander.Logging.Warning
+        ("agent", "Submit_Stack is agent-to-controller only");
+   end Handle_Submit_Stack;
+
+   overriding
+   procedure Handle_Submit_Stack_Result
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Submit_Stack_Result_Type'Class)
+   is
+      pragma Unreferenced (H, M);
+   begin
+      Podmander.Logging.Warning
+        ("agent", "Submit_Stack_Result is controller-to-agent only");
+   end Handle_Submit_Stack_Result;
+
    procedure Send_Status_Response
      (H      : in out Agent_Handler;
       Result : Podmander.Messages.Status_Responses.Status_Response)

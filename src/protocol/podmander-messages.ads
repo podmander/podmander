@@ -21,6 +21,8 @@ package Podmander.Messages is
    Deploy_Ack_Kind            : constant String := "deploy_ack";
    Status_Kind                : constant String := "status";
    Status_Ack_Kind            : constant String := "status_ack";
+   Submit_Stack_Kind          : constant String := "submit_stack";
+   Submit_Stack_Result_Kind   : constant String := "submit_stack_ack";
 
    -- Base interface for all protocol messages
    type Protocol_Message is interface;
@@ -54,6 +56,8 @@ package Podmander.Messages is
    type Deploy_Result_Type is abstract new Protocol_Message with null record;
    type Status_Query_Type is abstract new Protocol_Message with null record;
    type Status_Response_Type is abstract new Protocol_Message with null record;
+   type Submit_Stack_Type is abstract new Protocol_Message with null record;
+   type Submit_Stack_Result_Type is abstract new Protocol_Message with null record;
 
    -- Handler contract for inbound messages. Adding a new message category
    -- adds a new abstract anchor above and a new primitive here; the
@@ -80,7 +84,15 @@ package Podmander.Messages is
    is abstract;
 
    procedure Handle_Status_Response
-     (H : in out Message_Handler; M : Status_Response_Type'Class)
+      (H : in out Message_Handler; M : Status_Response_Type'Class)
+   is abstract;
+
+   procedure Handle_Submit_Stack
+      (H : in out Message_Handler; M : Submit_Stack_Type'Class)
+   is abstract;
+
+   procedure Handle_Submit_Stack_Result
+      (H : in out Message_Handler; M : Submit_Stack_Result_Type'Class)
    is abstract;
 
    -- Decoder registry: each concrete message type registers a decoder

@@ -46,8 +46,18 @@ package Podmander.Agent.Message_Handlers is
 
    overriding
    procedure Handle_Status_Response
-     (H : in out Agent_Handler;
-      M : Podmander.Messages.Status_Response_Type'Class);
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Status_Response_Type'Class);
+
+   overriding
+   procedure Handle_Submit_Stack
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Submit_Stack_Type'Class);
+
+   overriding
+   procedure Handle_Submit_Stack_Result
+      (H : in out Agent_Handler;
+       M : Podmander.Messages.Submit_Stack_Result_Type'Class);
 
    procedure Send_Deploy_Result
      (H      : in out Agent_Handler;
