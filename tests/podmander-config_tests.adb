@@ -248,6 +248,33 @@ package body Podmander.Config_Tests is
       Assert (To_String (Config.WantedBy) = "multi-user.target", "WantedBy should be 'multi-user.target'");
    end Test_Service_Definition_WantedBy_Field;
 
+   -- Test parsing valid TOML content from a string
+   procedure Test_Parse_Content_Valid (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]" & ASCII.LF
+        & "image = ""nginx:latest""" & ASCII.LF;
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (Result.Success, "Parse_Content with valid content should succeed");
+      if Result.Success then
+         Assert (To_String (Result.Config.Image) = "nginx:latest",
+                 "Image should be 'nginx:latest'");
+      end if;
+   end Test_Parse_Content_Valid;
+
+   -- Test parsing invalid TOML content from a string
+   procedure Test_Parse_Content_Invalid (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Content : constant String := "this is not valid toml";
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success,
+              "Parse_Content with invalid content should fail");
+   end Test_Parse_Content_Invalid;
+
    -- Register all test routines
    overriding
    procedure Register_Tests (T : in out Config_Test) is
@@ -275,6 +302,10 @@ package body Podmander.Config_Tests is
          "Constructing a Service_Definition with Description field");
       Register_Routine
         (T, Test_Service_Definition_WantedBy_Field'Access, "Constructing a Service_Definition with WantedBy field");
+      Register_Routine
+        (T, Test_Parse_Content_Valid'Access, "Parse_Content with valid TOML content succeeds");
+      Register_Routine
+        (T, Test_Parse_Content_Invalid'Access, "Parse_Content with invalid TOML content fails");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
