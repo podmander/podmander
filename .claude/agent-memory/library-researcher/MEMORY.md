@@ -1,0 +1,5 @@
+- [CLIC package structure](clic_structure.md) — Main packages, versioning, dependencies
+- [CLIC Command interface](clic_command_interface.md) — Abstract Command type, required primitives
+- [CLIC Instance generic](clic_instance_generic.md) — Generic parameters, registration, execution entry points
+- [CLIC switch definition](clic_switch_definition.md) — Boolean/string/integer/callback switches via Define_Switch
+- [CLIC no-subcommand constraint](clic_no_subcommand_constraint.md) — CRITICAL: subcommands mandatory, no single-verb mode
