@@ -124,6 +124,28 @@ package body Podmander.Controller.Stack_Submission_Tests is
          "State should be Pending");
    end Test_Submit_Registration_And_Schedule_Success;
 
+   ---------------------------------------------------
+   -- Test_Submit_Registration_Failed
+   ---------------------------------------------------
+
+   procedure Test_Submit_Registration_Failed
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      Result : Submission.Submission_Result;
+   begin
+      -- Drop the service_versions table so that Get_Latest_Version
+      -- fails during registration. The Registrar catches this as
+      -- Database_Error (non-Not_Found) and returns Ok = False.
+      DB.Execute (D, "DROP TABLE service_versions");
+      Result := Submission.Submit (D, Valid_TOML);
+      Assert (not Result.Ok, "Submit should fail with missing table");
+      Assert
+        (Result.Error = Submission.Registration_Failed,
+         "Error should be Registration_Failed");
+   end Test_Submit_Registration_Failed;
+
    ------------------------------------
    -- Register tests
    ------------------------------------
@@ -148,6 +170,10 @@ package body Podmander.Controller.Stack_Submission_Tests is
         (T,
          Test_Submit_Registration_And_Schedule_Success'Access,
          "Submit valid TOML registers service and creates catalog entry");
+      Register_Routine
+        (T,
+         Test_Submit_Registration_Failed'Access,
+         "Submit returns Registration_Failed on database error");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

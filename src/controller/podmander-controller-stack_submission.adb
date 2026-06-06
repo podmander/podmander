@@ -32,7 +32,8 @@ package body Podmander.Controller.Stack_Submission is
                Message =>
                  To_Unbounded_String
                    ("Failed to register service "
-                    & To_String (Parse_Res.Config.Name)));
+                    & To_String (Parse_Res.Config.Name)
+                    & ": " & Reg_Result.Error'Image));
          end if;
 
          declare
@@ -50,7 +51,8 @@ package body Podmander.Controller.Stack_Submission is
                   Message =>
                     To_Unbounded_String
                       ("Failed to schedule "
-                       & To_String (Parse_Res.Config.Name)));
+                       & To_String (Parse_Res.Config.Name)
+                       & ": " & Sched_Result.Error'Image));
             end if;
          end;
 
