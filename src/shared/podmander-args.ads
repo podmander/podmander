@@ -3,7 +3,7 @@
 
 --  Minimal CLI argument parsing for --key=value style arguments.
 
-package Podmander.CLI is
+package Podmander.Args is
 
    -- Look up a --key=value argument. Returns Default if not found.
    function Get (Key : String; Default : String := "") return String;
@@ -15,4 +15,4 @@ package Podmander.CLI is
    -- Print a usage message and set Program_Error flag.
    procedure Print_Usage (Usage : String);
 
-end Podmander.CLI;
+end Podmander.Args;

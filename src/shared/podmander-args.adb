@@ -4,7 +4,7 @@
 with Ada.Command_Line;
 with Podmander.Logging;
 
-package body Podmander.CLI is
+package body Podmander.Args is
 
    function Get (Key : String; Default : String := "") return String is
       Equal_Prefix : constant String := "--" & Key & "=";
@@ -40,7 +40,7 @@ package body Podmander.CLI is
    exception
       when Constraint_Error =>
          Podmander.Logging.Warning
-           ("cli",
+           ("args",
             "Invalid value for --"
             & Key
             & ", using default"
@@ -51,7 +51,7 @@ package body Podmander.CLI is
    procedure Print_Usage (Usage : String) is
    begin
       Ada.Command_Line.Set_Exit_Status (1);
-      Podmander.Logging.Critical ("cli", "Usage: " & Usage);
+      Podmander.Logging.Critical ("args", "Usage: " & Usage);
    end Print_Usage;
 
-end Podmander.CLI;
+end Podmander.Args;

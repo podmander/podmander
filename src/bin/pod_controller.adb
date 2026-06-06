@@ -2,7 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Strings.Unbounded;
-with Podmander.CLI;
+with Podmander.Args;
 with Podmander.Controller;
 with Podmander.Logging;
 
@@ -12,7 +12,7 @@ procedure Pod_Controller is
    Token  : Unbounded_String;
 begin
    declare
-      Level_Str : constant String := Podmander.CLI.Get ("log-level", "info");
+      Level_Str : constant String := Podmander.Args.Get ("log-level", "info");
    begin
       Podmander.Logging.Set_Level
         (Podmander.Logging.Log_Level'Value (Level_Str));
@@ -24,7 +24,7 @@ begin
    end;
 
    Podmander.Controller.Set_Bind_Address
-     (Config, Podmander.CLI.Get ("bind", "tcp://*:5555"));
+     (Config, Podmander.Args.Get ("bind", "tcp://*:5555"));
 
    declare
       Ctrl : Podmander.Controller.Controller_Instance :=

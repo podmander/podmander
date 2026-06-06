@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Renamed `Podmander.CLI` package to `Podmander.Args` and files to `podmander-args.ads/adb` (#130)
 - ZMQ protocol migrated from positional multi-frame messages to single-frame JSON payloads with a `kind` field for dispatch (#70)
 - Switched JSON library from json-ada to GNATCOLL.JSON (#107)
 - service_versions table now uses service_id FK instead of service_name (#82)
