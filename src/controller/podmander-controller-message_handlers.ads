@@ -47,14 +47,14 @@ package Podmander.Controller.Message_Handlers is
        M : Podmander.Messages.Status_Response_Type'Class);
 
    overriding
-   procedure Handle_Submit_Stack
+   procedure Handle_Stack_Submission
       (H : in out Controller_Handler;
-       M : Podmander.Messages.Submit_Stack_Type'Class);
+       M : Podmander.Messages.Stack_Submission_Type'Class);
 
    overriding
-   procedure Handle_Submit_Stack_Result
+   procedure Handle_Stack_Submission_Result
       (H : in out Controller_Handler;
-       M : Podmander.Messages.Submit_Stack_Result_Type'Class);
+       M : Podmander.Messages.Stack_Submission_Result_Type'Class);
 
    procedure Send_Status_Query
      (H : in out Controller_Handler; Node_Id : String);

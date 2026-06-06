@@ -16,7 +16,7 @@ workloads, and must never be scheduled. That distinctness invites a dedicated
 operator socket and/or a distinct operator credential with its own lifecycle.
 
 For the v0.1 MVP ("basic CLI"), the first and only operator capability is
-submitting a service TOML for registration (`Submit_Stack`), which retires the
+submitting a service TOML for registration (`Stack_Submission`), which retires the
 `--test-config` proof-of-concept scaffold. The forces shaping the decision:
 
 - ADR-0036 mandates ZeroMQ as the *sole* transport between the parts of the
@@ -40,7 +40,7 @@ credential rather than introduce an operator-specific socket or credential.
   handshake) and the enrollment secret. No controller filesystem artifact (e.g.
   `controller.crt`) is read.
 - The enrollment secret travels in the operator message
-  (`Submit_Stack.Enrollment_Secret`) and is validated by the **same**
+  (`Stack_Submission.Enrollment_Secret`) and is validated by the **same**
   `Enrollment.Secret_Matches` check applied to agent registration.
 - `podctl` is **not** an agent: it does not send a `Registration_Request`, never
   appears in the `agents` table, and is never scheduled. Operator messages are
@@ -61,7 +61,7 @@ credential rather than introduce an operator-specific socket or credential.
 - Operator requests are *authenticated* (the secret is checked), not merely
   reachable — strictly stronger than a public-key-only trust model.
 - The existing `kind`-based message dispatch absorbs operator messages cheaply,
-  and the `<Verb>_<Object>` / `<Verb>_<Object>_Result` naming convention scales
+  and the `<Noun>_<Noun>` / `<Noun>_<Noun>_Result` naming convention scales
   to the anticipated operator command family.
 
 ### Negative
@@ -122,5 +122,5 @@ credential rather than introduce an operator-specific socket or credential.
 - [ADR-0036](0036-zeromq-unified-transport.md) — ZeroMQ as sole transport
 - [ADR-0037](0037-database-only-state-access.md) — Controller is the sole state
   writer
-- `DOMAIN.md` — CLI (`podctl`), Stack Submission, `Submit_Stack`,
-  `Submit_Stack_Result`
+- `DOMAIN.md` — CLI (`podctl`), Stack Submission, `Stack_Submission`,
+  `Stack_Submission_Result`

@@ -202,6 +202,16 @@ A message from Agent to Controller carrying a catalog_id, service name, and
 success/failure status. Confirms whether a deployment landed.
 _Avoid_: Deploy response, deployment result
 
+### Message naming convention
+
+Protocol message types follow the `<Noun>_<Noun>` pattern: the first word
+names the domain concept (Registration, Status, Stack_Submission), the second
+names the message role (Request, Response, Command, Result, Query). Reply
+types append `_Result` to the request type name (Stack_Submission →
+Stack_Submission_Result). The one exception is `Deploy_Command` / `Deploy_Result`,
+where "Deploy" reads as both verb and noun; all newer messages use the pure
+noun form.
+
 ### Stack Submission
 
 An operator's request, issued through `podctl deploy`, to submit a Stack
@@ -212,7 +222,7 @@ deployment asynchronously. For MVP the submitted Stack holds exactly one service
 and is not yet persisted as a Stack entity.
 _Avoid_: Deploy request (collides with Deploy_Command, the controller→agent message)
 
-### Submit_Stack
+### Stack_Submission
 
 A message from CLI (`podctl`) to Controller carrying the raw Stack TOML and an
 enrollment secret. The request side of a Stack Submission. The controller
@@ -220,14 +230,13 @@ authorizes the secret with the same check used for agent enrollment before
 acting.
 _Avoid_: Deploy request, config message
 
-### Submit_Stack_Result
+### Stack_Submission_Result
 
-A message from Controller to CLI (`podctl`) confirming that a Submit_Stack was
+A message from Controller to CLI (`podctl`) confirming that a Stack_Submission was
 accepted (parsed, validated, registered, scheduled) or reporting an error
 (authorization rejected, parse failure, validation failure). It does not report
 the eventual deployment outcome — that is observed through the controller's
-logs. Names the general convention for operator replies: `<Verb>_<Object>_Result`.
-_Avoid_: Submit response, deploy ack
+logs. _Avoid_: Submit response, deploy ack
 
 ### Secret
 

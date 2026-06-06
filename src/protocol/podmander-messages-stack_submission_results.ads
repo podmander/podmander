@@ -4,22 +4,22 @@
 with Ada.Strings.Unbounded;
 with CZMQ.Messages;
 
-package Podmander.Messages.Submit_Stack_Results is
+package Podmander.Messages.Stack_Submission_Results is
 
    use Ada.Strings.Unbounded;
 
    -- Controller -> Operator: result of a stack submission
-   type Submit_Stack_Result is new Submit_Stack_Result_Type with record
+   type Stack_Submission_Result is new Stack_Submission_Result_Type with record
       Success : Boolean := False;
       Message : Unbounded_String;
    end record;
 
    overriding
    procedure Encode
-     (Self : Submit_Stack_Result; Msg : in out CZMQ.Messages.Message);
+     (Self : Stack_Submission_Result; Msg : in out CZMQ.Messages.Message);
 
    overriding
    procedure Dispatch_To
-     (Self : Submit_Stack_Result; H : in out Message_Handler'Class);
+     (Self : Stack_Submission_Result; H : in out Message_Handler'Class);
 
-end Podmander.Messages.Submit_Stack_Results;
+end Podmander.Messages.Stack_Submission_Results;

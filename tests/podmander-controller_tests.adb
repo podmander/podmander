@@ -86,12 +86,12 @@ package body Podmander.Controller_Tests is
    overriding
    procedure Handle_Status_Response (H : in out Spy_Handler; M : Podmander.Messages.Status_Response_Type'Class);
 
-   overriding
-   procedure Handle_Submit_Stack (H : in out Spy_Handler; M : Podmander.Messages.Submit_Stack_Type'Class);
+    overriding
+    procedure Handle_Stack_Submission (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Type'Class);
 
-   overriding
-   procedure Handle_Submit_Stack_Result
-     (H : in out Spy_Handler; M : Podmander.Messages.Submit_Stack_Result_Type'Class);
+    overriding
+    procedure Handle_Stack_Submission_Result
+      (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Result_Type'Class);
 
    overriding
    procedure Handle_Registration_Request
@@ -136,21 +136,21 @@ package body Podmander.Controller_Tests is
       H.Last_Status_Resp := Podmander.Messages.Status_Responses.Status_Response (M);
    end Handle_Status_Response;
 
-   overriding
-   procedure Handle_Submit_Stack
-     (H : in out Spy_Handler; M : Podmander.Messages.Submit_Stack_Type'Class) is
-      pragma Unreferenced (H, M);
-   begin
-      null;
-   end Handle_Submit_Stack;
+    overriding
+    procedure Handle_Stack_Submission
+      (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Type'Class) is
+       pragma Unreferenced (H, M);
+    begin
+       null;
+    end Handle_Stack_Submission;
 
-   overriding
-   procedure Handle_Submit_Stack_Result
-     (H : in out Spy_Handler; M : Podmander.Messages.Submit_Stack_Result_Type'Class) is
-      pragma Unreferenced (H, M);
-   begin
-      null;
-   end Handle_Submit_Stack_Result;
+    overriding
+    procedure Handle_Stack_Submission_Result
+      (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Result_Type'Class) is
+       pragma Unreferenced (H, M);
+    begin
+       null;
+    end Handle_Stack_Submission_Result;
 
    -- Test: Registration_Request.Dispatch_To routes to Handle_Registration_Request
    procedure Test_Dispatch_Registration_Request (T : in out AUnit.Test_Cases.Test_Case'Class) is

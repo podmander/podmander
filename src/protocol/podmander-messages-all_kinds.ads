@@ -31,11 +31,11 @@ pragma Unreferenced (Podmander.Messages.Status_Queries);
 with Podmander.Messages.Status_Responses;
 pragma Unreferenced (Podmander.Messages.Status_Responses);
 
-with Podmander.Messages.Submit_Stacks;
-pragma Unreferenced (Podmander.Messages.Submit_Stacks);
+with Podmander.Messages.Stack_Submissions;
+pragma Unreferenced (Podmander.Messages.Stack_Submissions);
 
-with Podmander.Messages.Submit_Stack_Results;
-pragma Unreferenced (Podmander.Messages.Submit_Stack_Results);
+with Podmander.Messages.Stack_Submission_Results;
+pragma Unreferenced (Podmander.Messages.Stack_Submission_Results);
 
 package Podmander.Messages.All_Kinds is
 end Podmander.Messages.All_Kinds;

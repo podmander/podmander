@@ -259,25 +259,25 @@ package body Podmander.Controller.Message_Handlers is
    end Handle_Status_Response;
 
    overriding
-   procedure Handle_Submit_Stack
+   procedure Handle_Stack_Submission
       (H : in out Controller_Handler;
-       M : Podmander.Messages.Submit_Stack_Type'Class)
+       M : Podmander.Messages.Stack_Submission_Type'Class)
    is
       pragma Unreferenced (H, M);
    begin
       Podmander.Logging.Warning
-        ("controller", "Submit_Stack is agent-to-controller only");
-   end Handle_Submit_Stack;
+        ("controller", "Stack_Submission is agent-to-controller only");
+   end Handle_Stack_Submission;
 
    overriding
-   procedure Handle_Submit_Stack_Result
+   procedure Handle_Stack_Submission_Result
       (H : in out Controller_Handler;
-       M : Podmander.Messages.Submit_Stack_Result_Type'Class)
+       M : Podmander.Messages.Stack_Submission_Result_Type'Class)
    is
       pragma Unreferenced (H, M);
    begin
       Podmander.Logging.Warning
-        ("controller", "Submit_Stack_Result is controller-to-agent only");
-   end Handle_Submit_Stack_Result;
+        ("controller", "Stack_Submission_Result is controller-to-agent only");
+   end Handle_Stack_Submission_Result;
 
 end Podmander.Controller.Message_Handlers;

@@ -19,8 +19,8 @@ with Podmander.Messages.Registration_Responses;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
-with Podmander.Messages.Submit_Stacks;
-with Podmander.Messages.Submit_Stack_Results;
+with Podmander.Messages.Stack_Submissions;
+with Podmander.Messages.Stack_Submission_Results;
 
 package body Podmander.Messages_Tests is
 
@@ -294,11 +294,11 @@ package body Podmander.Messages_Tests is
          null;  --  Expected
    end Test_Decode_Code_Unknown;
 
-   -- Test: Submit_Stack round-trip encode/decode
-   procedure Test_Submit_Stack_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   -- Test: Stack_Submission round-trip encode/decode
+   procedure Test_Stack_Submission_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      use Podmander.Messages.Submit_Stacks;
-      Original : constant Submit_Stack :=
+      use Podmander.Messages.Stack_Submissions;
+      Original : constant Stack_Submission :=
         (TOML              => To_Unbounded_String ("[container]" & Character'Val (10) & "name = ""web"""),
          Enrollment_Secret => To_Unbounded_String ("secret456"));
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
@@ -310,22 +310,22 @@ package body Podmander.Messages_Tests is
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
-         Assert (Decoded in Submit_Stack, "Expected Submit_Stack");
+         Assert (Decoded in Stack_Submission, "Expected Stack_Submission");
          Assert
-           (To_String (Submit_Stack (Decoded).TOML) = To_String (Original.TOML),
+           (To_String (Stack_Submission (Decoded).TOML) = To_String (Original.TOML),
             "TOML content mismatch");
          Assert
-           (To_String (Submit_Stack (Decoded).Enrollment_Secret) = "secret456",
+           (To_String (Stack_Submission (Decoded).Enrollment_Secret) = "secret456",
             "Enrollment_Secret mismatch");
       end;
-   end Test_Submit_Stack_Round_Trip;
+   end Test_Stack_Submission_Round_Trip;
 
-   -- Test: Submit_Stack_Result round-trip encode/decode (success)
-   procedure Test_Submit_Stack_Result_Success_Round_Trip
+   -- Test: Stack_Submission_Result round-trip encode/decode (success)
+   procedure Test_Stack_Submission_Result_Success_Round_Trip
      (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      use Podmander.Messages.Submit_Stack_Results;
-      Original : constant Submit_Stack_Result :=
+      use Podmander.Messages.Stack_Submission_Results;
+      Original : constant Stack_Submission_Result :=
         (Success => True, Message => To_Unbounded_String ("stack deployed"));
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
@@ -336,20 +336,20 @@ package body Podmander.Messages_Tests is
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
-         Assert (Decoded in Submit_Stack_Result, "Expected Submit_Stack_Result");
-         Assert (Submit_Stack_Result (Decoded).Success = True, "Expected Success = True");
+         Assert (Decoded in Stack_Submission_Result, "Expected Stack_Submission_Result");
+         Assert (Stack_Submission_Result (Decoded).Success = True, "Expected Success = True");
          Assert
-           (To_String (Submit_Stack_Result (Decoded).Message) = "stack deployed",
+           (To_String (Stack_Submission_Result (Decoded).Message) = "stack deployed",
             "Message mismatch");
       end;
-   end Test_Submit_Stack_Result_Success_Round_Trip;
+   end Test_Stack_Submission_Result_Success_Round_Trip;
 
-   -- Test: Submit_Stack_Result round-trip encode/decode (failure)
-   procedure Test_Submit_Stack_Result_Failure_Round_Trip
+   -- Test: Stack_Submission_Result round-trip encode/decode (failure)
+   procedure Test_Stack_Submission_Result_Failure_Round_Trip
      (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      use Podmander.Messages.Submit_Stack_Results;
-      Original : constant Submit_Stack_Result :=
+      use Podmander.Messages.Stack_Submission_Results;
+      Original : constant Stack_Submission_Result :=
         (Success => False, Message => To_Unbounded_String ("invalid TOML"));
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
@@ -360,21 +360,21 @@ package body Podmander.Messages_Tests is
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
-         Assert (Decoded in Submit_Stack_Result, "Expected Submit_Stack_Result");
-         Assert (Submit_Stack_Result (Decoded).Success = False, "Expected Success = False");
+         Assert (Decoded in Stack_Submission_Result, "Expected Stack_Submission_Result");
+         Assert (Stack_Submission_Result (Decoded).Success = False, "Expected Success = False");
          Assert
-           (To_String (Submit_Stack_Result (Decoded).Message) = "invalid TOML",
+           (To_String (Stack_Submission_Result (Decoded).Message) = "invalid TOML",
             "Message mismatch");
       end;
-   end Test_Submit_Stack_Result_Failure_Round_Trip;
+   end Test_Stack_Submission_Result_Failure_Round_Trip;
 
-   -- Test: Decode of Submit_Stack_Result with invalid success field raises Decode_Error
-   procedure Test_Submit_Stack_Result_Invalid_Success (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   -- Test: Decode of Stack_Submission_Result with invalid success field raises Decode_Error
+   procedure Test_Stack_Submission_Result_Invalid_Success (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       -- Manually craft a message with an invalid "success" value
-      Msg.Add_String ("""{""""kind"""": """"submit_stack_ack"""", """"success"""": """"maybe"""", """"message"""": """"test""""}""");
+      Msg.Add_String ("""{""""kind"""": """"stack_submission_ack"""", """"success"""": """"maybe"""", """"message"""": """"test""""}""");
       declare
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
@@ -385,7 +385,7 @@ package body Podmander.Messages_Tests is
    exception
       when Podmander.Messages.Decode_Error =>
          null;  --  Expected
-   end Test_Submit_Stack_Result_Invalid_Success;
+   end Test_Stack_Submission_Result_Invalid_Success;
 
    -- Stub decoder for Registration test (library-level so 'Access is valid).
    function Stub_Decoder (Obj : GNATCOLL.JSON.JSON_Value) return Podmander.Messages.Protocol_Message'Class;
@@ -670,16 +670,16 @@ package body Podmander.Messages_Tests is
       Register_Routine
         (T, Test_Status_Response_Failed_Round_Trip'Access, "Status_Response (failure) round-trip encode/decode");
       Register_Routine
-        (T, Test_Submit_Stack_Round_Trip'Access, "Submit_Stack round-trip encode/decode");
+        (T, Test_Stack_Submission_Round_Trip'Access, "Stack_Submission round-trip encode/decode");
       Register_Routine
-        (T, Test_Submit_Stack_Result_Success_Round_Trip'Access,
-         "Submit_Stack_Result (success) round-trip encode/decode");
+        (T, Test_Stack_Submission_Result_Success_Round_Trip'Access,
+         "Stack_Submission_Result (success) round-trip encode/decode");
       Register_Routine
-        (T, Test_Submit_Stack_Result_Failure_Round_Trip'Access,
-         "Submit_Stack_Result (failure) round-trip encode/decode");
+        (T, Test_Stack_Submission_Result_Failure_Round_Trip'Access,
+         "Stack_Submission_Result (failure) round-trip encode/decode");
       Register_Routine
-        (T, Test_Submit_Stack_Result_Invalid_Success'Access,
-         "Submit_Stack_Result with invalid success field raises Decode_Error");
+        (T, Test_Stack_Submission_Result_Invalid_Success'Access,
+         "Stack_Submission_Result with invalid success field raises Decode_Error");
       Register_Routine (T, Test_Result_Code_Round_Trip'Access, "Result_Code round-trip encode/decode");
       Register_Routine (T, Test_Decode_Code_Unknown'Access, "Decode_Code raises Decode_Error for unknown string");
       Register_Routine (T, Test_Decode_Unknown_Kind'Access, "Decode of unknown message kind raises Decode_Error");
