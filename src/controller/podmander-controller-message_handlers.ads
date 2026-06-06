@@ -59,4 +59,10 @@ package Podmander.Controller.Message_Handlers is
    procedure Send_Status_Query
      (H : in out Controller_Handler; Node_Id : String);
 
+   procedure Send_Stack_Submission_Result
+     (H : in out Controller_Handler;
+      Success : Boolean;
+      Message : String;
+      Identity : String);
+
 end Podmander.Controller.Message_Handlers;

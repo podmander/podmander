@@ -12,9 +12,9 @@ with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Controller.Service;
 with Podmander.Controller.Service.Repository;
+with Podmander.Controller.Stack_Submission;
 with Podmander.Database;
 with Podmander.Enrollment;
-with Podmander.Controller.Message_Handlers;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
@@ -25,6 +25,8 @@ with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Responses;
 with Podmander.Messages.Registration_Requests;
 with Podmander.Messages.Registration_Responses;
+with Podmander.Messages.Stack_Submissions;
+with Podmander.Messages.Stack_Submission_Results;
 with Podmander.Types;
 
 package body Podmander.Controller_Tests is
@@ -53,7 +55,9 @@ package body Podmander.Controller_Tests is
       Deploy_Command_Seen,
       Deploy_Result_Seen,
       Status_Query_Seen,
-      Status_Response_Seen);
+      Status_Response_Seen,
+      Stack_Submission_Seen,
+      Stack_Submission_Result_Seen);
 
    package Reg_Reqs renames Podmander.Messages.Registration_Requests;
    package Heartbeats renames Podmander.Messages.Heartbeats;
@@ -65,6 +69,8 @@ package body Podmander.Controller_Tests is
       Last_Deploy_Cmd   : Podmander.Messages.Deploy_Commands.Deploy_Command;
       Last_Deploy_Res   : Podmander.Messages.Deploy_Results.Deploy_Result;
       Last_Status_Resp  : Podmander.Messages.Status_Responses.Status_Response;
+      Last_Stack_Submission        : Podmander.Messages.Stack_Submissions.Stack_Submission;
+      Last_Stack_Submission_Result : Podmander.Messages.Stack_Submission_Results.Stack_Submission_Result;
    end record;
 
    overriding
@@ -86,12 +92,12 @@ package body Podmander.Controller_Tests is
    overriding
    procedure Handle_Status_Response (H : in out Spy_Handler; M : Podmander.Messages.Status_Response_Type'Class);
 
-    overriding
-    procedure Handle_Stack_Submission (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Type'Class);
+   overriding
+   procedure Handle_Stack_Submission (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Type'Class);
 
-    overriding
-    procedure Handle_Stack_Submission_Result
-      (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Result_Type'Class);
+   overriding
+   procedure Handle_Stack_Submission_Result
+     (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Result_Type'Class);
 
    overriding
    procedure Handle_Registration_Request
@@ -136,21 +142,22 @@ package body Podmander.Controller_Tests is
       H.Last_Status_Resp := Podmander.Messages.Status_Responses.Status_Response (M);
    end Handle_Status_Response;
 
-    overriding
-    procedure Handle_Stack_Submission
-      (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Type'Class) is
-       pragma Unreferenced (H, M);
-    begin
-       null;
-    end Handle_Stack_Submission;
+   overriding
+   procedure Handle_Stack_Submission
+     (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Type'Class) is
+   begin
+      H.Kind := Stack_Submission_Seen;
+      H.Last_Stack_Submission := Podmander.Messages.Stack_Submissions.Stack_Submission (M);
+   end Handle_Stack_Submission;
 
-    overriding
-    procedure Handle_Stack_Submission_Result
-      (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Result_Type'Class) is
-       pragma Unreferenced (H, M);
-    begin
-       null;
-    end Handle_Stack_Submission_Result;
+   overriding
+   procedure Handle_Stack_Submission_Result
+     (H : in out Spy_Handler; M : Podmander.Messages.Stack_Submission_Result_Type'Class) is
+   begin
+      H.Kind := Stack_Submission_Result_Seen;
+      H.Last_Stack_Submission_Result :=
+        Podmander.Messages.Stack_Submission_Results.Stack_Submission_Result (M);
+   end Handle_Stack_Submission_Result;
 
    -- Test: Registration_Request.Dispatch_To routes to Handle_Registration_Request
    procedure Test_Dispatch_Registration_Request (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -544,6 +551,120 @@ package body Podmander.Controller_Tests is
       Assert (True, "Handle_Deploy_Result should not crash without version");
    end Test_Handle_Deploy_Result_No_Version;
 
+   -- Test: Handle_Stack_Submission with valid enrollment secret delegates
+   -- to Stack_Submission.Submit and registers a service.
+   procedure Test_Handle_Stack_Submission_Valid_Secret
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+      H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
+        Make_Handler (Ctrl'Access, "cli-1");
+      Cmd  : constant Podmander.Messages.Stack_Submissions.Stack_Submission :=
+        (TOML =>
+           To_Unbounded_String
+             ("[service.web]" & ASCII.LF
+              & "image = ""nginx:latest""" & ASCII.LF),
+         Enrollment_Secret => To_Unbounded_String ("secret"));
+   begin
+      H.Handle_Stack_Submission (Cmd);
+      -- Verify the service was registered in the DB
+      declare
+         Svc : constant Podmander.Controller.Service.Service :=
+           Svc_Repo.Get_By_Name (Ctrl.DB, "web");
+         pragma Unreferenced (Svc);
+      begin
+         null;  --  Get_By_Name raises Database_Error if not found
+      end;
+      Assert (True, "Handle_Stack_Submission with valid secret should register service");
+   exception
+      when Podmander.Database.Database_Error =>
+         Assert (False, "Expected service 'web' to be registered in DB");
+   end Test_Handle_Stack_Submission_Valid_Secret;
+
+   -- Test: Handle_Stack_Submission with wrong enrollment secret does NOT
+   -- delegate and does NOT register any service.
+   procedure Test_Handle_Stack_Submission_Bad_Secret
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+      H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
+        Make_Handler (Ctrl'Access, "cli-1");
+      Cmd  : constant Podmander.Messages.Stack_Submissions.Stack_Submission :=
+        (TOML =>
+           To_Unbounded_String
+             ("[service.web]" & ASCII.LF
+              & "image = ""nginx:latest""" & ASCII.LF),
+         Enrollment_Secret => To_Unbounded_String ("wrong_secret"));
+   begin
+      H.Handle_Stack_Submission (Cmd);
+      -- Verify no service was registered in the DB
+      declare
+         Svc : constant Podmander.Controller.Service.Service :=
+           Svc_Repo.Get_By_Name (Ctrl.DB, "web");
+         pragma Unreferenced (Svc);
+      begin
+         Assert (False, "Expected no service registered with wrong secret");
+      end;
+   exception
+      when Podmander.Database.Database_Error =>
+         --  Expected: no service "web" found
+         null;
+   end Test_Handle_Stack_Submission_Bad_Secret;
+
+   -- Test: Handle_Stack_Submission with valid secret but invalid TOML does NOT
+   -- register any service.
+   procedure Test_Handle_Stack_Submission_Invalid_TOML
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+      H    : Podmander.Controller.Message_Handlers.Controller_Handler :=
+        Make_Handler (Ctrl'Access, "cli-1");
+      Cmd  : constant Podmander.Messages.Stack_Submissions.Stack_Submission :=
+        (TOML =>
+           To_Unbounded_String
+             ("[service.web]" & ASCII.LF
+              & "ports = [""80:80""" & ASCII.LF),
+         -- Missing closing bracket: invalid TOML syntax
+         Enrollment_Secret => To_Unbounded_String ("secret"));
+   begin
+      H.Handle_Stack_Submission (Cmd);
+      -- Verify no service was registered (parse failed)
+      declare
+         Svc : constant Podmander.Controller.Service.Service :=
+           Svc_Repo.Get_By_Name (Ctrl.DB, "web");
+         pragma Unreferenced (Svc);
+      begin
+         Assert (False, "Expected no service registered with invalid TOML");
+      end;
+   exception
+      when Podmander.Database.Database_Error =>
+         --  Expected: no service "web" found
+         null;
+   end Test_Handle_Stack_Submission_Invalid_TOML;
+
+   -- Test: Stack_Submission.Submit returns error detail via 'Image
+   -- when given invalid TOML.
+   procedure Test_Submit_Registration_Failed
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+Result : constant Podmander.Controller.Stack_Submission.Submission_Result :=
+         Podmander.Controller.Stack_Submission.Submit
+           (Ctrl.DB,
+            "[service.web]" & ASCII.LF
+            & "ports = [""80:80""" & ASCII.LF);
+   begin
+      -- Submit should have returned Ok = False due to invalid TOML
+      Assert (not Result.Ok, "Submit with invalid TOML should return Ok = False");
+      Assert
+        (To_String (Result.Message)'Length > 0,
+         "Submit error message should not be empty");
+   end Test_Submit_Registration_Failed;
+
    overriding
    procedure Register_Tests (T : in out Controller_Test) is
       use AUnit.Test_Cases.Registration;
@@ -576,6 +697,22 @@ package body Podmander.Controller_Tests is
         (T, Test_Load_Test_Deploy_Invalid_File'Access, "Load_Test_Deploy with nonexistent file returns False");
       Register_Routine
         (T, Test_Handle_Deploy_Result_No_Version'Access, "Handle_Deploy_Result logs warning when no version exists");
+      Register_Routine
+        (T,
+         Test_Handle_Stack_Submission_Valid_Secret'Access,
+         "Handle_Stack_Submission with valid secret registers service");
+      Register_Routine
+        (T,
+         Test_Handle_Stack_Submission_Bad_Secret'Access,
+         "Handle_Stack_Submission with bad secret does not register");
+      Register_Routine
+        (T,
+         Test_Handle_Stack_Submission_Invalid_TOML'Access,
+         "Handle_Stack_Submission with invalid TOML does not register");
+      Register_Routine
+        (T,
+         Test_Submit_Registration_Failed'Access,
+         "Stack_Submission.Submit returns error detail on invalid TOML");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

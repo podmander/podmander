@@ -16,6 +16,9 @@ with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Queries;
 with Podmander.Messages.Status_Responses;
+with Podmander.Messages.Stack_Submissions;
+with Podmander.Messages.Stack_Submission_Results;
+with Podmander.Controller.Stack_Submission;
 
 package body Podmander.Controller.Message_Handlers is
 
@@ -263,10 +266,38 @@ package body Podmander.Controller.Message_Handlers is
       (H : in out Controller_Handler;
        M : Podmander.Messages.Stack_Submission_Type'Class)
    is
-      pragma Unreferenced (H, M);
+      use Podmander.Messages.Stack_Submissions;
+      Cmd : constant Podmander.Messages.Stack_Submissions.Stack_Submission :=
+        Podmander.Messages.Stack_Submissions.Stack_Submission (M);
    begin
-      Podmander.Logging.Warning
-        ("controller", "Stack_Submission is agent-to-controller only");
+      if not Podmander.Enrollment.Secret_Matches
+               (H.Ctrl.Config.Enrollment, To_String (Cmd.Enrollment_Secret))
+      then
+         Podmander.Logging.Warning
+           ("controller", "Invalid enrollment secret in Stack_Submission");
+         if H.Ctrl.Socket.Is_Valid then
+            Send_Stack_Submission_Result
+              (H,
+               Success => False,
+               Message => "Invalid enrollment secret",
+               Identity => To_String (H.Identity));
+         end if;
+         return;
+      end if;
+
+      declare
+Submission_Res : constant Podmander.Controller.Stack_Submission.Submission_Result :=
+            Podmander.Controller.Stack_Submission.Submit
+              (H.Ctrl.DB, To_String (Cmd.TOML));
+      begin
+         if H.Ctrl.Socket.Is_Valid then
+            Send_Stack_Submission_Result
+              (H,
+               Success => Submission_Res.Ok,
+               Message => To_String (Submission_Res.Message),
+               Identity => To_String (H.Identity));
+         end if;
+      end;
    end Handle_Stack_Submission;
 
    overriding
@@ -277,7 +308,28 @@ package body Podmander.Controller.Message_Handlers is
       pragma Unreferenced (H, M);
    begin
       Podmander.Logging.Warning
-        ("controller", "Stack_Submission_Result is controller-to-agent only");
+        ("controller", "Stack_Submission_Result is controller-to-operator only");
    end Handle_Stack_Submission_Result;
+
+   procedure Send_Stack_Submission_Result
+     (H : in out Controller_Handler;
+      Success : Boolean;
+      Message : String;
+      Identity : String)
+   is
+      use Podmander.Messages.Stack_Submission_Results;
+      Result_Msg : constant Stack_Submission_Result :=
+        (Success => Success,
+         Message => To_Unbounded_String (Message));
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Msg.Add_String (Identity);
+      Result_Msg.Encode (Msg);
+      Msg.Send (H.Ctrl.Socket);
+      Podmander.Logging.Info
+        ("controller",
+         "Sent Stack_Submission_Result to " & Identity
+         & (if Success then " (success)" else " (failure)"));
+   end Send_Stack_Submission_Result;
 
 end Podmander.Controller.Message_Handlers;

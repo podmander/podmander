@@ -54,12 +54,12 @@ package Podmander.Agent.Message_Handlers is
       (H : in out Agent_Handler;
        M : Podmander.Messages.Stack_Submission_Type'Class);
 
-   overriding
-   procedure Handle_Stack_Submission_Result
-      (H : in out Agent_Handler;
-       M : Podmander.Messages.Stack_Submission_Result_Type'Class);
+    overriding
+    procedure Handle_Stack_Submission_Result
+       (H : in out Agent_Handler;
+        M : Podmander.Messages.Stack_Submission_Result_Type'Class);
 
-   procedure Send_Deploy_Result
+    procedure Send_Deploy_Result
      (H      : in out Agent_Handler;
       Result : Podmander.Messages.Deploy_Results.Deploy_Result);
 
