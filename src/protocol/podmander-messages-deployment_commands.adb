@@ -6,14 +6,14 @@ with Podmander.Messages.JSON_Utils;
 
 pragma Elaborate (Podmander.Messages);
 
-package body Podmander.Messages.Deploy_Commands is
+package body Podmander.Messages.Deployment_Commands is
 
    overriding
-   procedure Encode (Self : Deploy_Command; Msg : in out CZMQ.Messages.Message)
+   procedure Encode (Self : Deployment_Command; Msg : in out CZMQ.Messages.Message)
    is
       Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
-      JSON_Utils.Set_Kind (Obj, Deploy_Kind);
+      JSON_Utils.Set_Kind (Obj, Deployment_Kind);
       JSON_Utils.Set_Field (Obj, "catalog_id", Self.Catalog_Id);
       JSON_Utils.Set_Field (Obj, "service_name", To_String (Self.Service_Name));
       JSON_Utils.Set_Field (Obj, "quadlet", To_String (Self.Quadlet));
@@ -22,9 +22,9 @@ package body Podmander.Messages.Deploy_Commands is
 
    overriding
    procedure Dispatch_To
-     (Self : Deploy_Command; H : in out Message_Handler'Class) is
+     (Self : Deployment_Command; H : in out Message_Handler'Class) is
    begin
-      H.Handle_Deploy_Command (Self);
+      H.Handle_Deployment_Command (Self);
    end Dispatch_To;
 
    function Decode_Impl
@@ -33,12 +33,12 @@ package body Podmander.Messages.Deploy_Commands is
       Quadlet      : constant String := JSON_Utils.Get_Field (Obj, "quadlet");
    begin
       return
-        Deploy_Command'
+        Deployment_Command'
           (Catalog_Id   => JSON_Utils.Get_Field (Obj, "catalog_id"),
            Service_Name => To_Unbounded_String (Service_Name),
            Quadlet      => To_Unbounded_String (Quadlet));
    end Decode_Impl;
 
 begin
-   Register (Deploy_Kind, Decode_Impl'Access);
-end Podmander.Messages.Deploy_Commands;
+   Register (Deployment_Kind, Decode_Impl'Access);
+end Podmander.Messages.Deployment_Commands;

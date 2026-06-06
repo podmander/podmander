@@ -4,7 +4,7 @@
 with CZMQ.Messages;
 with Podmander.Agent.Podman;
 with Podmander.Logging;
-with Podmander.Messages.Deploy_Commands;
+with Podmander.Messages.Deployment_Commands;
 
 package body Podmander.Agent.Message_Handlers is
 
@@ -31,43 +31,43 @@ package body Podmander.Agent.Message_Handlers is
    end Handle_Heartbeat;
 
    overriding
-   procedure Handle_Deploy_Command
+   procedure Handle_Deployment_Command
      (H : in out Agent_Handler;
-      M : Podmander.Messages.Deploy_Command_Type'Class)
+      M : Podmander.Messages.Deployment_Command_Type'Class)
    is
-      use Podmander.Messages.Deploy_Commands;
-      Cmd    : constant Deploy_Command := Deploy_Command (M);
+      use Podmander.Messages.Deployment_Commands;
+      Cmd    : constant Deployment_Command := Deployment_Command (M);
       Name   : constant String := To_String (Cmd.Service_Name);
-      Result : Podmander.Messages.Deploy_Results.Deploy_Result :=
+      Result : Podmander.Messages.Deployment_Results.Deployment_Result :=
         Podmander.Agent.Podman.Install_Quadlet
           (Service_Name => Name, Quadlet => To_String (Cmd.Quadlet));
    begin
       -- Echo catalog_id back as opaque correlation token
       Result.Catalog_Id := Cmd.Catalog_Id;
-      Send_Deploy_Result (H, Result);
-   end Handle_Deploy_Command;
+      Send_Deployment_Result (H, Result);
+   end Handle_Deployment_Command;
 
    overriding
-   procedure Handle_Deploy_Result
+   procedure Handle_Deployment_Result
      (H : in out Agent_Handler;
-      M : Podmander.Messages.Deploy_Result_Type'Class)
+      M : Podmander.Messages.Deployment_Result_Type'Class)
    is
       pragma Unreferenced (H, M);
    begin
       Podmander.Logging.Warning
-        ("agent", "Deploy_Result is agent-to-controller only");
-   end Handle_Deploy_Result;
+        ("agent", "Deployment_Result is agent-to-controller only");
+   end Handle_Deployment_Result;
 
-   procedure Send_Deploy_Result
+   procedure Send_Deployment_Result
      (H      : in out Agent_Handler;
-      Result : Podmander.Messages.Deploy_Results.Deploy_Result)
+      Result : Podmander.Messages.Deployment_Results.Deployment_Result)
    is
-      use Podmander.Messages.Deploy_Results;
+      use Podmander.Messages.Deployment_Results;
       Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Result.Encode (Msg);
       Msg.Send (H.Agt.Sock);
-   end Send_Deploy_Result;
+   end Send_Deployment_Result;
 
    overriding
    procedure Handle_Status_Query

@@ -27,14 +27,14 @@ package Podmander.Controller.Message_Handlers is
       M : Podmander.Messages.Heartbeat_Message_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Command
+   procedure Handle_Deployment_Command
      (H : in out Controller_Handler;
-      M : Podmander.Messages.Deploy_Command_Type'Class);
+      M : Podmander.Messages.Deployment_Command_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Result
+   procedure Handle_Deployment_Result
      (H : in out Controller_Handler;
-      M : Podmander.Messages.Deploy_Result_Type'Class);
+      M : Podmander.Messages.Deployment_Result_Type'Class);
 
    overriding
    procedure Handle_Status_Query

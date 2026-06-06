@@ -10,8 +10,8 @@ with GNATCOLL.JSON;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
-with Podmander.Messages.Deploy_Commands;
-with Podmander.Messages.Deploy_Results;
+with Podmander.Messages.Deployment_Commands;
+with Podmander.Messages.Deployment_Results;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.JSON_Utils;
 with Podmander.Messages.Registration_Requests;
@@ -102,11 +102,11 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Heartbeat_Round_Trip;
 
-   -- Test: Deploy_Command round-trip encode/decode
+   -- Test: Deployment_Command round-trip encode/decode
    procedure Test_Deploy_Command_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      use Podmander.Messages.Deploy_Commands;
-      Original : constant Deploy_Command :=
+      use Podmander.Messages.Deployment_Commands;
+      Original : constant Deployment_Command :=
         (Catalog_Id   => 42,
          Service_Name => To_Unbounded_String ("api"),
          Quadlet      => To_Unbounded_String ("[Unit]" & Character'Val (10) & "Name=api" & Character'Val (10)));
@@ -119,19 +119,19 @@ package body Podmander.Messages_Tests is
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
-         Assert (Decoded in Deploy_Command, "Expected Deploy_Command");
-         Assert (Deploy_Command (Decoded).Catalog_Id = 42, "Catalog_Id mismatch");
-         Assert (To_String (Deploy_Command (Decoded).Service_Name) = "api", "Service name mismatch");
+         Assert (Decoded in Deployment_Command, "Expected Deployment_Command");
+         Assert (Deployment_Command (Decoded).Catalog_Id = 42, "Catalog_Id mismatch");
+         Assert (To_String (Deployment_Command (Decoded).Service_Name) = "api", "Service name mismatch");
          Assert
-           (To_String (Deploy_Command (Decoded).Quadlet) = To_String (Original.Quadlet), "Quadlet content mismatch");
+           (To_String (Deployment_Command (Decoded).Quadlet) = To_String (Original.Quadlet), "Quadlet content mismatch");
       end;
    end Test_Deploy_Command_Round_Trip;
 
-   -- Test: Deploy_Result round-trip encode/decode (Ok)
+   -- Test: Deployment_Result round-trip encode/decode (Ok)
    procedure Test_Deploy_Result_Ok_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      use Podmander.Messages.Deploy_Results;
-      Original : constant Deploy_Result :=
+      use Podmander.Messages.Deployment_Results;
+      Original : constant Deployment_Result :=
         (Catalog_Id    => 42,
          Code          => Podmander.Messages.Result_Codes.Ok,
          Service_Name  => To_Unbounded_String ("api"),
@@ -144,19 +144,19 @@ package body Podmander.Messages_Tests is
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
-         Assert (Decoded in Deploy_Result, "Expected Deploy_Result");
-         Assert (Deploy_Result (Decoded).Catalog_Id = 42, "Catalog_Id mismatch");
-         Assert (Deploy_Result (Decoded).Code = Podmander.Messages.Result_Codes.Ok, "Expected Code = Ok");
-         Assert (To_String (Deploy_Result (Decoded).Service_Name) = "api", "Service name mismatch");
-         Assert (To_String (Deploy_Result (Decoded).Error_Message) = "", "Expected empty error message");
+         Assert (Decoded in Deployment_Result, "Expected Deployment_Result");
+         Assert (Deployment_Result (Decoded).Catalog_Id = 42, "Catalog_Id mismatch");
+         Assert (Deployment_Result (Decoded).Code = Podmander.Messages.Result_Codes.Ok, "Expected Code = Ok");
+         Assert (To_String (Deployment_Result (Decoded).Service_Name) = "api", "Service name mismatch");
+         Assert (To_String (Deployment_Result (Decoded).Error_Message) = "", "Expected empty error message");
       end;
    end Test_Deploy_Result_Ok_Round_Trip;
 
-   -- Test: Deploy_Result round-trip encode/decode (Failed)
+   -- Test: Deployment_Result round-trip encode/decode (Failed)
    procedure Test_Deploy_Result_Failed_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      use Podmander.Messages.Deploy_Results;
-      Original : constant Deploy_Result :=
+      use Podmander.Messages.Deployment_Results;
+      Original : constant Deployment_Result :=
         (Catalog_Id    => 7,
          Code          => Podmander.Messages.Result_Codes.Failed,
          Service_Name  => To_Unbounded_String ("db"),
@@ -169,16 +169,16 @@ package body Podmander.Messages_Tests is
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
-         Assert (Deploy_Result (Decoded).Code = Podmander.Messages.Result_Codes.Failed, "Expected Code = Failed");
-         Assert (To_String (Deploy_Result (Decoded).Error_Message) = "image pull failed", "Error message mismatch");
+         Assert (Deployment_Result (Decoded).Code = Podmander.Messages.Result_Codes.Failed, "Expected Code = Failed");
+         Assert (To_String (Deployment_Result (Decoded).Error_Message) = "image pull failed", "Error message mismatch");
       end;
    end Test_Deploy_Result_Failed_Round_Trip;
 
-   -- Test: Deploy_Result round-trip encode/decode (Unavailable)
+   -- Test: Deployment_Result round-trip encode/decode (Unavailable)
    procedure Test_Deploy_Result_Unavailable_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      use Podmander.Messages.Deploy_Results;
-      Original : constant Deploy_Result :=
+      use Podmander.Messages.Deployment_Results;
+      Original : constant Deployment_Result :=
         (Catalog_Id    => 99,
          Code          => Podmander.Messages.Result_Codes.Unavailable,
          Service_Name  => To_Unbounded_String ("svc"),
@@ -192,7 +192,7 @@ package body Podmander.Messages_Tests is
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
          Assert
-           (Deploy_Result (Decoded).Code = Podmander.Messages.Result_Codes.Unavailable, "Expected Code = Unavailable");
+           (Deployment_Result (Decoded).Code = Podmander.Messages.Result_Codes.Unavailable, "Expected Code = Unavailable");
       end;
    end Test_Deploy_Result_Unavailable_Round_Trip;
 
@@ -659,12 +659,12 @@ package body Podmander.Messages_Tests is
       Register_Routine
         (T, Test_Registration_Response_Round_Trip'Access, "Registration_Response round-trip encode/decode");
       Register_Routine (T, Test_Heartbeat_Round_Trip'Access, "Heartbeat_Message round-trip encode/decode");
-      Register_Routine (T, Test_Deploy_Command_Round_Trip'Access, "Deploy_Command round-trip encode/decode");
-      Register_Routine (T, Test_Deploy_Result_Ok_Round_Trip'Access, "Deploy_Result (success) round-trip encode/decode");
+      Register_Routine (T, Test_Deploy_Command_Round_Trip'Access, "Deployment_Command round-trip encode/decode");
+      Register_Routine (T, Test_Deploy_Result_Ok_Round_Trip'Access, "Deployment_Result (success) round-trip encode/decode");
       Register_Routine
-        (T, Test_Deploy_Result_Failed_Round_Trip'Access, "Deploy_Result (failure) round-trip encode/decode");
+        (T, Test_Deploy_Result_Failed_Round_Trip'Access, "Deployment_Result (failure) round-trip encode/decode");
       Register_Routine
-        (T, Test_Deploy_Result_Unavailable_Round_Trip'Access, "Deploy_Result (unavailable) round-trip encode/decode");
+        (T, Test_Deploy_Result_Unavailable_Round_Trip'Access, "Deployment_Result (unavailable) round-trip encode/decode");
       Register_Routine (T, Test_Status_Query_Round_Trip'Access, "Status_Query round-trip encode/decode");
       Register_Routine (T, Test_Status_Response_Ok_Round_Trip'Access, "Status_Response round-trip encode/decode");
       Register_Routine

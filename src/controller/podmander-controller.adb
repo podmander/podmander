@@ -18,7 +18,7 @@ with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
-with Podmander.Messages.Deploy_Commands;
+with Podmander.Messages.Deployment_Commands;
 with CZMQ.Signals;
 
 package body Podmander.Controller is
@@ -259,7 +259,7 @@ package body Podmander.Controller is
 
    procedure Reconcile_State (Self : in out Controller_Instance) is
       use Podmander.Controller.Service_Catalog.Repository;
-      use Podmander.Messages.Deploy_Commands;
+      use Podmander.Messages.Deployment_Commands;
 
       -- Step 1: Schedule unscheduled entries
       Unscheduled : constant Catalog_Entry_Vectors.Vector :=
@@ -354,7 +354,7 @@ package body Podmander.Controller is
                         WantedBy      => SD.WantedBy);
                      Quadlet      : constant String :=
                        Podmander.Generators.Quadlet.Render (SD_With_Name);
-                     Cmd          : constant Deploy_Command :=
+                     Cmd          : constant Deployment_Command :=
                        (Catalog_Id   => Cat_Entry.Id,
                         Service_Name => Svc.Name,
                         Quadlet      => To_Unbounded_String (Quadlet));

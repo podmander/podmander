@@ -17,8 +17,8 @@ package Podmander.Messages is
    Registration_Request_Kind  : constant String := "registration";
    Registration_Response_Kind : constant String := "registered";
    Heartbeat_Kind             : constant String := "heartbeat";
-   Deploy_Kind                : constant String := "deploy";
-   Deploy_Ack_Kind            : constant String := "deploy_ack";
+   Deployment_Kind            : constant String := "deployment";
+   Deployment_Ack_Kind        : constant String := "deployment_ack";
    Status_Kind                : constant String := "status";
    Status_Ack_Kind            : constant String := "status_ack";
    Stack_Submission_Kind        : constant String := "stack_submission";
@@ -52,8 +52,8 @@ package Podmander.Messages is
    with null record;
    type Heartbeat_Message_Type is abstract new Protocol_Message
    with null record;
-   type Deploy_Command_Type is abstract new Protocol_Message with null record;
-   type Deploy_Result_Type is abstract new Protocol_Message with null record;
+   type Deployment_Command_Type is abstract new Protocol_Message with null record;
+   type Deployment_Result_Type is abstract new Protocol_Message with null record;
    type Status_Query_Type is abstract new Protocol_Message with null record;
    type Status_Response_Type is abstract new Protocol_Message with null record;
    type Stack_Submission_Type is abstract new Protocol_Message with null record;
@@ -71,12 +71,12 @@ package Podmander.Messages is
      (H : in out Message_Handler; M : Heartbeat_Message_Type'Class)
    is abstract;
 
-   procedure Handle_Deploy_Command
-     (H : in out Message_Handler; M : Deploy_Command_Type'Class)
+   procedure Handle_Deployment_Command
+     (H : in out Message_Handler; M : Deployment_Command_Type'Class)
    is abstract;
 
-   procedure Handle_Deploy_Result
-     (H : in out Message_Handler; M : Deploy_Result_Type'Class)
+   procedure Handle_Deployment_Result
+     (H : in out Message_Handler; M : Deployment_Result_Type'Class)
    is abstract;
 
    procedure Handle_Status_Query

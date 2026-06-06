@@ -18,8 +18,8 @@ with Podmander.Enrollment;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
-with Podmander.Messages.Deploy_Commands;
-with Podmander.Messages.Deploy_Results;
+with Podmander.Messages.Deployment_Commands;
+with Podmander.Messages.Deployment_Results;
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Responses;
@@ -52,8 +52,8 @@ package body Podmander.Controller_Tests is
      (None,
       Registration_Seen,
       Heartbeat_Seen,
-      Deploy_Command_Seen,
-      Deploy_Result_Seen,
+      Deployment_Command_Seen,
+      Deployment_Result_Seen,
       Status_Query_Seen,
       Status_Response_Seen,
       Stack_Submission_Seen,
@@ -66,8 +66,8 @@ package body Podmander.Controller_Tests is
       Kind              : Spy_Kind := None;
       Last_Registration : Reg_Reqs.Registration_Request;
       Last_Heartbeat    : Heartbeats.Heartbeat_Message;
-      Last_Deploy_Cmd   : Podmander.Messages.Deploy_Commands.Deploy_Command;
-      Last_Deploy_Res   : Podmander.Messages.Deploy_Results.Deploy_Result;
+      Last_Deploy_Cmd   : Podmander.Messages.Deployment_Commands.Deployment_Command;
+      Last_Deploy_Res   : Podmander.Messages.Deployment_Results.Deployment_Result;
       Last_Status_Resp  : Podmander.Messages.Status_Responses.Status_Response;
       Last_Stack_Submission        : Podmander.Messages.Stack_Submissions.Stack_Submission;
       Last_Stack_Submission_Result : Podmander.Messages.Stack_Submission_Results.Stack_Submission_Result;
@@ -81,10 +81,10 @@ package body Podmander.Controller_Tests is
    procedure Handle_Heartbeat (H : in out Spy_Handler; M : Podmander.Messages.Heartbeat_Message_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Command (H : in out Spy_Handler; M : Podmander.Messages.Deploy_Command_Type'Class);
+   procedure Handle_Deployment_Command (H : in out Spy_Handler; M : Podmander.Messages.Deployment_Command_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Result (H : in out Spy_Handler; M : Podmander.Messages.Deploy_Result_Type'Class);
+   procedure Handle_Deployment_Result (H : in out Spy_Handler; M : Podmander.Messages.Deployment_Result_Type'Class);
 
    overriding
    procedure Handle_Status_Query (H : in out Spy_Handler; M : Podmander.Messages.Status_Query_Type'Class);
@@ -115,18 +115,18 @@ package body Podmander.Controller_Tests is
    end Handle_Heartbeat;
 
    overriding
-   procedure Handle_Deploy_Command (H : in out Spy_Handler; M : Podmander.Messages.Deploy_Command_Type'Class) is
+   procedure Handle_Deployment_Command (H : in out Spy_Handler; M : Podmander.Messages.Deployment_Command_Type'Class) is
    begin
-      H.Kind := Deploy_Command_Seen;
-      H.Last_Deploy_Cmd := Podmander.Messages.Deploy_Commands.Deploy_Command (M);
-   end Handle_Deploy_Command;
+      H.Kind := Deployment_Command_Seen;
+      H.Last_Deploy_Cmd := Podmander.Messages.Deployment_Commands.Deployment_Command (M);
+   end Handle_Deployment_Command;
 
    overriding
-   procedure Handle_Deploy_Result (H : in out Spy_Handler; M : Podmander.Messages.Deploy_Result_Type'Class) is
+   procedure Handle_Deployment_Result (H : in out Spy_Handler; M : Podmander.Messages.Deployment_Result_Type'Class) is
    begin
-      H.Kind := Deploy_Result_Seen;
-      H.Last_Deploy_Res := Podmander.Messages.Deploy_Results.Deploy_Result (M);
-   end Handle_Deploy_Result;
+      H.Kind := Deployment_Result_Seen;
+      H.Last_Deploy_Res := Podmander.Messages.Deployment_Results.Deployment_Result (M);
+   end Handle_Deployment_Result;
 
    overriding
    procedure Handle_Status_Query (H : in out Spy_Handler; M : Podmander.Messages.Status_Query_Type'Class) is
@@ -514,22 +514,22 @@ package body Podmander.Controller_Tests is
          raise;
    end Test_Controller_Startup_Generates_Secret;
 
-   -- Test: Handle_Deploy_Result logs warning when no Service_Version exists
+   -- Test: Handle_Deployment_Result logs warning when no Service_Version exists
    -- (defensive: should not crash even if version lookup fails)
    procedure Test_Handle_Deploy_Result_No_Version (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
       H    : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "node-1");
-      Res  : constant Podmander.Messages.Deploy_Results.Deploy_Result :=
+      Res  : constant Podmander.Messages.Deployment_Results.Deployment_Result :=
         (Catalog_Id    => 0,
          Code          => Podmander.Messages.Result_Codes.Ok,
          Service_Name  => To_Unbounded_String ("web"),
          Error_Message => Null_Unbounded_String);
    begin
       -- No Service_Version created for "web"  -- this should not crash
-      H.Handle_Deploy_Result (Res);
+      H.Handle_Deployment_Result (Res);
       -- If we get here without crashing, the defensive handler worked
-      Assert (True, "Handle_Deploy_Result should not crash without version");
+      Assert (True, "Handle_Deployment_Result should not crash without version");
    end Test_Handle_Deploy_Result_No_Version;
 
    -- Test: Handle_Stack_Submission with valid enrollment secret delegates

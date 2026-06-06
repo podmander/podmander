@@ -7,11 +7,11 @@
 --  should `with` this package; the individual children are still
 --  `with`able directly when a consumer only needs one kind.
 
-with Podmander.Messages.Deploy_Commands;
-pragma Unreferenced (Podmander.Messages.Deploy_Commands);
+with Podmander.Messages.Deployment_Commands;
+pragma Unreferenced (Podmander.Messages.Deployment_Commands);
 
-with Podmander.Messages.Deploy_Results;
-pragma Unreferenced (Podmander.Messages.Deploy_Results);
+with Podmander.Messages.Deployment_Results;
+pragma Unreferenced (Podmander.Messages.Deployment_Results);
 
 with Podmander.Messages.Heartbeats;
 pragma Unreferenced (Podmander.Messages.Heartbeats);

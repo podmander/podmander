@@ -3,7 +3,7 @@
 
 --  Host-side Podman/Quadlet operations invoked by the agent.
 
-with Podmander.Messages.Deploy_Results;
+with Podmander.Messages.Deployment_Results;
 with Podmander.Messages.Status_Responses;
 
 package Podmander.Agent.Podman is
@@ -12,7 +12,7 @@ package Podmander.Agent.Podman is
    -- ~/.config/containers/systemd, reload systemd, and start the unit.
    function Install_Quadlet
      (Service_Name : String; Quadlet : String)
-      return Podmander.Messages.Deploy_Results.Deploy_Result;
+      return Podmander.Messages.Deployment_Results.Deployment_Result;
 
    -- Run `podman ps` and return a Status_Response carrying the
    -- formatted listing of currently active containers.

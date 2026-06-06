@@ -6,14 +6,14 @@ with Podmander.Messages.JSON_Utils;
 
 pragma Elaborate (Podmander.Messages);
 
-package body Podmander.Messages.Deploy_Results is
+package body Podmander.Messages.Deployment_Results is
 
    overriding
-   procedure Encode (Self : Deploy_Result; Msg : in out CZMQ.Messages.Message)
+   procedure Encode (Self : Deployment_Result; Msg : in out CZMQ.Messages.Message)
    is
       Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
-      JSON_Utils.Set_Kind (Obj, Deploy_Ack_Kind);
+      JSON_Utils.Set_Kind (Obj, Deployment_Ack_Kind);
       JSON_Utils.Set_Field (Obj, "catalog_id", Self.Catalog_Id);
       JSON_Utils.Set_Field (Obj, "code", RC.Encode_Code (Self.Code));
       JSON_Utils.Set_Field (Obj, "service_name", SU.To_String (Self.Service_Name));
@@ -23,9 +23,9 @@ package body Podmander.Messages.Deploy_Results is
 
    overriding
    procedure Dispatch_To
-     (Self : Deploy_Result; H : in out Message_Handler'Class) is
+     (Self : Deployment_Result; H : in out Message_Handler'Class) is
    begin
-      H.Handle_Deploy_Result (Self);
+      H.Handle_Deployment_Result (Self);
    end Dispatch_To;
 
    function Decode_Impl
@@ -34,7 +34,7 @@ package body Podmander.Messages.Deploy_Results is
       Error_Msg    : constant String := JSON_Utils.Get_Field (Obj, "error_message");
    begin
       return
-        Deploy_Result'
+        Deployment_Result'
           (Catalog_Id    => JSON_Utils.Get_Field (Obj, "catalog_id"),
            Code          => RC.Decode_Code (JSON_Utils.Get_Field (Obj, "code")),
            Service_Name  => SU.To_Unbounded_String (Service_Name),
@@ -42,5 +42,5 @@ package body Podmander.Messages.Deploy_Results is
    end Decode_Impl;
 
 begin
-   Register (Deploy_Ack_Kind, Decode_Impl'Access);
-end Podmander.Messages.Deploy_Results;
+   Register (Deployment_Ack_Kind, Decode_Impl'Access);
+end Podmander.Messages.Deployment_Results;

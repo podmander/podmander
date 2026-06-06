@@ -9,7 +9,7 @@ with Podmander.Types;
 with Podmander.Database;
 with Podmander.Enrollment;
 with Podmander.Logging;
-with Podmander.Messages.Deploy_Results;
+with Podmander.Messages.Deployment_Results;
 with Podmander.Messages.Registration_Requests;
 with Podmander.Messages.Registration_Responses;
 with Podmander.Messages.Heartbeats;
@@ -152,24 +152,24 @@ package body Podmander.Controller.Message_Handlers is
    end Handle_Heartbeat;
 
    overriding
-   procedure Handle_Deploy_Command
+   procedure Handle_Deployment_Command
      (H : in out Controller_Handler;
-      M : Podmander.Messages.Deploy_Command_Type'Class)
+      M : Podmander.Messages.Deployment_Command_Type'Class)
    is
       pragma Unreferenced (H, M);
    begin
       Podmander.Logging.Warning
-        ("controller", "Deploy_Command is controller-to-agent only");
-   end Handle_Deploy_Command;
+        ("controller", "Deployment_Command is controller-to-agent only");
+   end Handle_Deployment_Command;
 
    overriding
-   procedure Handle_Deploy_Result
+   procedure Handle_Deployment_Result
      (H : in out Controller_Handler;
-      M : Podmander.Messages.Deploy_Result_Type'Class)
+      M : Podmander.Messages.Deployment_Result_Type'Class)
    is
-      use Podmander.Messages.Deploy_Results;
+      use Podmander.Messages.Deployment_Results;
       use type Podmander.Messages.Result_Codes.Result_Code;
-      Result : constant Deploy_Result := Deploy_Result (M);
+      Result : constant Deployment_Result := Deployment_Result (M);
    begin
       if Result.Catalog_Id > 0 then
          -- Catalog-based deploy: update the catalog entry
@@ -226,7 +226,7 @@ package body Podmander.Controller.Message_Handlers is
                & To_String (Result.Error_Message));
          end if;
       end if;
-   end Handle_Deploy_Result;
+   end Handle_Deployment_Result;
 
    overriding
    procedure Handle_Status_Query

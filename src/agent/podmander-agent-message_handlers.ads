@@ -2,7 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Podmander.Messages;
-with Podmander.Messages.Deploy_Results;
+with Podmander.Messages.Deployment_Results;
 with Podmander.Messages.Status_Responses;
 
 package Podmander.Agent.Message_Handlers is
@@ -30,14 +30,14 @@ package Podmander.Agent.Message_Handlers is
       M : Podmander.Messages.Heartbeat_Message_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Command
+   procedure Handle_Deployment_Command
      (H : in out Agent_Handler;
-      M : Podmander.Messages.Deploy_Command_Type'Class);
+      M : Podmander.Messages.Deployment_Command_Type'Class);
 
    overriding
-   procedure Handle_Deploy_Result
+   procedure Handle_Deployment_Result
      (H : in out Agent_Handler;
-      M : Podmander.Messages.Deploy_Result_Type'Class);
+      M : Podmander.Messages.Deployment_Result_Type'Class);
 
    overriding
    procedure Handle_Status_Query
@@ -59,9 +59,9 @@ package Podmander.Agent.Message_Handlers is
        (H : in out Agent_Handler;
         M : Podmander.Messages.Stack_Submission_Result_Type'Class);
 
-    procedure Send_Deploy_Result
+    procedure Send_Deployment_Result
      (H      : in out Agent_Handler;
-      Result : Podmander.Messages.Deploy_Results.Deploy_Result);
+      Result : Podmander.Messages.Deployment_Results.Deployment_Result);
 
    procedure Send_Status_Response
      (H      : in out Agent_Handler;

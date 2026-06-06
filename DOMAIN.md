@@ -142,7 +142,7 @@ _Avoid_: Catalog row, state entry
 ### catalog_id
 
 An opaque correlation token identifying a Service Catalog entry. Carried in
-Deploy_Command and echoed in Deploy_Result so the controller can correlate
+Deployment_Command and echoed in Deployment_Result so the controller can correlate
 results without relying on (service_name, node_id) lookups.
 _Avoid_: Deployment ID, request ID
 
@@ -190,27 +190,25 @@ runs as part of each reconciliation cycle and whenever the operator deploys or
 scales a service. When conditions change (node labels, availability), the
 scheduler re-runs and updates expected state.
 
-### Deploy_Command
+### Deployment_Command
 
 A message from Controller to Agent carrying a catalog_id, service name, and
 Quadlet content. Instructs the agent to deploy or update a service.
-_Avoid_: Deploy request, deployment message
+_Avoid_: Deploy request, deploy message
 
-### Deploy_Result
+### Deployment_Result
 
 A message from Agent to Controller carrying a catalog_id, service name, and
 success/failure status. Confirms whether a deployment landed.
-_Avoid_: Deploy response, deployment result
+_Avoid_: Deploy response, deploy result
 
 ### Message naming convention
 
 Protocol message types follow the `<Noun>_<Noun>` pattern: the first word
-names the domain concept (Registration, Status, Stack_Submission), the second
-names the message role (Request, Response, Command, Result, Query). Reply
-types append `_Result` to the request type name (Stack_Submission →
-Stack_Submission_Result). The one exception is `Deploy_Command` / `Deploy_Result`,
-where "Deploy" reads as both verb and noun; all newer messages use the pure
-noun form.
+names the domain concept (Registration, Status, Stack_Submission, Deployment),
+the second names the message role (Request, Response, Command, Result, Query).
+Reply types append `_Result` to the request type name (Stack_Submission →
+Stack_Submission_Result, Deployment_Command → Deployment_Result).
 
 ### Stack Submission
 
@@ -220,7 +218,7 @@ the TOML, registers the resulting Service Version(s), and schedules them. It
 does **not** deploy in response — the supervisor loop performs the actual
 deployment asynchronously. For MVP the submitted Stack holds exactly one service
 and is not yet persisted as a Stack entity.
-_Avoid_: Deploy request (collides with Deploy_Command, the controller→agent message)
+_Avoid_: Deploy request (collides with Deployment_Command, the controller→agent message)
 
 ### Stack_Submission
 

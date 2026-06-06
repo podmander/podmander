@@ -5,13 +5,13 @@ with Ada.Strings.Unbounded;
 with CZMQ.Messages;
 with Podmander.Messages.Result_Codes;
 
-package Podmander.Messages.Deploy_Results is
+package Podmander.Messages.Deployment_Results is
 
    package SU renames Ada.Strings.Unbounded;
    package RC renames Podmander.Messages.Result_Codes;
 
-   -- Agent -> Controller: result of a deploy command
-   type Deploy_Result is new Deploy_Result_Type with record
+   -- Agent -> Controller: result of a deployment command
+   type Deployment_Result is new Deployment_Result_Type with record
       Catalog_Id    : Integer := 0;
       Code          : RC.Result_Code := RC.Ok;
       Service_Name  : SU.Unbounded_String;
@@ -19,10 +19,10 @@ package Podmander.Messages.Deploy_Results is
    end record;
 
    overriding
-   procedure Encode (Self : Deploy_Result; Msg : in out CZMQ.Messages.Message);
+   procedure Encode (Self : Deployment_Result; Msg : in out CZMQ.Messages.Message);
 
    overriding
    procedure Dispatch_To
-     (Self : Deploy_Result; H : in out Message_Handler'Class);
+     (Self : Deployment_Result; H : in out Message_Handler'Class);
 
-end Podmander.Messages.Deploy_Results;
+end Podmander.Messages.Deployment_Results;

@@ -8,7 +8,7 @@
 
 ADR-0009 established ZeroMQ with CURVE encryption as the control plane transport for commands, status, and heartbeats. ADR-0010 prescribed SSH/SCP as a separate data plane for file transfers (Quadlets, Caddyfiles, zone files, Restic configs).
 
-The initial implementation (PR #64) transferred Quadlet content inline as a string payload in a ZeroMQ `Deploy_Command` message. This worked without any SSH infrastructure. Reviewing this against ADR-0010 raised the question: is SSH actually needed?
+The initial implementation (PR #64) transferred Quadlet content inline as a string payload in a ZeroMQ `Deployment_Command` message. This worked without any SSH infrastructure. Reviewing this against ADR-0010 raised the question: is SSH actually needed?
 
 The files Podmander transfers between controller and agent are small configuration files — Quadlets under 1 KB, Caddyfiles and zone files under 10 KB. Podman pulls container images from registries; Podmander never transfers images. ZeroMQ handles messages up to ~2 GB, making these payloads well within its capacity.
 
@@ -28,10 +28,10 @@ All file payloads — Quadlets, Caddyfiles, CoreDNS zone files, Restic configura
 All protocol messages use JSON as their payload format. Each ZMQ message is a single JSON frame: a flat object with a `kind` field for dispatch and type-specific fields for the payload. Example:
 
 ```json
-{"kind": "deploy", "service_name": "webapp", "quadlet": "[Unit]\n..."}
+{"kind": "deployment", "service_name": "webapp", "quadlet": "[Unit]\n..."}
 ```
 
-This replaces the previous positional-frame encoding. All existing message types (registration, heartbeat, deploy, deploy_ack, status, status_ack) migrate to JSON. No mixed protocol — positional frames are removed entirely.
+This replaces the previous positional-frame encoding. All existing message types (registration, heartbeat, deployment, deployment_ack, status, status_ack) migrate to JSON. No mixed protocol — positional frames are removed entirely.
 
 Agent-side file writes use atomic replacement: content is written to a temporary file in the target directory, then renamed to the final path. This prevents partial files from being activated by systemd.
 
