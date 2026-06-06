@@ -1,10 +1,16 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with GNAT.OS_Lib;
+with GNAT.Strings;
+with Podmander.Podctl.Client;
+with Podmander.Podctl.Config;
 
 package body Podmander.Podctl.Commands.Deploy is
+
+   use Ada.Strings.Unbounded;
 
    overriding
    function Name (Cmd : Command) return CLIC.Subcommand.Identifier is
@@ -51,14 +57,53 @@ package body Podmander.Podctl.Commands.Deploy is
    overriding
    procedure Execute (Cmd : in out Command; Args : AAA.Strings.Vector) is
       pragma Unreferenced (Cmd);
+      --  Rename avoids ambiguity between the package name "Deploy" and
+      --  Podmander.Podctl.Client.Deploy.
+      package Client renames Podmander.Podctl.Client;
+      use type Client.Deploy_Outcome;
+      use type GNAT.Strings.String_Access;
    begin
       if Args.Is_Empty then
          Ada.Text_IO.Put_Line
            (Ada.Text_IO.Standard_Error, "Error: path argument required");
          GNAT.OS_Lib.OS_Exit (1);
       end if;
-      Ada.Text_IO.Put_Line
-        ("deploy " & Args.First_Element & " (not yet implemented)");
+
+      declare
+         Cfg_Result : constant Podmander.Podctl.Config.Load_Result :=
+           Podmander.Podctl.Config.Load
+             (Controller_Override =>
+                (if Commands.Controller_Value /= null
+                 then Commands.Controller_Value.all
+                 else ""),
+              Token_Override =>
+                (if Commands.Token_Value /= null
+                 then Commands.Token_Value.all
+                 else ""));
+      begin
+         if not Cfg_Result.Success then
+            Ada.Text_IO.Put_Line
+              (Ada.Text_IO.Standard_Error,
+               "Error: " & To_String (Cfg_Result.Message));
+            GNAT.OS_Lib.OS_Exit (1);
+         end if;
+
+         declare
+            Result : constant Client.Deploy_Result :=
+              Client.Deploy
+                (TOML_Path => Args.First_Element,
+                 Cfg       => Cfg_Result.Value);
+         begin
+            if Result.Outcome = Client.Accepted then
+               Ada.Text_IO.Put_Line (To_String (Result.Message));
+            else
+               Ada.Text_IO.Put_Line
+                 (Ada.Text_IO.Standard_Error,
+                  "Error: " & To_String (Result.Message));
+               GNAT.OS_Lib.OS_Exit (Client.Exit_Code_For (Result.Outcome));
+            end if;
+         end;
+      end;
    end Execute;
 
 end Podmander.Podctl.Commands.Deploy;
