@@ -52,7 +52,7 @@ package body Podmander.Controller.Message_Handlers is
       if not Podmander.Enrollment.Secret_Matches
                (H.Ctrl.Config.Enrollment, To_String (Req.Enrollment_Secret))
       then
-         Podmander.Logging.Warning
+         Podmander.Logging.Error
            ("controller",
             "Invalid enrollment secret from agent """ & Name & """");
          return;
@@ -273,7 +273,7 @@ package body Podmander.Controller.Message_Handlers is
       if not Podmander.Enrollment.Secret_Matches
                (H.Ctrl.Config.Enrollment, To_String (Cmd.Enrollment_Secret))
       then
-         Podmander.Logging.Warning
+         Podmander.Logging.Error
            ("controller", "Invalid enrollment secret in Stack_Submission");
          if H.Ctrl.Socket.Is_Valid then
             Send_Stack_Submission_Result
