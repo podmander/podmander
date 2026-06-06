@@ -9,7 +9,7 @@ pragma Elaborate (Podmander.Messages);
 package body Podmander.Messages.Submit_Stacks is
 
    overriding
-   procedure Encode (Self : Submit_Command; Msg : in out CZMQ.Messages.Message)
+   procedure Encode (Self : Submit_Stack; Msg : in out CZMQ.Messages.Message)
    is
       Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
@@ -21,19 +21,19 @@ package body Podmander.Messages.Submit_Stacks is
 
    overriding
    procedure Dispatch_To
-     (Self : Submit_Command; H : in out Message_Handler'Class) is
+     (Self : Submit_Stack; H : in out Message_Handler'Class) is
    begin
       H.Handle_Submit_Stack (Self);
    end Dispatch_To;
 
    function Decode_Impl
      (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class is
-      TOML             : constant String := JSON_Utils.Get_Field (Obj, "toml");
+      TOML              : constant String := JSON_Utils.Get_Field (Obj, "toml");
       Enrollment_Secret : constant String := JSON_Utils.Get_Field (Obj, "enrollment_secret");
    begin
       return
-        Submit_Command'
-          (TOML             => To_Unbounded_String (TOML),
+        Submit_Stack'
+          (TOML              => To_Unbounded_String (TOML),
            Enrollment_Secret => To_Unbounded_String (Enrollment_Secret));
    end Decode_Impl;
 

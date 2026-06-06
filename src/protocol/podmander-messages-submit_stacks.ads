@@ -9,17 +9,17 @@ package Podmander.Messages.Submit_Stacks is
    use Ada.Strings.Unbounded;
 
    -- Operator -> Controller: submit a stack TOML definition
-   type Submit_Command is new Submit_Stack_Type with record
-      TOML             : Unbounded_String;
+   type Submit_Stack is new Submit_Stack_Type with record
+      TOML              : Unbounded_String;
       Enrollment_Secret : Unbounded_String;
    end record;
 
    overriding
    procedure Encode
-     (Self : Submit_Command; Msg : in out CZMQ.Messages.Message);
+     (Self : Submit_Stack; Msg : in out CZMQ.Messages.Message);
 
    overriding
    procedure Dispatch_To
-     (Self : Submit_Command; H : in out Message_Handler'Class);
+     (Self : Submit_Stack; H : in out Message_Handler'Class);
 
 end Podmander.Messages.Submit_Stacks;

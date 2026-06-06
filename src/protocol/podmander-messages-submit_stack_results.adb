@@ -36,6 +36,11 @@ package body Podmander.Messages.Submit_Stack_Results is
       Success_Str : constant String := JSON_Utils.Get_Field (Obj, "success");
       Msg_Str     : constant String := JSON_Utils.Get_Field (Obj, "message");
    begin
+      if Success_Str /= "true" and then Success_Str /= "false" then
+         raise Podmander.Messages.Decode_Error with
+           "Invalid success field: expected 'true' or 'false', got '"
+           & Success_Str & "'";
+      end if;
       return
         Submit_Stack_Result'
           (Success => Success_Str = "true",
