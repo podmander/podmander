@@ -56,8 +56,11 @@ erDiagram
 
 The command-line interface through which operators interact with the fleet. All
 commands (deploy, status, scale, rollback, secret management, etc.) are issued
-through `podctl` and routed to the controller. The CLI is responsible for
-command parsing, input validation, and output formatting.
+through `podctl` and routed to the controller. The CLI is a lean client: it
+handles command parsing, client-side liveness checks on inputs (e.g. a config
+file exists and is readable), and output formatting. Authoritative parsing and
+validation of service definitions happen on the controller; `podctl` relays the
+controller's results rather than owning schema validation.
 
 ### Fleet
 
@@ -198,6 +201,33 @@ _Avoid_: Deploy request, deployment message
 A message from Agent to Controller carrying a catalog_id, service name, and
 success/failure status. Confirms whether a deployment landed.
 _Avoid_: Deploy response, deployment result
+
+### Stack Submission
+
+An operator's request, issued through `podctl deploy`, to submit a Stack
+definition (a TOML file) to the controller. The controller parses and validates
+the TOML, registers the resulting Service Version(s), and schedules them. It
+does **not** deploy in response — the supervisor loop performs the actual
+deployment asynchronously. For MVP the submitted Stack holds exactly one service
+and is not yet persisted as a Stack entity.
+_Avoid_: Deploy request (collides with Deploy_Command, the controller→agent message)
+
+### Submit_Stack
+
+A message from CLI (`podctl`) to Controller carrying the raw Stack TOML and an
+enrollment secret. The request side of a Stack Submission. The controller
+authorizes the secret with the same check used for agent enrollment before
+acting.
+_Avoid_: Deploy request, config message
+
+### Submit_Stack_Result
+
+A message from Controller to CLI (`podctl`) confirming that a Submit_Stack was
+accepted (parsed, validated, registered, scheduled) or reporting an error
+(authorization rejected, parse failure, validation failure). It does not report
+the eventual deployment outcome — that is observed through the controller's
+logs. Names the general convention for operator replies: `<Verb>_<Object>_Result`.
+_Avoid_: Submit response, deploy ack
 
 ### Secret
 
