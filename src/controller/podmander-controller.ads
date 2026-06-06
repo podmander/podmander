@@ -132,10 +132,4 @@ package Podmander.Controller is
    -- Delegates to Podmander.Enrollment.Generate_Join_Token
    -- using this controller's public key and enrollment config.
 
-   function Load_Test_Deploy
-     (Self : in out Controller_Instance; Path : String) return Boolean;
-   -- Parse a TOML service config file, register the service and version,
-   -- and schedule it for deployment through the catalog pipeline.
-   -- Returns True on success, False on parse or registration failure.
-
 end Podmander.Controller;

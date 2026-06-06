@@ -359,25 +359,6 @@ package body Podmander.Controller_Tests is
       return (Ctrl => Ctrl, Identity => To_Unbounded_String (Identity));
    end Make_Handler;
 
-   -- Test: Load_Test_Deploy with a valid TOML file parses, registers,
-   -- and schedules through the pipeline.
-   procedure Test_Load_Test_Deploy_Valid_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      Ctrl   : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      Result : constant Boolean := Ctrl.Load_Test_Deploy ("tests/fixtures/valid.toml");
-   begin
-      Assert (Result, "Load_Test_Deploy should return True for valid file");
-   end Test_Load_Test_Deploy_Valid_File;
-
-   -- Test: Load_Test_Deploy with a nonexistent path returns False
-   procedure Test_Load_Test_Deploy_Invalid_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      Ctrl   : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      Result : constant Boolean := Ctrl.Load_Test_Deploy ("/nonexistent/path/file.toml");
-   begin
-      Assert (not Result, "Load_Test_Deploy should return False for invalid file");
-   end Test_Load_Test_Deploy_Invalid_File;
-
    -- Test: Handle_Registration_Request adds the agent to the controller's map
    -- when Socket is not yet open (reply Send is guarded by Is_Valid).
    procedure Test_Handle_Registration_Request_Adds_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
@@ -691,10 +672,6 @@ Result : constant Podmander.Controller.Stack_Submission.Submission_Result :=
         (T, Test_Controller_Startup_Loads_Secret'Access, "Controller loads pre-seeded registration secret from DB");
       Register_Routine
         (T, Test_Controller_Startup_Generates_Secret'Access, "Controller generates new secret when none exists");
-      Register_Routine
-        (T, Test_Load_Test_Deploy_Valid_File'Access, "Load_Test_Deploy with valid file parses and schedules");
-      Register_Routine
-        (T, Test_Load_Test_Deploy_Invalid_File'Access, "Load_Test_Deploy with nonexistent file returns False");
       Register_Routine
         (T, Test_Handle_Deploy_Result_No_Version'Access, "Handle_Deploy_Result logs warning when no version exists");
       Register_Routine

@@ -15,6 +15,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Scheduler creates/updates service_catalog entries with agent assignment (#85)
 - Get_By_Service_Id in catalog repository for lookups by service (#85)
 
+### Removed
+
+- `--test-config` CLI flag and `Load_Test_Deploy` from the controller; replaced by `podctl deploy` (#121)
+- Obsolete `notes/spec/` document directory
+
 ### Changed
 
 - ZMQ protocol migrated from positional multi-frame messages to single-frame JSON payloads with a `kind` field for dispatch (#70)
