@@ -190,6 +190,17 @@ runs as part of each reconciliation cycle and whenever the operator deploys or
 scales a service. When conditions change (node labels, availability), the
 scheduler re-runs and updates expected state.
 
+### Scheduling Strategy
+
+The pluggable selection rule the Scheduler uses to choose a target agent for a
+service. The Scheduler owns persisting the placement decision into the Service
+Catalog; the strategy owns only the selection — given the current fleet state,
+which agent (if any) should run the service. MVP ships one strategy, *First
+Available* (the first registered agent). Envisioned future strategies include
+least-loaded, fewest-services, label-matching, and random placement.
+_Avoid_: Scheduling policy — "policy" denotes the supervisor's drift response
+(auto-repair vs. alert, ADR-0006); a placement choice is a "strategy".
+
 ### Deployment_Command
 
 A message from Controller to Agent carrying a catalog_id, service name, and
@@ -315,6 +326,7 @@ drift detection.
 - A **Service Catalog Entry** references one **Agent** (N:1, or NULL = not scheduled)
 - The **Registrar** consumes an ASD and produces a **Service** row and a **Service Version** row
 - The **Scheduler** consumes a **Service Version** and produces or updates a **Service Catalog Entry**
+- The **Scheduler** delegates target selection to a **Scheduling Strategy**
 - The **Supervisor** reads **Service Catalog Entries** and produces **Deploy_Commands**
 - An **Agent** receives a **Deploy_Command** and produces a **Deploy_Result**
 - The Controller processes a **Deploy_Result** and updates a **Service Catalog Entry**
