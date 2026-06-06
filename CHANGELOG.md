@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- podctl skeleton: CLIC command framework, `deploy` stub, `Podmander.Podctl.Config` with file + flag override loading (#118)
+
 - Scheduler creates/updates service_catalog entries with agent assignment (#85)
 - Get_By_Service_Id in catalog repository for lookups by service (#85)
 

@@ -5,6 +5,7 @@ authors = ["Jochen Lillich"]
 maintainers = ["Jochen Lillich <contact@geewiz.dev>"]
 maintainers-logins = ["geewiz"]
 licenses = "Apache-2.0"
+project-files = ["podmander.gpr", "podctl.gpr"]
 
 [[depends-on]]
 czmq_ada = "~0.5.0"
@@ -23,3 +24,11 @@ command = ["scripts/run_tests.sh"]
 [[depends-on]]
 ada_toml = "~0.5.0"
 gnatcoll = "~26.0.0"
+
+[[depends-on]]
+clic = "~0.3.0"
+
+[[pins]]
+# geewiz/clic tag v0.3.0-ada-toml-0.5 - broadens ada_toml compat to ~0.5
+clic.url = "https://github.com/geewiz/clic.git"
+clic.commit = "093fc3eba900bf56228547377c5e3f6f6f73d622"

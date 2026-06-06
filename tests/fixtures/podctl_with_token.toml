@@ -1,0 +1,2 @@
+controller = "tcp://filehost:5555"
+token = "file-token"
