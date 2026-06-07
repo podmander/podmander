@@ -34,11 +34,8 @@ run = "distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~
 
 [tasks.test]
 description = "Build and run the AUnit test suite"
-dir = "{{cwd}}"
-run = """
-distrobox enter ada_dev -- alr exec -- gprbuild -P podmander_tests.gpr
-distrobox enter ada_dev -- alr exec -- ./bin/test_runner
-"""
+depends = ["build"]
+run = "distrobox enter ada_dev -- alr exec -- ./bin/test_runner"
 
 # --- Test Container Lifecycle ---
 

@@ -5,7 +5,7 @@ authors = ["Jochen Lillich"]
 maintainers = ["Jochen Lillich <contact@geewiz.dev>"]
 maintainers-logins = ["geewiz"]
 licenses = "Apache-2.0"
-project-files = ["podmander.gpr", "podctl.gpr"]
+project-files = ["podmander.gpr", "podctl.gpr", "podmander_tests.gpr"]
 
 [[depends-on]]
 czmq_ada = "~0.5.0"
