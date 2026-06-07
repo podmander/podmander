@@ -17,10 +17,6 @@ ada_sqlite3 = "~0.1.1"
 "*".style_checks = "yes"
 "*".ada_version = "ada2022"
 
-[[actions]]
-type = "test"
-command = ["scripts/run_tests.sh"]
-
 [[depends-on]]
 ada_toml = "~0.5.0"
 gnatcoll = "~26.0.0"

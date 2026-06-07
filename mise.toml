@@ -30,6 +30,16 @@ description = "Check Ada source formatting without modifying files"
 dir = "{{cwd}}"
 run = "distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander.gpr --no-subprojects --check'"
 
+# --- Test ---
+
+[tasks.test]
+description = "Build and run the AUnit test suite"
+dir = "{{cwd}}"
+run = """
+distrobox enter ada_dev -- alr exec -- gprbuild -P podmander_tests.gpr
+distrobox enter ada_dev -- alr exec -- ./bin/test_runner
+"""
+
 # --- Test Container Lifecycle ---
 
 [tasks."test:container:build"]
