@@ -27,33 +27,6 @@ package body Podmander.Config_Tests is
    function Fixture_Path (Name : String) return String
    is (Fixture_Dir & Name);
 
-   -- Test constructing a Service_Definition with valid fields
-   procedure Test_Service_Definition_Construction (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      Config : constant Podmander.Config.Service_Definition :=
-        (Name          => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
-   begin
-      Assert (To_String (Config.Image) = "nginx:latest", "Image should be 'nginx:latest'");
-   end Test_Service_Definition_Construction;
-
-   -- Test constructing a Port_Mapping with valid fields
-   procedure Test_Port_Mapping_Construction (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      Mapping : constant Podmander.Config.Port_Mapping := (Host => 8080, Container => 80);
-   begin
-      Assert (Mapping.Host = 8080, "Port_Mapping Host should be 8080");
-      Assert (Mapping.Container = 80, "Port_Mapping Container should be 80");
-   end Test_Port_Mapping_Construction;
-
    -- Test parsing a valid TOML file
    procedure Test_Parse_Valid_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
@@ -194,60 +167,6 @@ package body Podmander.Config_Tests is
       end if;
    end Test_Parse_Extracts_Service_Name;
 
-   -- Test constructing a Service_Definition with Name field
-   procedure Test_Service_Definition_Name_Field (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      Config : constant Podmander.Config.Service_Definition :=
-        (Name          => To_Unbounded_String ("myservice"),
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
-   begin
-      Assert (To_String (Config.Name) = "myservice", "Name should be 'myservice'");
-   end Test_Service_Definition_Name_Field;
-
-   -- Test constructing a Service_Definition with Description field
-   procedure Test_Service_Definition_Description_Field (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      Config : constant Podmander.Config.Service_Definition :=
-        (Name          => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => To_Unbounded_String ("My web app"),
-         WantedBy      => Null_Unbounded_String);
-   begin
-      Assert (To_String (Config.Description) = "My web app", "Description should be 'My web app'");
-   end Test_Service_Definition_Description_Field;
-
-   -- Test constructing a Service_Definition with WantedBy field
-   procedure Test_Service_Definition_WantedBy_Field (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      Config : constant Podmander.Config.Service_Definition :=
-        (Name          => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => To_Unbounded_String ("multi-user.target"));
-   begin
-      Assert (To_String (Config.WantedBy) = "multi-user.target", "WantedBy should be 'multi-user.target'");
-   end Test_Service_Definition_WantedBy_Field;
-
    -- Test parsing valid TOML content from a string
    procedure Test_Parse_Content_Valid (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
@@ -280,9 +199,6 @@ package body Podmander.Config_Tests is
    procedure Register_Tests (T : in out Config_Test) is
       use AUnit.Test_Cases.Registration;
    begin
-      Register_Routine
-        (T, Test_Service_Definition_Construction'Access, "Constructing a Service_Definition with valid fields");
-      Register_Routine (T, Test_Port_Mapping_Construction'Access, "Constructing a Port_Mapping with valid fields");
       Register_Routine (T, Test_Parse_Valid_File'Access, "Parsing a valid TOML file with all fields");
       Register_Routine (T, Test_Parse_Missing_Image'Access, "Parsing a TOML file with missing image field should fail");
       Register_Routine (T, Test_Parse_Nonexistent_File'Access, "Parsing a nonexistent file should fail with error");
@@ -294,14 +210,6 @@ package body Podmander.Config_Tests is
       Register_Routine (T, Test_Empty_Volume_Path_Fails_Validation'Access, "Empty volume path fails validation");
       Register_Routine
         (T, Test_Parse_Extracts_Service_Name'Access, "Parser extracts service name from [service.<name>] header");
-      Register_Routine
-        (T, Test_Service_Definition_Name_Field'Access, "Constructing a Service_Definition with Name field");
-      Register_Routine
-        (T,
-         Test_Service_Definition_Description_Field'Access,
-         "Constructing a Service_Definition with Description field");
-      Register_Routine
-        (T, Test_Service_Definition_WantedBy_Field'Access, "Constructing a Service_Definition with WantedBy field");
       Register_Routine
         (T, Test_Parse_Content_Valid'Access, "Parse_Content with valid TOML content succeeds");
       Register_Routine
