@@ -141,9 +141,9 @@ private
    --  SQLite doesn't support ALTER TABLE ADD CONSTRAINT, so we recreate
    --  the tables with the constraints included.
    --
-   --  service_versions: CHECK (version >= 1) — version must be positive.
-   --  service_catalog: CHECK (state IN (0, 1, 2, 3)) — state enum values.
-   --  service_catalog: CHECK (current_version >= 0) — non-negative.
+   --  service_versions: CHECK (version >= 1) - version must be positive.
+   --  service_catalog: CHECK (state IN (0, 1, 2, 3)) - state enum values.
+   --  service_catalog: CHECK (current_version >= 0) - non-negative.
    Migration_010_SQL : constant String :=
      --  service_versions: recreate with CHECK (version >= 1)
      "CREATE TABLE service_versions_new ("
