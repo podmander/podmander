@@ -9,14 +9,19 @@ functionality.
 ## Dev Environment
 
 All build, test, and analysis commands run inside the `ada_dev` distrobox container.
-Use Alire (`alr`) for builds and dependency management.
+Use `mise` for all development tasks — it handles the distrobox wrapping automatically.
 
 ```bash
-# Enter an interactive shell
-distrobox enter ada_dev
+mise run build        # compile all binaries
+mise run test         # build and run the AUnit test suite
+mise run format       # auto-format Ada sources
+mise run format:check # check formatting without modifying files
+```
 
-# Run a single command
-distrobox enter ada_dev -- alr build
+To enter an interactive shell directly:
+
+```bash
+distrobox enter ada_dev
 ```
 
 ## Project Management
@@ -48,8 +53,8 @@ This is the handoff point for resuming work in a later session.
 All work happens in git worktrees managed by `wt`. The main worktree is reserved for `wt switch` operations only.
 
 - Create: `wt switch --create <issue>-<stub>`
-- Build: `distrobox enter ada_dev -- alr build`
-- Test: `distrobox enter ada_dev -- alr test`
+- Build: `mise run build`
+- Test: `mise run test`
 - Clean up: `wt switch main && wt remove <issue>-<stub>`
 
 Never edit or build in the main worktree while another agent is active.
@@ -97,8 +102,8 @@ These recur whenever we touch the database layer.
 
 ### Common pitfalls
 
-- **Distrobox**: All `alr build`/`alr test` commands MUST run via
-  `distrobox enter ada_dev --`. Subagents need this in every prompt.
+- **Distrobox**: All build and test commands MUST use `mise run`. Mise
+  handles the `distrobox enter ada_dev` wrapping — never call `alr` directly.
 - **Prompt length**: If a @fixer prompt exceeds the tool limit, split the
   work into smaller scoped tasks (e.g., one @fixer for tests, another for
   production code).
