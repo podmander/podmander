@@ -309,9 +309,10 @@ package body Podmander.Controller is
 
                --  Only deploy to agents that are currently connected.
                declare
-                  All_Agents    : constant Podmander.Types.Agent_Maps.Map :=
-                    Agent.Repository.Load_All (Self.DB);
-                  Agent_Found   : Boolean := False;
+                  All_Agents          :
+                    constant Podmander.Types.Agent_Maps.Map :=
+                      Agent.Repository.Load_All (Self.DB);
+                  Agent_Found         : Boolean := False;
                   Agent_Connection_Id : Ada.Strings.Unbounded.Unbounded_String;
                begin
                   for Cur in All_Agents.Iterate loop

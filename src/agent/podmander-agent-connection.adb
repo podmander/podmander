@@ -55,7 +55,8 @@ package body Podmander.Agent.Connection is
       Send_Message
         (Sock,
          Heartbeat_Message'
-           (Connection_Id => Self.Connection_Id, Timestamp => Ada.Calendar.Clock),
+           (Connection_Id => Self.Connection_Id,
+            Timestamp     => Ada.Calendar.Clock),
          "Sent heartbeat");
    end Send_Heartbeat;
 
@@ -106,7 +107,8 @@ package body Podmander.Agent.Connection is
             Decoded : constant Protocol_Message'Class := Decode (Msg);
          begin
             if Decoded in Registration_Response then
-               Self.Connection_Id := Registration_Response (Decoded).Connection_Id;
+               Self.Connection_Id :=
+                 Registration_Response (Decoded).Connection_Id;
                Self.State := Podmander.Types.Connected;
                Self.Backoff := 1.0;
                Podmander.Logging.Info

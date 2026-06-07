@@ -35,7 +35,8 @@ package body Podmander.Controller.Message_Handlers is
       Msg.Add_String (Connection_Id);
       Query.Encode (Msg);
       Msg.Send (H.Ctrl.Socket);
-      Podmander.Logging.Info ("controller", "Sent status query to " & Connection_Id);
+      Podmander.Logging.Info
+        ("controller", "Sent status query to " & Connection_Id);
    end Send_Status_Query;
 
    overriding
@@ -45,7 +46,8 @@ package body Podmander.Controller.Message_Handlers is
    is
       use Podmander.Messages.Registration_Requests;
       use Podmander.Messages.Registration_Responses;
-      Req     : constant Registration_Request := Registration_Request (M);
+      Req           : constant Registration_Request :=
+        Registration_Request (M);
       Name          : constant String := To_String (Req.Agent_Name);
       Connection_Id : constant String := To_String (H.Identity);
    begin

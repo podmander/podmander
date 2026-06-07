@@ -62,7 +62,7 @@ package Podmander.Controller is
    end record;
 
    type Service_Node_Key is record
-      Service_Name : Ada.Strings.Unbounded.Unbounded_String;
+      Service_Name  : Ada.Strings.Unbounded.Unbounded_String;
       Connection_Id : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 

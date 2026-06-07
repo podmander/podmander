@@ -15,7 +15,8 @@ package body Podmander.Messages.Registration_Responses is
       Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       JSON_Utils.Set_Kind (Obj, Registration_Response_Kind);
-      JSON_Utils.Set_Field (Obj, "connection_id", To_String (Self.Connection_Id));
+      JSON_Utils.Set_Field
+        (Obj, "connection_id", To_String (Self.Connection_Id));
       Msg.Add_String (GNATCOLL.JSON.Write (Obj));
    end Encode;
 
@@ -31,9 +32,12 @@ package body Podmander.Messages.Registration_Responses is
    function Decode_Impl
      (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class
    is
-      Connection_Id : constant String := JSON_Utils.Get_Field (Obj, "connection_id");
+      Connection_Id : constant String :=
+        JSON_Utils.Get_Field (Obj, "connection_id");
    begin
-      return Registration_Response'(Connection_Id => To_Unbounded_String (Connection_Id));
+      return
+        Registration_Response'
+          (Connection_Id => To_Unbounded_String (Connection_Id));
    end Decode_Impl;
 
 begin
