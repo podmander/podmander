@@ -312,7 +312,7 @@ package body Podmander.Controller is
                   All_Agents    : constant Podmander.Types.Agent_Maps.Map :=
                     Agent.Repository.Load_All (Self.DB);
                   Agent_Found   : Boolean := False;
-                  Agent_Node_Id : Ada.Strings.Unbounded.Unbounded_String;
+                  Agent_Connection_Id : Ada.Strings.Unbounded.Unbounded_String;
                begin
                   for Cur in All_Agents.Iterate loop
                      declare
@@ -323,7 +323,7 @@ package body Podmander.Controller is
                           and then Info.State = Podmander.Types.Registered
                         then
                            Agent_Found := True;
-                           Agent_Node_Id := Info.Node_Id;
+                           Agent_Connection_Id := Info.Connection_Id;
                            exit;
                         end if;
                      end;
@@ -365,7 +365,7 @@ package body Podmander.Controller is
                      Msg          : CZMQ.Messages.Message :=
                        CZMQ.Messages.New_Message;
                   begin
-                     Msg.Add_String (To_String (Agent_Node_Id));
+                     Msg.Add_String (To_String (Agent_Connection_Id));
                      Cmd.Encode (Msg);
                      Msg.Send (Self.Socket);
                      declare
@@ -382,7 +382,7 @@ package body Podmander.Controller is
                         & " v"
                         & Cat_Entry.Target_Version'Image
                         & " to "
-                        & To_String (Agent_Node_Id)
+                        & To_String (Agent_Connection_Id)
                         & " (catalog "
                         & Cat_Entry.Id'Image
                         & ")");

@@ -41,7 +41,7 @@ package body Podmander.Controller.Strategies.First_Available_Tests is
       Info : constant Podmander.Types.Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String (Name),
-         Node_Id   => To_Unbounded_String ("node-" & Name),
+         Connection_Id => To_Unbounded_String ("node-" & Name),
          State     => Podmander.Types.Registered,
          Last_Seen => Clock);
    begin

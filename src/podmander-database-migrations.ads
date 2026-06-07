@@ -237,6 +237,11 @@ private
      & "    ON service_catalog(service_id, agent_id)"
      & "    WHERE agent_id IS NOT NULL;";
 
+   --  Migration 012: Rename agents.node_id to connection_id.
+   --  The column held the ZeroMQ ROUTER routing identity, not a domain Node.
+   Migration_012_SQL : constant String :=
+     "ALTER TABLE agents RENAME COLUMN node_id TO connection_id;";
+
    Migration_History : constant Migration_Array :=
      [1  =>
         (Version => 1,
@@ -281,6 +286,10 @@ private
       11 =>
         (Version => 11,
          SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_011_SQL))];
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_011_SQL)),
+      12 =>
+        (Version => 12,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_012_SQL))];
 
 end Podmander.Database.Migrations;

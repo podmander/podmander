@@ -55,7 +55,7 @@ package body Podmander.Agent.Connection is
       Send_Message
         (Sock,
          Heartbeat_Message'
-           (Node_Id => Self.Node_Id, Timestamp => Ada.Calendar.Clock),
+           (Connection_Id => Self.Connection_Id, Timestamp => Ada.Calendar.Clock),
          "Sent heartbeat");
    end Send_Heartbeat;
 
@@ -106,11 +106,11 @@ package body Podmander.Agent.Connection is
             Decoded : constant Protocol_Message'Class := Decode (Msg);
          begin
             if Decoded in Registration_Response then
-               Self.Node_Id := Registration_Response (Decoded).Node_Id;
+               Self.Connection_Id := Registration_Response (Decoded).Connection_Id;
                Self.State := Podmander.Types.Connected;
                Self.Backoff := 1.0;
                Podmander.Logging.Info
-                 ("agent", "Registered as " & To_String (Self.Node_Id));
+                 ("agent", "Registered as " & To_String (Self.Connection_Id));
             else
                Podmander.Logging.Warning
                  ("agent", "Unexpected response during enrollment");

@@ -387,7 +387,7 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
-           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, node_id, state, last_seen FROM agents");
+           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, connection_id, state, last_seen FROM agents");
       begin
          -- Preparing the query should not raise  -- table exists with correct columns
          null;

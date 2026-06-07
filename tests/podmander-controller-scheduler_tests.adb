@@ -56,22 +56,22 @@ package body Podmander.Controller.Scheduler_Tests is
    end Seed_Service;
 
    -- Helper: register a single agent in Registered state.
-   procedure Register_Agent (Handle : in out DB.DB_Handle; Name : String; Node_Id : String) is
+   procedure Register_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) is
       Info : constant Podmander.Types.Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String (Name),
-         Node_Id   => To_Unbounded_String (Node_Id),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Ada.Calendar.Clock);
+        (Id            => 0,
+         Name          => To_Unbounded_String (Name),
+         Connection_Id => To_Unbounded_String (Connection_Id),
+         State         => Podmander.Types.Registered,
+         Last_Seen     => Ada.Calendar.Clock);
    begin
       Agent_Repo.Register (Handle, Info);
    end Register_Agent;
 
    -- Helper: register an agent and return its auto-generated id.
-   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Node_Id : String) return Podmander.Controller.Agent_Id_Type is
+   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Agent_Id_Type is
       use Podmander.Types;
    begin
-      Register_Agent (Handle, Name, Node_Id);
+      Register_Agent (Handle, Name, Connection_Id);
       return Podmander.Controller.Agent_Id_Type
         (Agent_Repo.Load_All (Handle).Element (Name).Id);
    end Seed_Agent;
@@ -111,7 +111,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
       Result : Scheduler.Schedule_Result;
    begin
-      --  No agents registered - Scheduler should create entry with empty Node_Id
+      --  No agents registered - Scheduler should create entry with empty Connection_Id
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1,
                                     Strategy => Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with no agent");
@@ -207,7 +207,7 @@ package body Podmander.Controller.Scheduler_Tests is
    begin
       Register_Routine (T, Test_Schedule_New_Entry'Access, "Schedule creates a new catalog entry");
       Register_Routine
-        (T, Test_Schedule_New_Entry_No_Agent'Access, "Schedule creates entry with empty Node_Id when no agent");
+        (T, Test_Schedule_New_Entry_No_Agent'Access, "Schedule creates entry with empty Connection_Id when no agent");
       Register_Routine
         (T, Test_Schedule_Update_Existing'Access, "Schedule updates target and sets state = Pending on existing");
       Register_Routine

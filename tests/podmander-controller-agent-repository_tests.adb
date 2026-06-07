@@ -49,7 +49,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Info   : constant Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("test-agent"),
-         Node_Id   => To_Unbounded_String ("node-001"),
+         Connection_Id => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
       Map    : Podmander.Types.Agent_Maps.Map;
@@ -63,7 +63,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Registered agent should be in map");
       Loaded := Podmander.Types.Agent_Maps.Element (Cur);
       Assert (To_String (Loaded.Name) = "test-agent", "Agent name should match");
-      Assert (To_String (Loaded.Node_Id) = "node-001", "Node ID should match");
+      Assert (To_String (Loaded.Connection_Id) = "node-001", "Connection ID should match");
       Assert (Loaded.State = Registered, "Agent state should be Registered");
       Assert (Format_Time (Loaded.Last_Seen) = Format_Time (Now), "Last_Seen should match");
    end Test_Register_And_Load_All;
@@ -79,7 +79,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Info      : constant Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("dup-agent"),
-         Node_Id   => To_Unbounded_String ("node-001"),
+         Connection_Id => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
       Got_Error : Boolean := False;
@@ -111,7 +111,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Info   : constant Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("touch-agent"),
-         Node_Id   => To_Unbounded_String ("node-001"),
+         Connection_Id => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
       Map    : Podmander.Types.Agent_Maps.Map;
@@ -123,7 +123,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
         (D,
          (Id        => 0,
           Name      => To_Unbounded_String ("touch-agent"),
-          Node_Id   => To_Unbounded_String ("node-001"),
+          Connection_Id => To_Unbounded_String ("node-001"),
           State     => Registered,
           Last_Seen => Later));
       Map := Repo.Load_All (D);
@@ -148,7 +148,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
            (D,
             (Id        => 0,
              Name      => To_Unbounded_String ("nonexistent"),
-             Node_Id   => To_Unbounded_String (""),
+             Connection_Id => To_Unbounded_String (""),
              State     => Registered,
              Last_Seen => Now));
       exception
@@ -174,7 +174,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Info   : constant Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("state-agent"),
-         Node_Id   => To_Unbounded_String ("node-001"),
+         Connection_Id => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
       Map    : Podmander.Types.Agent_Maps.Map;
@@ -186,7 +186,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
         (D,
          (Id        => 0,
           Name      => To_Unbounded_String ("state-agent"),
-          Node_Id   => To_Unbounded_String ("node-001"),
+          Connection_Id => To_Unbounded_String ("node-001"),
           State     => Unresponsive,
           Last_Seen => Now));
       Map := Repo.Load_All (D);
@@ -211,7 +211,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
            (D,
             (Id        => 0,
              Name      => To_Unbounded_String ("nonexistent"),
-             Node_Id   => To_Unbounded_String (""),
+             Connection_Id => To_Unbounded_String (""),
              State     => Lost,
              Last_Seen => Now));
       exception
@@ -237,7 +237,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Info : constant Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("remove-agent"),
-         Node_Id   => To_Unbounded_String ("node-001"),
+         Connection_Id => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
       Map  : Podmander.Types.Agent_Maps.Map;
@@ -247,7 +247,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
         (D,
          (Id        => 0,
           Name      => To_Unbounded_String ("remove-agent"),
-          Node_Id   => To_Unbounded_String ("node-001"),
+          Connection_Id => To_Unbounded_String ("node-001"),
           State     => Registered,
           Last_Seen => Now));
       Map := Repo.Load_All (D);
@@ -265,7 +265,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Info : constant Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("keep-agent"),
-         Node_Id   => To_Unbounded_String ("node-001"),
+         Connection_Id => To_Unbounded_String ("node-001"),
          State     => Registered,
          Last_Seen => Now);
       Map  : Podmander.Types.Agent_Maps.Map;
@@ -276,7 +276,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
         (D,
          (Id        => 0,
           Name      => To_Unbounded_String ("nonexistent"),
-          Node_Id   => To_Unbounded_String (""),
+          Connection_Id => To_Unbounded_String (""),
           State     => Registered,
           Last_Seen => Now));
       Map := Repo.Load_All (D);

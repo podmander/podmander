@@ -26,16 +26,16 @@ package body Podmander.Controller.Message_Handlers is
    use type Podmander.Database.Error_Kind;
 
    procedure Send_Status_Query
-     (H : in out Controller_Handler; Node_Id : String)
+     (H : in out Controller_Handler; Connection_Id : String)
    is
       use Podmander.Messages.Status_Queries;
       Query : constant Status_Query := (null record);
       Msg   : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      Msg.Add_String (Node_Id);
+      Msg.Add_String (Connection_Id);
       Query.Encode (Msg);
       Msg.Send (H.Ctrl.Socket);
-      Podmander.Logging.Info ("controller", "Sent status query to " & Node_Id);
+      Podmander.Logging.Info ("controller", "Sent status query to " & Connection_Id);
    end Send_Status_Query;
 
    overriding
@@ -46,8 +46,8 @@ package body Podmander.Controller.Message_Handlers is
       use Podmander.Messages.Registration_Requests;
       use Podmander.Messages.Registration_Responses;
       Req     : constant Registration_Request := Registration_Request (M);
-      Name    : constant String := To_String (Req.Agent_Name);
-      Node_Id : constant String := To_String (H.Identity);
+      Name          : constant String := To_String (Req.Agent_Name);
+      Connection_Id : constant String := To_String (H.Identity);
    begin
       if not Podmander.Enrollment.Secret_Matches
                (H.Ctrl.Config.Enrollment, To_String (Req.Enrollment_Secret))
@@ -60,11 +60,11 @@ package body Podmander.Controller.Message_Handlers is
 
       declare
          Info : constant Podmander.Types.Agent_Info :=
-           (Id        => 0,
-            Name      => Req.Agent_Name,
-            Node_Id   => To_Unbounded_String (Node_Id),
-            State     => Podmander.Types.Registered,
-            Last_Seen => Ada.Calendar.Clock);
+           (Id            => 0,
+            Name          => Req.Agent_Name,
+            Connection_Id => To_Unbounded_String (Connection_Id),
+            State         => Podmander.Types.Registered,
+            Last_Seen     => Ada.Calendar.Clock);
       begin
          -- Persist to DB
          begin
@@ -83,21 +83,22 @@ package body Podmander.Controller.Message_Handlers is
                end if;
          end;
          Podmander.Logging.Info
-           ("controller", "Registered agent """ & Name & """ as " & Node_Id);
+           ("controller",
+            "Registered agent """ & Name & """ as " & Connection_Id);
       end;
 
       if H.Ctrl.Socket.Is_Valid then
          declare
             Reply     : constant Registration_Response :=
-              (Node_Id => To_Unbounded_String (Node_Id));
+              (Connection_Id => To_Unbounded_String (Connection_Id));
             Reply_Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
          begin
-            Reply_Msg.Add_String (Node_Id);
+            Reply_Msg.Add_String (Connection_Id);
             Reply.Encode (Reply_Msg);
             Reply_Msg.Send (H.Ctrl.Socket);
          end;
 
-         Send_Status_Query (H, Node_Id);
+         Send_Status_Query (H, Connection_Id);
       end if;
    end Handle_Registration_Request;
 
@@ -108,20 +109,20 @@ package body Podmander.Controller.Message_Handlers is
    is
       use Podmander.Controller.Service_Catalog.Repository;
       use Podmander.Messages.Heartbeats;
-      HB         : constant Heartbeat_Message := Heartbeat_Message (M);
-      Node_Id    : constant String := To_String (HB.Node_Id);
-      Found      : Boolean := False;
-      All_Agents : constant Podmander.Types.Agent_Maps.Map :=
+      HB            : constant Heartbeat_Message := Heartbeat_Message (M);
+      Connection_Id : constant String := To_String (HB.Connection_Id);
+      Found         : Boolean := False;
+      All_Agents    : constant Podmander.Types.Agent_Maps.Map :=
         Agent.Repository.Load_All (H.Ctrl.DB);
    begin
-      -- The map is keyed by agent name, not by Node_Id, so we must
-      -- scan linearly to find the agent with the matching Node_Id.
+      -- The map is keyed by agent name, not by Connection_Id, so we must
+      -- scan linearly to find the agent with the matching Connection_Id.
       for Cur in All_Agents.Iterate loop
          declare
             Info : Podmander.Types.Agent_Info :=
               Podmander.Types.Agent_Maps.Element (Cur);
          begin
-            if To_String (Info.Node_Id) = Node_Id then
+            if To_String (Info.Connection_Id) = Connection_Id then
                Found := True;
                Info.Last_Seen := Ada.Calendar.Clock;
                if Info.State /= Podmander.Types.Registered then
@@ -132,11 +133,11 @@ package body Podmander.Controller.Message_Handlers is
                   Reset_In_Progress_For_Agent
                     (H.Ctrl.DB, Podmander.Controller.Agent_Id_Type (Info.Id));
                   Podmander.Logging.Info
-                    ("controller", "Agent " & Node_Id & " reconnected");
+                    ("controller", "Agent " & Connection_Id & " reconnected");
                end if;
                Agent.Repository.Touch (H.Ctrl.DB, Info);
                Podmander.Logging.Debug
-                 ("controller", "Heartbeat from " & Node_Id);
+                 ("controller", "Heartbeat from " & Connection_Id);
                exit;
             end if;
          end;

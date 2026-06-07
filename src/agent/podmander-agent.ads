@@ -26,7 +26,7 @@ package Podmander.Agent is
       Config            : Agent_Config;
       State             : Podmander.Types.Connection_State :=
         Podmander.Types.Disconnected;
-      Node_Id           : Ada.Strings.Unbounded.Unbounded_String;
+      Connection_Id     : Ada.Strings.Unbounded.Unbounded_String;
       Running           : Boolean := False;
       Backoff           : Duration := 1.0;
       Server_Public_Key : Ada.Strings.Unbounded.Unbounded_String;

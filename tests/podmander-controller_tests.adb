@@ -176,12 +176,12 @@ package body Podmander.Controller_Tests is
    procedure Test_Dispatch_Heartbeat (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Heartbeats;
-      HB  : constant Heartbeat_Message := (Node_Id => To_Unbounded_String ("node-1"), Timestamp => Ada.Calendar.Clock);
+      HB  : constant Heartbeat_Message := (Connection_Id => To_Unbounded_String ("node-1"), Timestamp => Ada.Calendar.Clock);
       Spy : Spy_Handler;
    begin
       HB.Dispatch_To (Spy);
       Assert (Spy.Kind = Heartbeat_Seen, "Expected Heartbeat_Seen");
-      Assert (To_String (Spy.Last_Heartbeat.Node_Id) = "node-1", "Expected node_id node-1");
+      Assert (To_String (Spy.Last_Heartbeat.Connection_Id) = "node-1", "Expected connection_id node-1");
    end Test_Dispatch_Heartbeat;
 
    -- Test: Polymorphic dispatch through Protocol_Message'Class routes
@@ -202,7 +202,7 @@ package body Podmander.Controller_Tests is
    procedure Test_Dispatch_Response_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Registration_Responses;
-      Resp : constant Registration_Response := (Node_Id => To_Unbounded_String ("n-1"));
+      Resp : constant Registration_Response := (Connection_Id => To_Unbounded_String ("n-1"));
       Spy  : Spy_Handler;
    begin
       Resp.Dispatch_To (Spy);
@@ -249,9 +249,9 @@ package body Podmander.Controller_Tests is
       Info    : constant Podmander.Types.Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("persisted-agent"),
-         Node_Id   => To_Unbounded_String ("node-001"),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Now);
+         Connection_Id => To_Unbounded_String ("node-001"),
+         State         => Podmander.Types.Registered,
+         Last_Seen     => Now);
       Loaded  : Podmander.Types.Agent_Maps.Map;
       Cur     : Podmander.Types.Agent_Maps.Cursor;
       Element : Podmander.Types.Agent_Info;
@@ -387,11 +387,11 @@ package body Podmander.Controller_Tests is
       Info : constant Podmander.Types.Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("web-1"),
-         Node_Id   => To_Unbounded_String ("node-xyz"),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Past);
+         Connection_Id => To_Unbounded_String ("node-xyz"),
+         State         => Podmander.Types.Registered,
+         Last_Seen     => Past);
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Node_Id => To_Unbounded_String ("node-xyz"), Timestamp => Ada.Calendar.Clock);
+        (Connection_Id => To_Unbounded_String ("node-xyz"), Timestamp => Ada.Calendar.Clock);
    begin
       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
       H.Handle_Heartbeat (HB);
@@ -410,7 +410,7 @@ package body Podmander.Controller_Tests is
       Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
       H    : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "unknown");
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Node_Id => To_Unbounded_String ("unknown"), Timestamp => Ada.Calendar.Clock);
+        (Connection_Id => To_Unbounded_String ("unknown"), Timestamp => Ada.Calendar.Clock);
    begin
       H.Handle_Heartbeat (HB);
       declare
@@ -431,11 +431,11 @@ package body Podmander.Controller_Tests is
       Info : constant Podmander.Types.Agent_Info :=
         (Id        => 0,
          Name      => To_Unbounded_String ("web-1"),
-         Node_Id   => To_Unbounded_String ("lost-node"),
-         State     => Podmander.Types.Lost,
-         Last_Seen => Ada.Calendar.Clock - 300.0);
+         Connection_Id => To_Unbounded_String ("lost-node"),
+         State         => Podmander.Types.Lost,
+         Last_Seen     => Ada.Calendar.Clock - 300.0);
       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Node_Id => To_Unbounded_String ("lost-node"), Timestamp => Ada.Calendar.Clock);
+        (Connection_Id => To_Unbounded_String ("lost-node"), Timestamp => Ada.Calendar.Clock);
    begin
       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
       H.Handle_Heartbeat (HB);

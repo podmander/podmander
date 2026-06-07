@@ -12,7 +12,7 @@ package Podmander.Messages.Registration_Responses is
    -- Outbound only; Dispatch_To raises Program_Error because Decode never
    -- produces a Registration_Response from inbound traffic.
    type Registration_Response is new Registration_Response_Type with record
-      Node_Id : Unbounded_String;
+      Connection_Id : Unbounded_String;
    end record;
 
    overriding

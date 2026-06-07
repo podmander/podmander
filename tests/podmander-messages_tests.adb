@@ -63,7 +63,7 @@ package body Podmander.Messages_Tests is
    procedure Test_Registration_Response_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       use Podmander.Messages.Registration_Responses;
-      Original : constant Registration_Response := (Node_Id => To_Unbounded_String ("node-42"));
+      Original : constant Registration_Response := (Connection_Id => To_Unbounded_String ("node-42"));
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
@@ -74,7 +74,7 @@ package body Podmander.Messages_Tests is
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
          Assert (Decoded in Registration_Response, "Expected Registration_Response");
-         Assert (To_String (Registration_Response (Decoded).Node_Id) = "node-42", "Node ID mismatch");
+         Assert (To_String (Registration_Response (Decoded).Connection_Id) = "node-42", "Connection ID mismatch");
       end;
    end Test_Registration_Response_Round_Trip;
 
@@ -83,7 +83,7 @@ package body Podmander.Messages_Tests is
       pragma Unreferenced (T);
       use Podmander.Messages.Heartbeats;
       Now      : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Original : constant Heartbeat_Message := (Node_Id => To_Unbounded_String ("node-42"), Timestamp => Now);
+      Original : constant Heartbeat_Message := (Connection_Id => To_Unbounded_String ("node-42"), Timestamp => Now);
       Msg      : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
       Original.Encode (Msg);
@@ -95,7 +95,7 @@ package body Podmander.Messages_Tests is
          Decoded : constant Protocol_Message'Class := Decode (Msg);
       begin
          Assert (Decoded in Heartbeat_Message, "Expected Heartbeat_Message");
-         Assert (To_String (Heartbeat_Message (Decoded).Node_Id) = "node-42", "Node ID mismatch");
+         Assert (To_String (Heartbeat_Message (Decoded).Connection_Id) = "node-42", "Connection ID mismatch");
          -- Timestamp survives round-trip through string formatting
          -- (sub-second precision may be lost)
          Assert (abs (Heartbeat_Message (Decoded).Timestamp - Now) < 1.0, "Timestamp drift exceeds 1 second");

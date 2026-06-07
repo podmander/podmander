@@ -51,12 +51,12 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Seed_Service;
 
    -- Helper: register an agent and return its auto-generated id.
-   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Node_Id : String) return Podmander.Controller.Agent_Id_Type is
+   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Agent_Id_Type is
       use Podmander.Types;
       Info       : constant Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String (Name),
-         Node_Id   => To_Unbounded_String (Node_Id),
+        (Id            => 0,
+         Name          => To_Unbounded_String (Name),
+         Connection_Id => To_Unbounded_String (Connection_Id),
          State     => Registered,
          Last_Seen => Ada.Calendar.Clock);
       All_Agents : Agent_Maps.Map;
