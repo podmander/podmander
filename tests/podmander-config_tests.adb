@@ -194,6 +194,115 @@ package body Podmander.Config_Tests is
               "Parse_Content with invalid content should fail");
    end Test_Parse_Content_Invalid;
 
+   -- Test that a port string without a colon separator fails parsing
+   procedure Test_Parse_Port_Without_Colon (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]" & ASCII.LF
+        & "image = ""nginx:latest""" & ASCII.LF
+        & "ports = [""80""]" & ASCII.LF;
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success,
+              "Port string without colon should fail parsing");
+   end Test_Parse_Port_Without_Colon;
+
+   -- Test that a volume string without a colon separator fails parsing
+   procedure Test_Parse_Volume_Without_Colon (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]" & ASCII.LF
+        & "image = ""nginx:latest""" & ASCII.LF
+        & "volumes = [""/data""]" & ASCII.LF;
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success,
+              "Volume string without colon should fail parsing");
+   end Test_Parse_Volume_Without_Colon;
+
+   -- Test that exceeding MAX_ENV_ENTRIES fails parsing
+   procedure Test_Parse_Too_Many_Env_Entries (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Header  : constant String :=
+        "[service.web]" & ASCII.LF
+        & "image = ""nginx:latest""" & ASCII.LF
+        & "[service.web.env]" & ASCII.LF;
+      Content : Unbounded_String := To_Unbounded_String (Header);
+   begin
+      for I in 1 .. Podmander.Config.MAX_ENV_ENTRIES + 1 loop
+         declare
+            I_Img : constant String := I'Image;
+         begin
+            Append (Content,
+                    "KEY_" & I_Img (2 .. I_Img'Last) & " = ""value""" & ASCII.LF);
+         end;
+      end loop;
+      declare
+         Result : constant Podmander.Config.Parser.Parse_Result :=
+           Podmander.Config.Parser.Parse_Content (To_String (Content));
+      begin
+         Assert (not Result.Success,
+                 "Exceeding MAX_ENV_ENTRIES should fail parsing");
+      end;
+   end Test_Parse_Too_Many_Env_Entries;
+
+   -- Test that exceeding MAX_PORTS_ENTRIES fails parsing
+   procedure Test_Parse_Too_Many_Ports_Entries (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Header  : constant String :=
+        "[service.web]" & ASCII.LF
+        & "image = ""nginx:latest""" & ASCII.LF
+        & "ports = [" & ASCII.LF;
+      Content : Unbounded_String := To_Unbounded_String (Header);
+   begin
+      for I in 1 .. Podmander.Config.MAX_PORTS_ENTRIES + 1 loop
+         declare
+            I_Img : constant String := I'Image;
+            Port  : constant String := I_Img (2 .. I_Img'Last);
+         begin
+            Append (Content, "  """ & Port & ":" & Port & """," & ASCII.LF);
+         end;
+      end loop;
+      Append (Content, "]" & ASCII.LF);
+      declare
+         Result : constant Podmander.Config.Parser.Parse_Result :=
+           Podmander.Config.Parser.Parse_Content (To_String (Content));
+      begin
+         Assert (not Result.Success,
+                 "Exceeding MAX_PORTS_ENTRIES should fail parsing");
+      end;
+   end Test_Parse_Too_Many_Ports_Entries;
+
+   -- Test that exceeding MAX_VOLUMES_ENTRIES fails parsing
+   procedure Test_Parse_Too_Many_Volumes_Entries (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Header  : constant String :=
+        "[service.web]" & ASCII.LF
+        & "image = ""nginx:latest""" & ASCII.LF
+        & "volumes = [" & ASCII.LF;
+      Content : Unbounded_String := To_Unbounded_String (Header);
+   begin
+      for I in 1 .. Podmander.Config.MAX_VOLUMES_ENTRIES + 1 loop
+         declare
+            I_Img : constant String := I'Image;
+            Idx   : constant String := I_Img (2 .. I_Img'Last);
+         begin
+            Append (Content,
+                    "  ""/host/" & Idx & ":/cont/" & Idx & """," & ASCII.LF);
+         end;
+      end loop;
+      Append (Content, "]" & ASCII.LF);
+      declare
+         Result : constant Podmander.Config.Parser.Parse_Result :=
+           Podmander.Config.Parser.Parse_Content (To_String (Content));
+      begin
+         Assert (not Result.Success,
+                 "Exceeding MAX_VOLUMES_ENTRIES should fail parsing");
+      end;
+   end Test_Parse_Too_Many_Volumes_Entries;
+
    -- Register all test routines
    overriding
    procedure Register_Tests (T : in out Config_Test) is
@@ -214,6 +323,16 @@ package body Podmander.Config_Tests is
         (T, Test_Parse_Content_Valid'Access, "Parse_Content with valid TOML content succeeds");
       Register_Routine
         (T, Test_Parse_Content_Invalid'Access, "Parse_Content with invalid TOML content fails");
+      Register_Routine
+        (T, Test_Parse_Port_Without_Colon'Access, "Port string without colon should fail parsing");
+      Register_Routine
+        (T, Test_Parse_Volume_Without_Colon'Access, "Volume string without colon should fail parsing");
+      Register_Routine
+        (T, Test_Parse_Too_Many_Env_Entries'Access, "Exceeding MAX_ENV_ENTRIES should fail parsing");
+      Register_Routine
+        (T, Test_Parse_Too_Many_Ports_Entries'Access, "Exceeding MAX_PORTS_ENTRIES should fail parsing");
+      Register_Routine
+        (T, Test_Parse_Too_Many_Volumes_Entries'Access, "Exceeding MAX_VOLUMES_ENTRIES should fail parsing");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `--test-config` CLI flag and `Load_Test_Deploy` from the controller; replaced by `podctl deploy` (#121)
 - Obsolete `notes/spec/` document directory
 
+### Fixed
+
+- Config parser now returns an error instead of silently dropping entries when `MAX_ENV_ENTRIES`, `MAX_PORTS_ENTRIES`, or `MAX_VOLUMES_ENTRIES` is exceeded, and when a port or volume string lacks a colon separator (#62)
+
 ### Changed
 
 - Renamed transport routing identity from `node_id`/`Node_Id` to `connection_id`/`Connection_Id` across Ada types, JSON wire fields, the `agents` DB column (migration 012), and all tests (#142)
