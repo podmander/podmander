@@ -42,5 +42,9 @@ ADRs capture architecturally significant decisions — the *why* behind the syst
 | [0032](0032-ssh-based-node-bootstrap.md) | SSH-based node bootstrap with role-based installation | Abandoned | 2026-04-12 |
 | [0033](0033-git-based-stack-collections.md) | Git-based stack collections with Jinja parameters | Accepted | 2026-04-12 |
 | 0034 | CLI-to-controller communication protocol | Proposed | — |
-| [0035](0035-database-layer-design.md) | Database layer design | Proposed | 2026-05-11 |
+| [0035](0035-database-layer-design.md) | Database layer design | Superseded by ADR-0037 | 2026-05-11 |
 | [0036](0036-zeromq-unified-transport.md) | ZeroMQ as sole runtime transport between controller and agent | Accepted | 2026-05-17 |
+| [0037](0037-database-only-state-access.md) | Database-only state access | Accepted | 2026-05-23 |
+| [0038](0038-state-tracking-design.md) | State tracking design for MVP | Accepted | 2026-05-23 |
+| [0039](0039-operator-cli-shares-agent-channel.md) | Operator CLI shares the agent control-plane channel | Accepted | 2026-06-06 |
+| [0040](0040-node-as-first-class-domain-object.md) | Node as a first-class domain object, distinct from Agent | Proposed | 2026-06-07 |
