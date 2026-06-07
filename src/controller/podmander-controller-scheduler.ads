@@ -32,11 +32,4 @@ package Podmander.Controller.Scheduler is
    --  If no entry exists, creates one with current_version = 0.
    --  Agent_Id = 0 when Strategy finds no eligible agent (entry unscheduled).
 
-   function Schedule
-     (DB             : in out DB_Handle;
-      Service_Id     : Podmander.Controller.Service_Id_Type;
-      Target_Version : Podmander.Controller.Service_Version_Type)
-      return Schedule_Result;
-   --  Convenience overload using the First_Available scheduling strategy.
-
 end Podmander.Controller.Scheduler;

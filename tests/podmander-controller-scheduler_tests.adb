@@ -9,6 +9,7 @@ with Podmander.Controller;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Scheduler;
 with Podmander.Controller.Service.Repository;
+with Podmander.Controller.Strategies.First_Available;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Database;
 with Podmander.Types;
@@ -88,7 +89,8 @@ package body Podmander.Controller.Scheduler_Tests is
       --  Register one agent so the Scheduler can assign it
       Register_Agent (D, "agent-1", "node-1");
 
-      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2);
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2,
+                                    Strategy => Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed for new entry");
       Assert (Result.Catalog_Entry.Id > 0, "Id should be positive after create");
       Assert (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
@@ -110,7 +112,8 @@ package body Podmander.Controller.Scheduler_Tests is
       Result : Scheduler.Schedule_Result;
    begin
       --  No agents registered — Scheduler should create entry with empty Node_Id
-      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1);
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1,
+                                    Strategy => Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with no agent");
       Assert (Result.Catalog_Entry.Agent_Id = 0, "Agent_Id should be 0 when no agent is connected");
       Assert (Result.Error = Scheduler.None, "Error should be None");
@@ -139,7 +142,8 @@ package body Podmander.Controller.Scheduler_Tests is
       end;
 
       --  Schedule with a new target_version
-      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 3);
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 3,
+                                    Strategy => Podmander.Controller.Strategies.First_Available.Instance);
 
       Assert (Result.Ok, "Schedule should succeed for existing entry");
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
@@ -165,7 +169,8 @@ package body Podmander.Controller.Scheduler_Tests is
       Register_Agent (D, "agent-1", "assigned-node");
 
       --  Schedule — the Scheduler should assign the registered agent's node
-      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2);
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2,
+                                    Strategy => Podmander.Controller.Strategies.First_Available.Instance);
 
       Assert (Result.Ok, "Schedule should succeed");
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
@@ -189,7 +194,8 @@ package body Podmander.Controller.Scheduler_Tests is
       Register_Agent (D, "agent-1", "node-1");
       Register_Agent (D, "agent-2", "node-2");
 
-      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1);
+      Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1,
+                                    Strategy => Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with multiple agents");
       Assert (Result.Catalog_Entry.Agent_Id /= 0, "Agent_Id should be assigned");
       Assert (Result.Error = Scheduler.None, "Error should be None");

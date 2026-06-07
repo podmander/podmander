@@ -11,6 +11,7 @@ with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Controller.Registrar;
 with Podmander.Controller.Scheduler;
+with Podmander.Controller.Strategies.First_Available;
 with Podmander.Controller.Service.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Generators.Quadlet;
@@ -271,7 +272,8 @@ package body Podmander.Controller is
               Catalog_Entry_Vectors.Element (Cursor);
             Result    : constant Scheduler.Schedule_Result :=
               Scheduler.Schedule
-                (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version);
+                (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version,
+                 Podmander.Controller.Strategies.First_Available.Instance);
          begin
             if Result.Ok then
                if Result.Catalog_Entry.Agent_Id /= 0 then

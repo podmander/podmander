@@ -3,7 +3,6 @@
 
 with Ada.Calendar;
 with Podmander.Controller.Service_Catalog.Repository;
-with Podmander.Controller.Strategies.First_Available;
 
 package body Podmander.Controller.Scheduler is
 
@@ -77,20 +76,6 @@ package body Podmander.Controller.Scheduler is
                Catalog_Entry => Dummy_Entry,
                Error         => Database_Error);
       end;
-   end Schedule;
-
-   function Schedule
-     (DB             : in out DB_Handle;
-      Service_Id     : Podmander.Controller.Service_Id_Type;
-      Target_Version : Podmander.Controller.Service_Version_Type)
-      return Schedule_Result is
-   begin
-      return
-        Schedule
-          (DB,
-           Service_Id,
-           Target_Version,
-           Podmander.Controller.Strategies.First_Available.Instance);
    end Schedule;
 
 end Podmander.Controller.Scheduler;

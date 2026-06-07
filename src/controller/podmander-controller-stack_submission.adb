@@ -4,6 +4,7 @@
 with Podmander.Config.Parser;
 with Podmander.Controller.Registrar;
 with Podmander.Controller.Scheduler;
+with Podmander.Controller.Strategies.First_Available;
 
 package body Podmander.Controller.Stack_Submission is
 
@@ -42,7 +43,9 @@ package body Podmander.Controller.Stack_Submission is
                 Podmander.Controller.Scheduler.Schedule
                   (DB,
                    Service_Id     => Reg_Result.Version.Service_Id,
-                   Target_Version => Reg_Result.Version.Version);
+                   Target_Version => Reg_Result.Version.Version,
+                   Strategy       =>
+                     Podmander.Controller.Strategies.First_Available.Instance);
          begin
             if not Sched_Result.Ok then
                return
