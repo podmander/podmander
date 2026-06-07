@@ -8,11 +8,13 @@ functionality.
 
 ## Dev Environment
 
-All build, test, and analysis commands run inside the `ada_dev` distrobox container.
-Use `mise` for all development tasks — it handles the distrobox wrapping automatically.
+Builds, tests, and analysis commands need to run inside the `ada_dev` distrobox container. The `mise` build tool offers
+preconfigured tasks for common development actions. They have the distrobox wrapping built in; run them from the host
+system.
 
 ```bash
 mise run build        # compile all binaries
+mise run build:clean  # build everything from scratch
 mise run test         # build and run the AUnit test suite
 mise run format       # auto-format Ada sources
 mise run format:check # check formatting without modifying files
@@ -26,8 +28,6 @@ distrobox enter ada_dev
 
 ## Project Management
 
-All work is tracked in Forgejo (owner: `podmander`, repo: `podmander`).
-
 ### Labels
 
 - `kind/` prefix: `epic`, `feature`, `refactor`, `bug`, `docs`, `infra`
@@ -37,7 +37,7 @@ Epic issues (label: `kind/epic`) are top-level tracking issues with a checklist 
 
 ### Milestones
 
-Issues are grouped by release target. Current milestone: **v0.1 MVP**.
+Issues are grouped by release target.
 
 ### Session Handoff
 
@@ -50,23 +50,18 @@ This is the handoff point for resuming work in a later session.
 
 ## Multi-Agent Workflow
 
-All work happens in git worktrees managed by `wt`. The main worktree is reserved for `wt switch` operations only.
+All work happens in git worktrees managed by `wt`. Use the /version-control skill for details.
 
-- Create: `wt switch --create <issue>-<stub>`
-- Build: `mise run build`
-- Test: `mise run test`
-- Clean up: `wt switch main && wt remove <issue>-<stub>`
-
-Never edit or build in the main worktree while another agent is active.
+The main worktree is reserved for `wt switch` operations only.
 
 ## Implementation Process
 
-1. Create an issue via the Forgejo MCP.
-2. In the main worktree, run `wt switch --create <issue-number>-<short-stub>`.
-3. Do all coding work in the worktree.
+1. Create a tracking issue if it doesn't exist yet. See "Issue Tracker" below.
+2. Use the /version-control skill to create or switch to a feature worktree.
+3. Do all coding work in the feature worktree.
 4. If the session pauses, leave a handoff comment on the issue.
-5. Push the branch and submit a pull request via Forgejo MCP.
-6. After merge, remove the worktree: `wt remove <issue-number>-<short-stub>`.
+5. Push the branch and submit a pull request.
+6. After merge, update the main worktree and remove the feature worktree.
 
 ## SQLite Gotchas
 
@@ -80,39 +75,6 @@ These recur whenever we touch the database layer.
   suite). In-memory databases are isolated per connection — a second
   connection won't see the first connection's schema.
 
-## Subagent Delegation Strategy
-
-### Anti-patterns to avoid
-
-- **Copy-paste delegation**: Never write exact code in a fixer prompt and
-  expect it to paste it into files. Markdown code blocks lose indentation,
-  and the fixer can't match GNAT style from markdown. If you've already
-  designed the exact code, edit the files directly — no subagent needed.
-- **Orchestrator doing implementation work**: If the spec is clear and the
-  work is more than ~20 lines, delegate to @fixer with *design guidance*
-  (what to change, where, constraints, patterns to follow from existing
-  code), not exact code. The fixer reads the actual files and matches the
-  existing style.
-- **Tests as a separate phase**: @fixer must follow TDD Red-Green — write
-  the failing test first, then make it pass. Never batch all tests at the
-  end.
-- **Rewriting on compilation errors**: When Ada compilation fails, read the
-  error message, fix the specific issue, and rebuild. Don't rewrite the
-  whole unit from scratch.
-
-### Common pitfalls
-
-- **Distrobox**: All build and test commands MUST use `mise run`. Mise
-  handles the `distrobox enter ada_dev` wrapping — never call `alr` directly.
-- **Prompt length**: If a @fixer prompt exceeds the tool limit, split the
-  work into smaller scoped tasks (e.g., one @fixer for tests, another for
-  production code).
-- **Architectural decisions**: If a @fixer encounters a design constraint
-  (like Ada's circular dependency rule), it should surface the issue rather
-  than silently restructuring. Flag these in the prompt: "If you encounter
-  a design constraint that requires an architectural change, stop and report
-  it instead of making the change."
-
 ## Agent skills
 
 ### Issue tracker
@@ -125,4 +87,18 @@ Triage labels use a `triage/` prefix to match the existing `kind/` and `area/` c
 
 ### Domain docs
 
-Single-context repo. See `notes/agents/domain.md`.
+Single-context repo. See `notes/agents/domain-docs.md`.
+
+## Desired practices
+
+- **Boy scout rule:** When you encounter pre-existing issues, fix them and
+  commit these changes separately.
+
+## Subagent Delegation Strategy
+
+### Anti-patterns to avoid
+
+- **Copy-paste delegation**: Never write exact code in a subagent prompt and
+  expect it to paste it into files. Markdown code blocks lose indentation, and
+  the subagent can't match GNAT style from markdown. If you've already designed
+  the exact code, edit the files directly — no subagent needed.
