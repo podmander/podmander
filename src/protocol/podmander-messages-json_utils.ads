@@ -44,7 +44,7 @@ package Podmander.Messages.JSON_Utils is
    --  Set a timestamp field on a JSON object.
    --  Formats via Ada.Calendar.Formatting.Image and stores as a string.
    procedure Set_Field
-     (Obj : GNATCOLL.JSON.JSON_Value;
+     (Obj   : GNATCOLL.JSON.JSON_Value;
       Field : String;
       Value : Ada.Calendar.Time);
 

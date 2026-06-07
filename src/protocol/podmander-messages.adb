@@ -14,15 +14,16 @@ package body Podmander.Messages is
         Hash            => Ada.Strings.Hash,
         Equivalent_Keys => "=");
 
-   Decoders : Decoder_Maps.Map;
+   Decoders    : Decoder_Maps.Map;
    Initialized : Boolean := False;
 
    procedure Register (Kind : String; Decoder : Decoder_Access) is
    begin
       if not Initialized then
-         raise Program_Error with
-           "Decoder registry not yet initialized; "
-           & "missing pragma Elaborate(Podmander.Messages)?";
+         raise Program_Error
+           with
+             "Decoder registry not yet initialized; "
+             & "missing pragma Elaborate(Podmander.Messages)?";
       end if;
       if Decoders.Contains (Kind) then
          raise Already_Registered with "kind already registered: " & Kind;

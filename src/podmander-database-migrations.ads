@@ -145,7 +145,7 @@ private
    --  service_catalog: CHECK (state IN (0, 1, 2, 3)) - state enum values.
    --  service_catalog: CHECK (current_version >= 0) - non-negative.
    Migration_010_SQL : constant String :=
-     --  service_versions: recreate with CHECK (version >= 1)
+   --  service_versions: recreate with CHECK (version >= 1)
      "CREATE TABLE service_versions_new ("
      & "id           INTEGER PRIMARY KEY AUTOINCREMENT,"
      & "service_id   INTEGER NOT NULL,"
@@ -198,7 +198,7 @@ private
    --  SQLite doesn't support ALTER TABLE ADD COLUMN with PRIMARY KEY
    --  or changes to column types, so we recreate both tables.
    Migration_011_SQL : constant String :=
-     --  Recreate agents table with id INTEGER PRIMARY KEY AUTOINCREMENT
+   --  Recreate agents table with id INTEGER PRIMARY KEY AUTOINCREMENT
      "CREATE TABLE agents_new ("
      & "id        INTEGER PRIMARY KEY AUTOINCREMENT,"
      & "name      TEXT NOT NULL UNIQUE,"
@@ -238,49 +238,49 @@ private
      & "    WHERE agent_id IS NOT NULL;";
 
    Migration_History : constant Migration_Array :=
-      [1 =>
-         (Version => 1,
+     [1  =>
+        (Version => 1,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_001_SQL)),
-      2 =>
+      2  =>
         (Version => 2,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_002_SQL)),
-      3 =>
+      3  =>
         (Version => 3,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_003_SQL)),
-      4 =>
+      4  =>
         (Version => 4,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_004_SQL)),
-      5 =>
+      5  =>
         (Version => 5,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_005_SQL)),
-      6 =>
+      6  =>
         (Version => 6,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_006_SQL)),
-      7 =>
+      7  =>
         (Version => 7,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_007_SQL)),
-      8 =>
+      8  =>
         (Version => 8,
          SQL     =>
            Ada.Strings.Unbounded.To_Unbounded_String (Migration_008_SQL)),
-9 =>
-         (Version => 9,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_009_SQL)),
-       10 =>
-         (Version => 10,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_010_SQL)),
-       11 =>
-         (Version => 11,
-          SQL     =>
-            Ada.Strings.Unbounded.To_Unbounded_String (Migration_011_SQL))];
+      9  =>
+        (Version => 9,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_009_SQL)),
+      10 =>
+        (Version => 10,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_010_SQL)),
+      11 =>
+        (Version => 11,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_011_SQL))];
 
 end Podmander.Database.Migrations;

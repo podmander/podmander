@@ -22,27 +22,27 @@ package Podmander.Controller.Service.Repository is
    -- if no matching service exists.
 
    function Get_By_Id
-      (DB : in out DB_Handle; Id : Podmander.Controller.Service_Id_Type)
-       return Service;
+     (DB : in out DB_Handle; Id : Podmander.Controller.Service_Id_Type)
+      return Service;
    -- Return a Service by id. Raises Database_Error with Not_Found
    -- if no matching service exists.
 
    procedure Create_Version
-      (DB : in out DB_Handle; Version : Podmander.Controller.Service_Version);
+     (DB : in out DB_Handle; Version : Podmander.Controller.Service_Version);
    -- Persist a new Service_Version. Raises Database_Error with
    -- Constraint_Violation on UNIQUE (service_id, version) violation.
 
    function Get_Version
-      (DB             : in out DB_Handle;
-       Service_Id     : Podmander.Controller.Service_Id_Type;
-       Version        : Podmander.Controller.Service_Version_Type)
-       return Podmander.Controller.Service_Version;
+     (DB         : in out DB_Handle;
+      Service_Id : Podmander.Controller.Service_Id_Type;
+      Version    : Podmander.Controller.Service_Version_Type)
+      return Podmander.Controller.Service_Version;
    -- Return a specific Service_Version by (service_id, version).
    -- Raises Database_Error with Not_Found if no matching version exists.
 
    function Get_Latest_Version
-      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
-       return Podmander.Controller.Service_Version;
+     (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
+      return Podmander.Controller.Service_Version;
    -- Return the highest version number for the given service id.
    -- Raises Database_Error with Not_Found if no versions exist for service.
 

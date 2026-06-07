@@ -19,7 +19,8 @@ package Podmander.Messages.Deployment_Results is
    end record;
 
    overriding
-   procedure Encode (Self : Deployment_Result; Msg : in out CZMQ.Messages.Message);
+   procedure Encode
+     (Self : Deployment_Result; Msg : in out CZMQ.Messages.Message);
 
    overriding
    procedure Dispatch_To

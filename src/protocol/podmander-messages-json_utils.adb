@@ -31,8 +31,7 @@ package body Podmander.Messages.JSON_Utils is
    -- Get_Field (String)
    ---------------
    function Get_Field
-     (Obj : GNATCOLL.JSON.JSON_Value; Field : String) return String
-   is
+     (Obj : GNATCOLL.JSON.JSON_Value; Field : String) return String is
    begin
       if not Obj.Has_Field (Field) then
          raise Decode_Error with "missing field '" & Field & "'";
@@ -51,8 +50,7 @@ package body Podmander.Messages.JSON_Utils is
    -- Get_Field (Integer)
    ---------------
    function Get_Field
-     (Obj : GNATCOLL.JSON.JSON_Value; Field : String) return Integer
-   is
+     (Obj : GNATCOLL.JSON.JSON_Value; Field : String) return Integer is
    begin
       if not Obj.Has_Field (Field) then
          raise Decode_Error with "missing field '" & Field & "'";
@@ -78,15 +76,15 @@ package body Podmander.Messages.JSON_Utils is
       return Ada.Calendar.Formatting.Value (Raw);
    exception
       when Constraint_Error =>
-         raise Decode_Error with "field '" & Field & "' is not a valid timestamp";
+         raise Decode_Error
+           with "field '" & Field & "' is not a valid timestamp";
    end Get_Field;
 
    ---------------
    -- Set_Field (String)
    ---------------
    procedure Set_Field
-     (Obj : GNATCOLL.JSON.JSON_Value; Field : String; Value : String)
-   is
+     (Obj : GNATCOLL.JSON.JSON_Value; Field : String; Value : String) is
    begin
       Obj.Set_Field (Field, Value);
    end Set_Field;
@@ -95,8 +93,7 @@ package body Podmander.Messages.JSON_Utils is
    -- Set_Field (Integer)
    ---------------
    procedure Set_Field
-     (Obj : GNATCOLL.JSON.JSON_Value; Field : String; Value : Integer)
-   is
+     (Obj : GNATCOLL.JSON.JSON_Value; Field : String; Value : Integer) is
    begin
       Obj.Set_Field (Field, Value);
    end Set_Field;
@@ -105,10 +102,9 @@ package body Podmander.Messages.JSON_Utils is
    -- Set_Field (Time)
    ---------------
    procedure Set_Field
-     (Obj : GNATCOLL.JSON.JSON_Value;
+     (Obj   : GNATCOLL.JSON.JSON_Value;
       Field : String;
-      Value : Ada.Calendar.Time)
-   is
+      Value : Ada.Calendar.Time) is
    begin
       Obj.Set_Field (Field, Ada.Calendar.Formatting.Image (Value));
    end Set_Field;
@@ -118,15 +114,13 @@ package body Podmander.Messages.JSON_Utils is
    ----------------
    function Encode_Code
      (Code : Podmander.Messages.Result_Codes.Result_Code) return String
-   is
-      (Podmander.Messages.Result_Codes.Encode_Code (Code));
+   is (Podmander.Messages.Result_Codes.Encode_Code (Code));
 
    ----------------
    -- Decode_Code
    ----------------
    function Decode_Code
      (S : String) return Podmander.Messages.Result_Codes.Result_Code
-   is
-      (Podmander.Messages.Result_Codes.Decode_Code (S));
+   is (Podmander.Messages.Result_Codes.Decode_Code (S));
 
 end Podmander.Messages.JSON_Utils;

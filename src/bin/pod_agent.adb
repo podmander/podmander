@@ -41,7 +41,8 @@ begin
            To_Unbounded_String (Podmander.Args.Get ("name", "agent-1")),
          Join_Token           =>
            To_Unbounded_String (Podmander.Args.Get ("token", "")),
-         Heartbeat_Interval   => Podmander.Args.Get_Duration ("interval", 30.0),
+         Heartbeat_Interval   =>
+           Podmander.Args.Get_Duration ("interval", 30.0),
          Registration_Timeout => 5.0,
          Max_Backoff          => 60.0);
    begin

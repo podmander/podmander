@@ -14,13 +14,13 @@ package Podmander.Messages is
    Already_Registered : exception;
 
    -- Message kind discriminator strings used as the JSON "kind" field
-   Registration_Request_Kind  : constant String := "registration";
-   Registration_Response_Kind : constant String := "registered";
-   Heartbeat_Kind             : constant String := "heartbeat";
-   Deployment_Kind            : constant String := "deployment";
-   Deployment_Ack_Kind        : constant String := "deployment_ack";
-   Status_Kind                : constant String := "status";
-   Status_Ack_Kind            : constant String := "status_ack";
+   Registration_Request_Kind    : constant String := "registration";
+   Registration_Response_Kind   : constant String := "registered";
+   Heartbeat_Kind               : constant String := "heartbeat";
+   Deployment_Kind              : constant String := "deployment";
+   Deployment_Ack_Kind          : constant String := "deployment_ack";
+   Status_Kind                  : constant String := "status";
+   Status_Ack_Kind              : constant String := "status_ack";
    Stack_Submission_Kind        : constant String := "stack_submission";
    Stack_Submission_Result_Kind : constant String := "stack_submission_ack";
 
@@ -52,12 +52,16 @@ package Podmander.Messages is
    with null record;
    type Heartbeat_Message_Type is abstract new Protocol_Message
    with null record;
-   type Deployment_Command_Type is abstract new Protocol_Message with null record;
-   type Deployment_Result_Type is abstract new Protocol_Message with null record;
+   type Deployment_Command_Type is abstract new Protocol_Message
+   with null record;
+   type Deployment_Result_Type is abstract new Protocol_Message
+   with null record;
    type Status_Query_Type is abstract new Protocol_Message with null record;
    type Status_Response_Type is abstract new Protocol_Message with null record;
-   type Stack_Submission_Type is abstract new Protocol_Message with null record;
-   type Stack_Submission_Result_Type is abstract new Protocol_Message with null record;
+   type Stack_Submission_Type is abstract new Protocol_Message
+   with null record;
+   type Stack_Submission_Result_Type is abstract new Protocol_Message
+   with null record;
 
    -- Handler contract for inbound messages. Adding a new message category
    -- adds a new abstract anchor above and a new primitive here; the
@@ -84,15 +88,15 @@ package Podmander.Messages is
    is abstract;
 
    procedure Handle_Status_Response
-      (H : in out Message_Handler; M : Status_Response_Type'Class)
+     (H : in out Message_Handler; M : Status_Response_Type'Class)
    is abstract;
 
-procedure Handle_Stack_Submission
-       (H : in out Message_Handler; M : Stack_Submission_Type'Class)
+   procedure Handle_Stack_Submission
+     (H : in out Message_Handler; M : Stack_Submission_Type'Class)
    is abstract;
 
    procedure Handle_Stack_Submission_Result
-       (H : in out Message_Handler; M : Stack_Submission_Result_Type'Class)
+     (H : in out Message_Handler; M : Stack_Submission_Result_Type'Class)
    is abstract;
 
    -- Decoder registry: each concrete message type registers a decoder

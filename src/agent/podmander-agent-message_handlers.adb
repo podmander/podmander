@@ -93,8 +93,8 @@ package body Podmander.Agent.Message_Handlers is
 
    overriding
    procedure Handle_Stack_Submission
-      (H : in out Agent_Handler;
-       M : Podmander.Messages.Stack_Submission_Type'Class)
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Stack_Submission_Type'Class)
    is
       pragma Unreferenced (H, M);
    begin
@@ -104,8 +104,8 @@ package body Podmander.Agent.Message_Handlers is
 
    overriding
    procedure Handle_Stack_Submission_Result
-      (H : in out Agent_Handler;
-       M : Podmander.Messages.Stack_Submission_Result_Type'Class)
+     (H : in out Agent_Handler;
+      M : Podmander.Messages.Stack_Submission_Result_Type'Class)
    is
       pragma Unreferenced (H, M);
    begin

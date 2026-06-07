@@ -32,19 +32,22 @@ package body Podmander.Messages.Stack_Submission_Results is
    end Dispatch_To;
 
    function Decode_Impl
-     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class is
+     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class
+   is
       Success_Str : constant String := JSON_Utils.Get_Field (Obj, "success");
       Msg_Str     : constant String := JSON_Utils.Get_Field (Obj, "message");
    begin
       if Success_Str /= "true" and then Success_Str /= "false" then
-         raise Podmander.Messages.Decode_Error with
-           "Invalid success field: expected 'true' or 'false', got '"
-           & Success_Str & "'";
+         raise Podmander.Messages.Decode_Error
+           with
+             "Invalid success field: expected 'true' or 'false', got '"
+             & Success_Str
+             & "'";
       end if;
-return
-         Stack_Submission_Result'
-           (Success => Success_Str = "true",
-            Message => To_Unbounded_String (Msg_Str));
+      return
+        Stack_Submission_Result'
+          (Success => Success_Str = "true",
+           Message => To_Unbounded_String (Msg_Str));
    end Decode_Impl;
 
 begin

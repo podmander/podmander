@@ -11,23 +11,23 @@ package Podmander.Controller.Service_Catalog.Repository is
    use Podmander.Database;
 
    function Create_Entry
-      (DB             : in out DB_Handle;
-       Service_Id     : Podmander.Controller.Service_Id_Type;
-       Agent_Id       : Podmander.Controller.Agent_Id_Type := 0;
-       Target_Version : Podmander.Controller.Service_Version_Type)
-       return Podmander.Controller.Service_Catalog_Entry;
+     (DB             : in out DB_Handle;
+      Service_Id     : Podmander.Controller.Service_Id_Type;
+      Agent_Id       : Podmander.Controller.Agent_Id_Type := 0;
+      Target_Version : Podmander.Controller.Service_Version_Type)
+      return Podmander.Controller.Service_Catalog_Entry;
    -- Insert a new catalog entry. Agent_Id 0 means unscheduled.
    -- Returns the created entry with its auto-generated id.
 
    function Get_By_Id
-      (DB : in out DB_Handle; Id : Integer)
-       return Podmander.Controller.Service_Catalog_Entry;
+     (DB : in out DB_Handle; Id : Integer)
+      return Podmander.Controller.Service_Catalog_Entry;
    -- Return a catalog entry by id.
    -- Raises Database_Error with Not_Found if no matching entry exists.
 
    function Get_By_Service_Id
-      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
-       return Podmander.Controller.Service_Catalog_Entry;
+     (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type)
+      return Podmander.Controller.Service_Catalog_Entry;
    -- Return the catalog entry for the given service_id.
    -- Raises Database_Error with Not_Found if no entry exists.
    -- If multiple entries exist (different agents), returns the first one.
@@ -38,31 +38,33 @@ package Podmander.Controller.Service_Catalog.Repository is
    -- Return all catalog entries where agent_id IS NULL.
 
    function Get_Pending
-      (DB : in out DB_Handle)
-       return Podmander.Controller.Catalog_Entry_Vectors.Vector;
+     (DB : in out DB_Handle)
+      return Podmander.Controller.Catalog_Entry_Vectors.Vector;
    -- Return all catalog entries where state = Pending.
 
    function Update_On_Success
-      (DB : in out DB_Handle; Id : Integer; Current_Version : Natural)
-       return Boolean;
+     (DB : in out DB_Handle; Id : Integer; Current_Version : Natural)
+      return Boolean;
    -- Set current_version = Current_Version, state = Deployed, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Update_On_Failure
-      (DB : in out DB_Handle; Id : Integer) return Boolean;
+     (DB : in out DB_Handle; Id : Integer) return Boolean;
    -- Set state = Failed, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Assign_Agent
-     (DB : in out DB_Handle; Id : Integer;
+     (DB       : in out DB_Handle;
+      Id       : Integer;
       Agent_Id : Podmander.Controller.Agent_Id_Type) return Boolean;
    -- Set agent_id = Agent_Id, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Set_Target
-       (DB : in out DB_Handle; Id : Integer;
-        Target_Version : Podmander.Controller.Service_Version_Type)
-        return Boolean;
+     (DB             : in out DB_Handle;
+      Id             : Integer;
+      Target_Version : Podmander.Controller.Service_Version_Type)
+      return Boolean;
    -- Set target_version = Target_Version, state = Pending,
    -- update updated_at.  Returns True if a row was updated, False otherwise.
 

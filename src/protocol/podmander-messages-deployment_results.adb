@@ -9,15 +9,18 @@ pragma Elaborate (Podmander.Messages);
 package body Podmander.Messages.Deployment_Results is
 
    overriding
-   procedure Encode (Self : Deployment_Result; Msg : in out CZMQ.Messages.Message)
+   procedure Encode
+     (Self : Deployment_Result; Msg : in out CZMQ.Messages.Message)
    is
       Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       JSON_Utils.Set_Kind (Obj, Deployment_Ack_Kind);
       JSON_Utils.Set_Field (Obj, "catalog_id", Self.Catalog_Id);
       JSON_Utils.Set_Field (Obj, "code", RC.Encode_Code (Self.Code));
-      JSON_Utils.Set_Field (Obj, "service_name", SU.To_String (Self.Service_Name));
-      JSON_Utils.Set_Field (Obj, "error_message", SU.To_String (Self.Error_Message));
+      JSON_Utils.Set_Field
+        (Obj, "service_name", SU.To_String (Self.Service_Name));
+      JSON_Utils.Set_Field
+        (Obj, "error_message", SU.To_String (Self.Error_Message));
       Msg.Add_String (GNATCOLL.JSON.Write (Obj));
    end Encode;
 
@@ -29,14 +32,18 @@ package body Podmander.Messages.Deployment_Results is
    end Dispatch_To;
 
    function Decode_Impl
-     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class is
-      Service_Name : constant String := JSON_Utils.Get_Field (Obj, "service_name");
-      Error_Msg    : constant String := JSON_Utils.Get_Field (Obj, "error_message");
+     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class
+   is
+      Service_Name : constant String :=
+        JSON_Utils.Get_Field (Obj, "service_name");
+      Error_Msg    : constant String :=
+        JSON_Utils.Get_Field (Obj, "error_message");
    begin
       return
         Deployment_Result'
           (Catalog_Id    => JSON_Utils.Get_Field (Obj, "catalog_id"),
-           Code          => RC.Decode_Code (JSON_Utils.Get_Field (Obj, "code")),
+           Code          =>
+             RC.Decode_Code (JSON_Utils.Get_Field (Obj, "code")),
            Service_Name  => SU.To_Unbounded_String (Service_Name),
            Error_Message => SU.To_Unbounded_String (Error_Msg));
    end Decode_Impl;

@@ -16,7 +16,8 @@ package body Podmander.Messages.Registration_Requests is
    begin
       JSON_Utils.Set_Kind (Obj, Registration_Request_Kind);
       JSON_Utils.Set_Field (Obj, "agent_name", To_String (Self.Agent_Name));
-      JSON_Utils.Set_Field (Obj, "enrollment_secret", To_String (Self.Enrollment_Secret));
+      JSON_Utils.Set_Field
+        (Obj, "enrollment_secret", To_String (Self.Enrollment_Secret));
       Msg.Add_String (GNATCOLL.JSON.Write (Obj));
    end Encode;
 
@@ -28,8 +29,9 @@ package body Podmander.Messages.Registration_Requests is
    end Dispatch_To;
 
    function Decode_Impl
-     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class is
-      Agent_Name : constant String :=
+     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class
+   is
+      Agent_Name        : constant String :=
         JSON_Utils.Get_Field (Obj, "agent_name");
       Enrollment_Secret : constant String :=
         JSON_Utils.Get_Field (Obj, "enrollment_secret");

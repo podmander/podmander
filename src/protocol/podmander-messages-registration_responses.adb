@@ -29,12 +29,11 @@ package body Podmander.Messages.Registration_Responses is
    end Dispatch_To;
 
    function Decode_Impl
-     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class is
+     (Obj : GNATCOLL.JSON.JSON_Value) return Protocol_Message'Class
+   is
       Node_Id : constant String := JSON_Utils.Get_Field (Obj, "node_id");
    begin
-      return
-        Registration_Response'
-          (Node_Id => To_Unbounded_String (Node_Id));
+      return Registration_Response'(Node_Id => To_Unbounded_String (Node_Id));
    end Decode_Impl;
 
 begin
