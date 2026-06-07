@@ -9,6 +9,7 @@ with CZMQ.Sockets;
 with Podmander.Config;
 with Podmander.Database;
 with Podmander.Enrollment;
+
 package Podmander.Controller is
 
    use Podmander.Config;
@@ -29,6 +30,18 @@ package Podmander.Controller is
    --  Row identifier in the agents table. 0 means unassigned (no agent
    --  has been scheduled for this catalog entry). Distinct from Integer
    --  so a generic integer cannot be passed by mistake.
+
+   type Agent_Option (Present : Boolean := False) is record
+      case Present is
+         when True =>
+            Agent_Id : Agent_Id_Type;
+
+         when False =>
+            null;
+      end case;
+   end record;
+   --  Scheduling strategy return type: Present => True carries the selected
+   --  agent; Present => False means no eligible agent was found.
 
    -- State tracking types
 

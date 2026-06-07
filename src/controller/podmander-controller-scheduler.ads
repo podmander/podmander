@@ -2,10 +2,10 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 --  The Scheduler creates or updates service_catalog entries to schedule
---  a service for deployment. It selects the target node by querying
---  available agents. For MVP, it assigns the first connected agent
---  (or leaves node_id NULL if none connected).
+--  a service for deployment. Agent selection is delegated to the injected
+--  Scheduling Strategy; the Scheduler owns only persistence.
 
+with Podmander.Controller.Strategies;
 with Podmander.Database;
 
 package Podmander.Controller.Scheduler is
@@ -21,15 +21,22 @@ package Podmander.Controller.Scheduler is
    end record;
 
    function Schedule
-      (DB : in out DB_Handle; Service_Id : Podmander.Controller.Service_Id_Type;
-       Target_Version : Podmander.Controller.Service_Version_Type)
-       return Schedule_Result;
-   --  Create or update a catalog entry for the given service.
-   --  If an entry already exists for this service, update target_version
-   --  and set state = Pending. If no entry exists, create one with
-   --  current_version = 0 and the given target_version.
-   --  The Scheduler selects the target node by querying registered
-   --  agents: 0 agents -> unscheduled (node_id NULL), otherwise
-   --  assigns the first registered agent found.
+     (DB             : in out DB_Handle;
+      Service_Id     : Podmander.Controller.Service_Id_Type;
+      Target_Version : Podmander.Controller.Service_Version_Type;
+      Strategy       : Podmander.Controller.Strategies.Strategy_Type'Class)
+      return Schedule_Result;
+   --  Create or update a catalog entry for the given service, using the
+   --  provided Scheduling Strategy to select the target agent.
+   --  If an entry already exists, updates target_version and state = Pending.
+   --  If no entry exists, creates one with current_version = 0.
+   --  Agent_Id = 0 when Strategy finds no eligible agent (entry unscheduled).
+
+   function Schedule
+     (DB             : in out DB_Handle;
+      Service_Id     : Podmander.Controller.Service_Id_Type;
+      Target_Version : Podmander.Controller.Service_Version_Type)
+      return Schedule_Result;
+   --  Convenience overload using the First_Available scheduling strategy.
 
 end Podmander.Controller.Scheduler;

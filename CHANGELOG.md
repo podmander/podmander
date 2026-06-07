@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Podmander.Controller.Strategies` pluggable agent-selection abstraction; `First_Available` strategy extracted from Scheduler; `Schedule` gains a Strategy parameter (#137)
+- `Agent_Option` variant record in `Podmander.Controller` for strategy return values (#137)
+
 - `podctl deploy <path>` now sends a `Stack_Submission` over a CURVE DEALER socket and prints the controller's response; exit codes distinguish token errors, file errors, timeouts, and rejections (#119)
 - podctl skeleton: CLIC command framework, `deploy` stub, `Podmander.Podctl.Config` with file + flag override loading (#118)
 
