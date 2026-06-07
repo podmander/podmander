@@ -246,7 +246,7 @@ package body Podmander.Controller is
      (SV : Service_Version; Name : String) return Service_Definition is
    begin
       return
-        (Name          => To_Unbounded_String (Name),
+        (Service_Name  => To_Unbounded_String (Name),
          Image         => SV.Image,
          Env           => SV.Env,
          Env_Count     => SV.Env_Count,
@@ -272,7 +272,9 @@ package body Podmander.Controller is
               Catalog_Entry_Vectors.Element (Cursor);
             Result    : constant Scheduler.Schedule_Result :=
               Scheduler.Schedule
-                (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version,
+                (Self.DB,
+                 Cat_Entry.Service_Id,
+                 Cat_Entry.Target_Version,
                  Podmander.Controller.Strategies.First_Available.Instance);
          begin
             if Result.Ok then
@@ -344,7 +346,7 @@ package body Podmander.Controller is
                          Service.Repository.Get_By_Id
                            (Self.DB, Cat_Entry.Service_Id);
                      SD_With_Name : constant Service_Definition :=
-                       (Name          => Svc.Name,
+                       (Service_Name  => Svc.Name,
                         Image         => SD.Image,
                         Env           => SD.Env,
                         Env_Count     => SD.Env_Count,

@@ -30,7 +30,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Minimal (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -50,7 +50,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Single_Env (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           =>
            [1      => (Key => To_Unbounded_String ("FOO"), Value => To_Unbounded_String ("bar")),
@@ -71,7 +71,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Multiple_Env (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           =>
            [1      => (Key => To_Unbounded_String ("FOO"), Value => To_Unbounded_String ("bar")),
@@ -94,7 +94,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Single_Port (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -113,7 +113,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Multiple_Ports (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -136,7 +136,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Single_Volume (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -157,7 +157,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Full_Container (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("myapp:latest"),
          Env           =>
            [1      => (Key => To_Unbounded_String ("FOO"), Value => To_Unbounded_String ("bar")),
@@ -190,7 +190,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Description_Present (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("myapp:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -212,7 +212,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Description_Empty (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("myapp:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -231,7 +231,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_WantedBy_Specified (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("myapp:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -253,7 +253,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_WantedBy_Default (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("myapp:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -275,7 +275,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Render_Full_Sections (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config        : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("myapp:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -301,7 +301,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Write_File_Creates_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -344,7 +344,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Write_File_Creates_Directory (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -388,7 +388,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Write_File_Content_Matches_Render (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config   : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -469,7 +469,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Golden_Minimal (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,
@@ -489,7 +489,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Golden_Full (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           =>
            [1      => (Key => To_Unbounded_String ("FOO"), Value => To_Unbounded_String ("bar")),
@@ -517,7 +517,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Golden_Multi_Env (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("app:latest"),
          Env           =>
            [1      => (Key => To_Unbounded_String ("FOO"), Value => To_Unbounded_String ("bar")),
@@ -541,7 +541,7 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Golden_Multi_Port (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Name          => Null_Unbounded_String,
+        (Service_Name  => Null_Unbounded_String,
          Image         => To_Unbounded_String ("nginx:latest"),
          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
          Env_Count     => 0,

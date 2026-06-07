@@ -12,10 +12,10 @@ package body Podmander.Controller.Registrar is
    use Ada.Strings.Unbounded;
 
    function To_Service_Version
-      (ASD : Service_Definition;
-       Service_Id : Podmander.Controller.Service_Id_Type;
-       Version    : Podmander.Controller.Service_Version_Type)
-       return Podmander.Controller.Service_Version is
+     (ASD        : Service_Definition;
+      Service_Id : Podmander.Controller.Service_Id_Type;
+      Version    : Podmander.Controller.Service_Version_Type)
+      return Podmander.Controller.Service_Version is
    begin
       return
         (Id            => 0,
@@ -41,7 +41,7 @@ package body Podmander.Controller.Registrar is
      (DB : in out DB_Handle; ASD : Podmander.Config.Service_Definition)
       return Register_Result
    is
-      Name        : constant String := To_String (ASD.Name);
+      Name        : constant String := To_String (ASD.Service_Name);
       Svc         : Podmander.Controller.Service.Service;
       Version_Num : Podmander.Controller.Service_Version_Type := 1;
       SV          : Podmander.Controller.Service_Version;

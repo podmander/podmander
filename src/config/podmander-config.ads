@@ -38,7 +38,7 @@ package Podmander.Config is
    type Volume_Array is array (Positive range <>) of Volume_Mapping;
 
    type Service_Definition is record
-      Name          : Unbounded_String;
+      Service_Name  : Unbounded_String;
       Image         : Unbounded_String;
       Env           : Env_Array (1 .. MAX_ENV_ENTRIES);
       Env_Count     : Natural := 0;

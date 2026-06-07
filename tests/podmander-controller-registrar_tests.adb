@@ -41,7 +41,7 @@ package body Podmander.Controller.Registrar_Tests is
    is
       Result : Podmander.Config.Service_Definition;
    begin
-      Result.Name := To_Unbounded_String (Name);
+      Result.Service_Name := To_Unbounded_String (Name);
       Result.Image := To_Unbounded_String (Image);
       Result.Description := To_Unbounded_String (Desc);
       Result.WantedBy := To_Unbounded_String (Wanted);

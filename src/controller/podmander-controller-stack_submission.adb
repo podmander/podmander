@@ -16,9 +16,7 @@ package body Podmander.Controller.Stack_Submission is
    begin
       if not Parse_Res.Success then
          return
-           (Ok      => False,
-            Error   => Parse_Failed,
-            Message => Parse_Res.Message);
+           (Ok => False, Error => Parse_Failed, Message => Parse_Res.Message);
       end if;
 
       declare
@@ -33,8 +31,9 @@ package body Podmander.Controller.Stack_Submission is
                Message =>
                  To_Unbounded_String
                    ("Failed to register service "
-                    & To_String (Parse_Res.Config.Name)
-                    & ": " & Reg_Result.Error'Image));
+                    & To_String (Parse_Res.Config.Service_Name)
+                    & ": "
+                    & Reg_Result.Error'Image));
          end if;
 
          declare
@@ -54,8 +53,9 @@ package body Podmander.Controller.Stack_Submission is
                   Message =>
                     To_Unbounded_String
                       ("Failed to schedule "
-                       & To_String (Parse_Res.Config.Name)
-                       & ": " & Sched_Result.Error'Image));
+                       & To_String (Parse_Res.Config.Service_Name)
+                       & ": "
+                       & Sched_Result.Error'Image));
             end if;
          end;
 
@@ -64,7 +64,7 @@ package body Podmander.Controller.Stack_Submission is
             Error   => None,
             Message =>
               To_Unbounded_String
-                ("Scheduled " & To_String (Parse_Res.Config.Name)));
+                ("Scheduled " & To_String (Parse_Res.Config.Service_Name)));
       end;
    end Submit;
 

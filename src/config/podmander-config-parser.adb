@@ -46,7 +46,7 @@ package body Podmander.Config.Parser is
             Config        : Service_Definition;
          begin
             -- Service name from [service.<name>] section header
-            Config.Name := To_Unbounded_String (Service_Name);
+            Config.Service_Name := To_Unbounded_String (Service_Name);
 
             -- Required field: image
             if not Service_Value.Has ("image") then
@@ -74,8 +74,7 @@ package body Podmander.Config.Parser is
                         Config.Env (Config.Env_Count + 1) :=
                           (Key   => Env_Item.Key,
                            Value =>
-                             To_Unbounded_String
-                               (Env_Item.Value.As_String));
+                             To_Unbounded_String (Env_Item.Value.As_String));
                         Config.Env_Count := Config.Env_Count + 1;
                      end if;
                   end loop;
@@ -92,8 +91,7 @@ package body Podmander.Config.Parser is
                      declare
                         Port_Str  : constant String :=
                           Ports_Array.Item (I).As_String;
-                        Colon_Pos : constant Natural :=
-                          Index (Port_Str, ":");
+                        Colon_Pos : constant Natural := Index (Port_Str, ":");
                      begin
                         if Colon_Pos > 0
                           and then Config.Ports_Count < MAX_PORTS_ENTRIES
@@ -101,12 +99,10 @@ package body Podmander.Config.Parser is
                            Config.Ports (Config.Ports_Count + 1) :=
                              (Host      =>
                                 Positive'Value
-                                  (Port_Str
-                                     (Port_Str'First .. Colon_Pos - 1)),
+                                  (Port_Str (Port_Str'First .. Colon_Pos - 1)),
                               Container =>
                                 Positive'Value
-                                  (Port_Str
-                                     (Colon_Pos + 1 .. Port_Str'Last)));
+                                  (Port_Str (Colon_Pos + 1 .. Port_Str'Last)));
                            Config.Ports_Count := Config.Ports_Count + 1;
                         end if;
                      end;
@@ -124,22 +120,18 @@ package body Podmander.Config.Parser is
                      declare
                         Vol_Str   : constant String :=
                           Volumes_Array.Item (I).As_String;
-                        Colon_Pos : constant Natural :=
-                          Index (Vol_Str, ":");
+                        Colon_Pos : constant Natural := Index (Vol_Str, ":");
                      begin
                         if Colon_Pos > 0
-                          and then Config.Volumes_Count
-                                   < MAX_VOLUMES_ENTRIES
+                          and then Config.Volumes_Count < MAX_VOLUMES_ENTRIES
                         then
                            Config.Volumes (Config.Volumes_Count + 1) :=
                              (Host      =>
                                 To_Unbounded_String
-                                  (Vol_Str
-                                     (Vol_Str'First .. Colon_Pos - 1)),
+                                  (Vol_Str (Vol_Str'First .. Colon_Pos - 1)),
                               Container =>
                                 To_Unbounded_String
-                                  (Vol_Str
-                                     (Colon_Pos + 1 .. Vol_Str'Last)));
+                                  (Vol_Str (Colon_Pos + 1 .. Vol_Str'Last)));
                            Config.Volumes_Count := Config.Volumes_Count + 1;
                         end if;
                      end;

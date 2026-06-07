@@ -81,16 +81,16 @@ package body Podmander.Config_Tests is
    procedure Test_Valid_Config_Passes_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-        (Name          => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+(Service_Name  => Null_Unbounded_String,
+          Image         => To_Unbounded_String ("nginx:latest"),
+          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+          Env_Count     => 0,
+          Ports         => [others => (Host => 1, Container => 1)],
+          Ports_Count   => 0,
+          Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
+          Volumes_Count => 0,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
       Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
    begin
       Assert (Result.Success, "Valid config should pass validation");
@@ -100,16 +100,16 @@ package body Podmander.Config_Tests is
    procedure Test_Empty_Image_Fails_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-        (Name          => Null_Unbounded_String,
-         Image         => Null_Unbounded_String,
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+        (Service_Name  => Null_Unbounded_String,
+          Image         => Null_Unbounded_String,
+          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+          Env_Count     => 0,
+          Ports         => [others => (Host => 1, Container => 1)],
+          Ports_Count   => 0,
+          Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
+          Volumes_Count => 0,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
       Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
    begin
       Assert (not Result.Success, "Empty image should fail validation");
@@ -119,16 +119,16 @@ package body Podmander.Config_Tests is
    procedure Test_Port_Out_Of_Range_Fails_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-        (Name          => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [1 => (Host => 65536, Container => 80), others => (Host => 1, Container => 1)],
-         Ports_Count   => 1,
-         Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+        (Service_Name  => Null_Unbounded_String,
+          Image         => To_Unbounded_String ("nginx:latest"),
+          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+          Env_Count     => 0,
+          Ports         => [1 => (Host => 65536, Container => 80), others => (Host => 1, Container => 1)],
+          Ports_Count   => 1,
+          Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
+          Volumes_Count => 0,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
       Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
    begin
       Assert (not Result.Success, "Port host 65536 should fail validation");
@@ -138,18 +138,18 @@ package body Podmander.Config_Tests is
    procedure Test_Empty_Volume_Path_Fails_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-        (Name          => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
-           [1      => (Host => Null_Unbounded_String, Container => To_Unbounded_String ("/data")),
-            others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-         Volumes_Count => 1,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+        (Service_Name  => Null_Unbounded_String,
+          Image         => To_Unbounded_String ("nginx:latest"),
+          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+          Env_Count     => 0,
+          Ports         => [others => (Host => 1, Container => 1)],
+          Ports_Count   => 0,
+          Volumes       =>
+            [1      => (Host => Null_Unbounded_String, Container => To_Unbounded_String ("/data")),
+             others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
+          Volumes_Count => 1,
+          Description   => Null_Unbounded_String,
+          WantedBy      => Null_Unbounded_String);
       Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
    begin
       Assert (not Result.Success, "Empty volume host path should fail validation");
@@ -163,7 +163,7 @@ package body Podmander.Config_Tests is
    begin
       Assert (Result.Success, "Parsing valid.toml should succeed");
       if Result.Success then
-         Assert (To_String (Result.Config.Name) = "web", "Service name should be 'web' from [service.web] header");
+         Assert (To_String (Result.Config.Service_Name) = "web", "Service name should be 'web' from [service.web] header");
       end if;
    end Test_Parse_Extracts_Service_Name;
 
