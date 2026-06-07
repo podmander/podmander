@@ -3,7 +3,7 @@
 
 --  First Available scheduling strategy: selects the first agent with
 --  Registered state. Returns Present => False when no eligible agent exists.
---  Stateless â share the package-level Instance constant.
+--  Stateless ; share the package-level Instance constant.
 
 package Podmander.Controller.Strategies.First_Available is
 

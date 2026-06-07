@@ -111,7 +111,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
       Result : Scheduler.Schedule_Result;
    begin
-      --  No agents registered — Scheduler should create entry with empty Node_Id
+      --  No agents registered - Scheduler should create entry with empty Node_Id
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1,
                                     Strategy => Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with no agent");
@@ -168,7 +168,7 @@ package body Podmander.Controller.Scheduler_Tests is
       --  Register one agent so the Scheduler can assign it
       Register_Agent (D, "agent-1", "assigned-node");
 
-      --  Schedule — the Scheduler should assign the registered agent's node
+      --  Schedule - the Scheduler should assign the registered agent's node
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2,
                                     Strategy => Podmander.Controller.Strategies.First_Available.Instance);
 
@@ -190,7 +190,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "cache", 1);
       Result : Scheduler.Schedule_Result;
    begin
-      --  Register two agents — Scheduler should pick the first one and succeed
+      --  Register two agents - Scheduler should pick the first one and succeed
       Register_Agent (D, "agent-1", "node-1");
       Register_Agent (D, "agent-2", "node-2");
 
