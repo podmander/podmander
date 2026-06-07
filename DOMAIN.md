@@ -91,6 +91,13 @@ local filesystem, manage systemd units, query Podman for container state, and
 report status back over ZeroMQ. On restart, an agent rediscovers its workloads
 from the filesystem and Podman API.
 
+The Agent is the protocol-layer executor the controller reaches a Node
+*through*; it is not itself the unit of placement. Scheduling targets the Node;
+the controller resolves a Node to its Agent only to deliver deploys and collect
+results.
+_Avoid_: using "Agent" as the scheduling or placement target — placement
+targets a Node.
+
 ### Stack
 
 A group of related services and volumes, initially defined in a TOML file
@@ -192,12 +199,13 @@ scheduler re-runs and updates expected state.
 
 ### Scheduling Strategy
 
-The pluggable selection rule the Scheduler uses to choose a target agent for a
+The pluggable selection rule the Scheduler uses to choose a target node for a
 service. The Scheduler owns persisting the placement decision into the Service
 Catalog; the strategy owns only the selection — given the current fleet state,
-which agent (if any) should run the service. MVP ships one strategy, *First
-Available* (the first registered agent). Envisioned future strategies include
-least-loaded, fewest-services, label-matching, and random placement.
+which node (if any) should run the service. MVP ships one strategy, *First
+Available* (the first node with a connected agent). Envisioned future strategies
+include least-loaded, fewest-services, label-matching, and random placement —
+all of which select on node characteristics, not agent state.
 _Avoid_: Scheduling policy — "policy" denotes the supervisor's drift response
 (auto-repair vs. alert, ADR-0006); a placement choice is a "strategy".
 
@@ -323,7 +331,7 @@ drift detection.
 - A **Service** has zero or more **Service Catalog Entries** (1:N, one per node)
 - A **Service Catalog Entry** references one **Service Version** as its target (N:1)
 - A **Service Catalog Entry** references one **Service Version** as its current version (N:1, or 0 = not deployed)
-- A **Service Catalog Entry** references one **Agent** (N:1, or NULL = not scheduled)
+- A **Service Catalog Entry** references one **Node** (N:1, or NULL = not scheduled)
 - The **Registrar** consumes an ASD and produces a **Service** row and a **Service Version** row
 - The **Scheduler** consumes a **Service Version** and produces or updates a **Service Catalog Entry**
 - The **Scheduler** delegates target selection to a **Scheduling Strategy**
@@ -347,3 +355,4 @@ drift detection.
 - "Desired state" and "expected state" were used interchangeably in early discussions. Resolved: for MVP, both collapse into the Service Catalog's target_version. The full three-state model (ADR-0005) is deferred until the scheduler is implemented.
 - "Actual state" was a separate table. Resolved: replaced by Service Catalog's current_version column. The catalog is the single source of truth for both intent and reality.
 - "Service definition" was ambiguous between the parser output type and the domain concept. Resolved: the parser type is Service_Definition; the domain concept is Abstract Service Definition (ASD).
+- "Node" and "Agent" were used interchangeably, and the code conflated them: the Service Catalog stored an `Agent_Id`, while the agent's ZeroMQ routing identity was misnamed `node_id`. Resolved: a **Node** is the durable domain object that placement targets and that carries scheduling-relevant characteristics (labels, capabilities); an **Agent** is the protocol-layer process running on a Node that executes deploys and reports status. A Node is associated 1:1 with an Agent and reached through that Agent's connection identity (renamed `Connection_Id`; formerly mis-called `node_id`). The Service Catalog references a **Node**. Aligning the code with this model — a first-class Node entity, the `Agent_Id`→`Node_Id` catalog change, and the `Connection_Id` rename — is tracked in a separate issue.

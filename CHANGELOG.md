@@ -25,6 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Resolved Node-vs-Agent terminology in DOMAIN.md: a Node is the durable domain object that placement targets; an Agent is the protocol-layer process reached through it. The Service Catalog targets a Node; code alignment is tracked separately (#139)
 - Renamed `Podmander.CLI` package to `Podmander.Args` and files to `podmander-args.ads/adb` (#130)
 - Renamed `Deploy_Command` / `Deploy_Result` to `Deployment_Command` / `Deployment_Result`; updated kind strings to `"deployment"` / `"deployment_ack"` (#126)
 - ZMQ protocol migrated from positional multi-frame messages to single-frame JSON payloads with a `kind` field for dispatch (#70)
