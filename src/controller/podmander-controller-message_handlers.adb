@@ -62,8 +62,8 @@ package body Podmander.Controller.Message_Handlers is
       end if;
 
       declare
-         Node_Id : constant Integer :=
-           Node.Repository.Create_Or_Get (H.Ctrl.DB, Name);
+Node_Id : constant Podmander.Types.Node_Id_Type :=
+            Node.Repository.Create_Or_Get (H.Ctrl.DB, Name);
          Info    : constant Podmander.Types.Agent_Info :=
            (Id            => 0,
             Name          => Req.Agent_Name,

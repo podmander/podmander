@@ -12,8 +12,13 @@ package Podmander.Types is
 
    type Agent_State is (Registered, Unresponsive, Lost);
 
+   type Node_Id_Type is new Integer;
+   --  Row identifier in the nodes table. 0 means unassigned (no node
+   --  has been linked yet). Distinct from Integer so a generic integer
+   --  cannot be passed by mistake.
+
    type Node_Info is record
-      Id   : Integer := 0;
+      Id   : Node_Id_Type := 0;
       Name : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
@@ -23,7 +28,7 @@ package Podmander.Types is
       Connection_Id : Ada.Strings.Unbounded.Unbounded_String;
       State         : Agent_State := Registered;
       Last_Seen     : Ada.Calendar.Time;
-      Node_Id       : Integer := 0;
+      Node_Id       : Node_Id_Type := 0;
    end record;
 
    package Agent_Maps is new

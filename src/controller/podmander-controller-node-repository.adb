@@ -11,8 +11,9 @@ package body Podmander.Controller.Node.Repository is
    -- Create_Or_Get --
    -------------------
 
-   function Create_Or_Get
-     (DB : in out DB_Handle; Machine_Name : String) return Integer is
+function Create_Or_Get
+      (DB : in out DB_Handle; Machine_Name : String) return Podmander.Types.Node_Id_Type
+   is
    begin
       --  Try to insert a new node. If the machine_name already exists,
       --  the UNIQUE constraint will fire; catch that and select instead.
@@ -32,29 +33,29 @@ package body Podmander.Controller.Node.Repository is
             QH : Query_Handle := Prepare (DB, "SELECT last_insert_rowid()");
          begin
             if Step (QH) then
-               return Column_Int (QH, 0);
-            else
-               raise Database_Error
-                 with
-                   Format_Error
-                     ((Kind    => Unknown,
-                       Message =>
-                         To_Unbounded_String
-                           ("Failed to get last_insert_rowid for node"),
-                       Code    => 0));
-            end if;
-         end;
-      exception
-         when Database_Error =>
-            --  UNIQUE constraint violation: node already exists.
-            --  Select the existing id by name.
-            declare
-               QH : Query_Handle :=
-                 Prepare (DB, "SELECT id FROM nodes WHERE machine_name = ?");
-            begin
-               Bind_Text (QH, 1, Machine_Name);
-               if Step (QH) then
-                  return Column_Int (QH, 0);
+return Podmander.Types.Node_Id_Type (Column_Int (QH, 0));
+             else
+                raise Database_Error
+                  with
+                    Format_Error
+                      ((Kind    => Unknown,
+                        Message =>
+                          To_Unbounded_String
+                            ("Failed to get last_insert_rowid for node"),
+                        Code    => 0));
+             end if;
+          end;
+       exception
+          when Database_Error =>
+             --  UNIQUE constraint violation: node already exists.
+             --  Select the existing id by name.
+             declare
+                QH : Query_Handle :=
+                  Prepare (DB, "SELECT id FROM nodes WHERE machine_name = ?");
+             begin
+                Bind_Text (QH, 1, Machine_Name);
+                if Step (QH) then
+                   return Podmander.Types.Node_Id_Type (Column_Int (QH, 0));
                else
                   raise Database_Error
                     with
@@ -74,15 +75,16 @@ package body Podmander.Controller.Node.Repository is
    -- Load_By_Name --
    ------------------
 
-   function Load_By_Name
-     (DB : in out DB_Handle; Machine_Name : String) return Integer
+function Load_By_Name
+      (DB : in out DB_Handle; Machine_Name : String) return Podmander.Types.Node_Id_Type
+   is
    is
       QH : Query_Handle :=
         Prepare (DB, "SELECT id FROM nodes WHERE machine_name = ?");
    begin
       Bind_Text (QH, 1, Machine_Name);
       if Step (QH) then
-         return Column_Int (QH, 0);
+         return Podmander.Types.Node_Id_Type (Column_Int (QH, 0));
       else
          raise Database_Error
            with

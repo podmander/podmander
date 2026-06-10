@@ -40,7 +40,7 @@ package body Podmander.Controller.Strategies.First_Available_Tests is
        Name   : String;
        State  : Podmander.Types.Agent_State := Podmander.Types.Registered)
     is
-       Node_Id : constant Integer := Node_Repo.Create_Or_Get (Handle, Name);
+       Node_Id : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
        Info    : constant Podmander.Types.Agent_Info :=
          (Id            => 0,
           Name          => To_Unbounded_String (Name),

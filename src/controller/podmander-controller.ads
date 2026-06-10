@@ -9,6 +9,7 @@ with CZMQ.Sockets;
 with Podmander.Config;
 with Podmander.Database;
 with Podmander.Enrollment;
+with Podmander.Types;
 
 package Podmander.Controller is
 
@@ -31,10 +32,9 @@ package Podmander.Controller is
    --  has been scheduled for this catalog entry). Distinct from Integer
    --  so a generic integer cannot be passed by mistake.
 
-   type Node_Id_Type is new Integer;
-   --  Row identifier in the nodes table. 0 means unassigned (no node
-   --  has been linked yet). Distinct from Integer so a generic integer
-   --  cannot be passed by mistake.
+   subtype Node_Id_Type is Podmander.Types.Node_Id_Type;
+   --  Row identifier in the nodes table. Subtype of the canonical type
+   --  defined in Podmander.Types, for convenient use in controller code.
 
    type Agent_Option (Present : Boolean := False) is record
       case Present is

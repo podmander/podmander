@@ -25,10 +25,10 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
    use AUnit.Assertions;
 
    package DB renames Podmander.Database;
-    package Svc_Repo renames Podmander.Controller.Service.Repository;
-    package Agent_Repo renames Podmander.Controller.Agent.Repository;
-    package Node_Repo renames Podmander.Controller.Node.Repository;
-    package Scheduler renames Podmander.Controller.Scheduler;
+   package Svc_Repo renames Podmander.Controller.Service.Repository;
+   package Agent_Repo renames Podmander.Controller.Agent.Repository;
+   package Node_Repo renames Podmander.Controller.Node.Repository;
+   package Scheduler renames Podmander.Controller.Scheduler;
    use Podmander.Controller.Strategies;
 
    use type Scheduler.Schedule_Error;
@@ -98,7 +98,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       (Handle : in out DB.DB_Handle; Name : String)
        return Podmander.Controller.Agent_Id_Type
     is
-       Node_Id : constant Integer := Node_Repo.Create_Or_Get (Handle, Name);
+       Node_Id : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
        Info    : constant Podmander.Types.Agent_Info :=
          (Id            => 0,
           Name          => To_Unbounded_String (Name),

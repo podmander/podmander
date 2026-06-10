@@ -23,10 +23,10 @@ package body Podmander.Controller.Scheduler_Tests is
 
    package DB renames Podmander.Database;
    package Svc_Repo renames Podmander.Controller.Service.Repository;
-    package Cat_Repo renames Podmander.Controller.Service_Catalog.Repository;
-    package Agent_Repo renames Podmander.Controller.Agent.Repository;
-    package Node_Repo renames Podmander.Controller.Node.Repository;
-    package Scheduler renames Podmander.Controller.Scheduler;
+   package Cat_Repo renames Podmander.Controller.Service_Catalog.Repository;
+   package Agent_Repo renames Podmander.Controller.Agent.Repository;
+   package Node_Repo renames Podmander.Controller.Node.Repository;
+   package Scheduler renames Podmander.Controller.Scheduler;
 
    use type DB.Error_Kind;
    use type Scheduler.Schedule_Error;
@@ -59,7 +59,7 @@ package body Podmander.Controller.Scheduler_Tests is
 
     -- Helper: register a single agent in Registered state.
     procedure Register_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) is
-       Node_Id : constant Integer := Node_Repo.Create_Or_Get (Handle, Name);
+       Node_Id : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
        Info    : constant Podmander.Types.Agent_Info :=
          (Id            => 0,
           Name          => To_Unbounded_String (Name),

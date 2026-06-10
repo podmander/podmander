@@ -35,9 +35,9 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    --  Helper: create a node with the given machine name and return its id.
    --  Every agent must reference a valid node (FK constraint).
-    function Seed_Node
-      (D : in out DB.DB_Handle; Machine_Name : String) return Integer
-    is (Node_Repo.Create_Or_Get (D, Machine_Name));
+function Seed_Node
+       (D : in out DB.DB_Handle; Machine_Name : String) return Node_Id_Type
+     is (Node_Repo.Create_Or_Get (D, Machine_Name));
 
    -- Format time as ISO 8601 for string comparison
    function Format_Time (T : Ada.Calendar.Time) return String is
@@ -53,7 +53,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    procedure Test_Register_And_Load_All (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Node_Id : constant Integer := Seed_Node (D, "test-agent");
+      Node_Id : constant Node_Id_Type := Seed_Node (D, "test-agent");
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info    : constant Agent_Info :=
         (Id            => 0,
@@ -86,7 +86,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    procedure Test_Register_Duplicate_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D         : DB.DB_Handle := DB.Open (":memory:");
-      Node_Id   : constant Integer := Seed_Node (D, "dup-agent");
+      Node_Id   : constant Node_Id_Type := Seed_Node (D, "dup-agent");
       Now       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info      : constant Agent_Info :=
         (Id            => 0,
@@ -119,7 +119,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    procedure Test_Touch_Updates_Last_Seen (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Node_Id : constant Integer := Seed_Node (D, "touch-agent");
+      Node_Id : constant Node_Id_Type := Seed_Node (D, "touch-agent");
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Later   : constant Ada.Calendar.Time := Now + 60.0;
       Info    : constant Agent_Info :=
@@ -187,7 +187,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    procedure Test_Set_State_Updates_State (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Node_Id : constant Integer := Seed_Node (D, "state-agent");
+      Node_Id : constant Node_Id_Type := Seed_Node (D, "state-agent");
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info    : constant Agent_Info :=
         (Id            => 0,
@@ -254,7 +254,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    procedure Test_Remove_Deletes_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Node_Id : constant Integer := Seed_Node (D, "remove-agent");
+      Node_Id : constant Node_Id_Type := Seed_Node (D, "remove-agent");
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info    : constant Agent_Info :=
         (Id            => 0,
@@ -285,7 +285,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
    procedure Test_Remove_Not_Found_Noop (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Node_Id : constant Integer := Seed_Node (D, "keep-agent");
+      Node_Id : constant Node_Id_Type := Seed_Node (D, "keep-agent");
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info    : constant Agent_Info :=
         (Id            => 0,
