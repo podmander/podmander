@@ -23,12 +23,18 @@ run = "distrobox enter ada_dev -- alr clean && distrobox enter ada_dev -- alr bu
 [tasks.format]
 description = "Auto-format Ada source files with gnatformat"
 dir = "{{config_root}}"
-run = "distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander.gpr --no-subprojects'"
+run = """
+distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander.gpr --no-subprojects'
+distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander_tests.gpr --no-subprojects'
+"""
 
 [tasks."format:check"]
 description = "Check Ada source formatting without modifying files"
 dir = "{{config_root}}"
-run = "distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander.gpr --no-subprojects --check'"
+run = """
+distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander.gpr --no-subprojects --check'
+distrobox enter ada_dev -- bash -c 'eval $(alr printenv 2>/dev/null) && ~/.alire/bin/gnatformat -P podmander_tests.gpr --no-subprojects --check'
+"""
 
 # --- Test ---
 
