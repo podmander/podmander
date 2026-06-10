@@ -16,9 +16,13 @@ system.
 mise run build        # compile all binaries
 mise run build:clean  # build everything from scratch
 mise run test         # build and run the AUnit test suite
-mise run format       # auto-format Ada sources
+mise run format       # auto-format Ada sources (run this IMMEDIATELY when build shows style warnings)
 mise run format:check # check formatting without modifying files
 ```
+
+**Formatting rule:** When the build produces GNAT style warnings (indentation,
+spacing, line length), do NOT try to fix them manually. Run `mise run format`
+immediately and rebuild. Only address remaining warnings after formatting.
 
 To enter an interactive shell directly:
 
