@@ -7,6 +7,7 @@ with AUnit.Test_Suites;
 with Podmander.Agent.Host_Command_Tests;
 with Podmander.Agent.Host_Command.Result_Mapping_Tests;
 with Podmander.Controller.Agent.Repository_Tests;
+with Podmander.Controller.Node.Repository_Tests;
 with Podmander.Controller.Registrar_Tests;
 with Podmander.Controller.Scheduler_Tests;
 with Podmander.Controller.Scheduler_Seam_Tests;
@@ -37,6 +38,8 @@ procedure Test_Runner is
       AUnit.Test_Suites.Add_Test (Result, Podmander.Messages_Tests.Suite);
       AUnit.Test_Suites.Add_Test
         (Result, Podmander.Controller.Agent.Repository_Tests.Suite);
+      AUnit.Test_Suites.Add_Test
+        (Result, Podmander.Controller.Node.Repository_Tests.Suite);
       AUnit.Test_Suites.Add_Test
         (Result, Podmander.Controller.Registrar_Tests.Suite);
       AUnit.Test_Suites.Add_Test

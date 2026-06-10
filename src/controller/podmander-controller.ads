@@ -31,6 +31,11 @@ package Podmander.Controller is
    --  has been scheduled for this catalog entry). Distinct from Integer
    --  so a generic integer cannot be passed by mistake.
 
+   type Node_Id_Type is new Integer;
+   --  Row identifier in the nodes table. 0 means unassigned (no node
+   --  has been linked yet). Distinct from Integer so a generic integer
+   --  cannot be passed by mistake.
+
    type Agent_Option (Present : Boolean := False) is record
       case Present is
          when True =>

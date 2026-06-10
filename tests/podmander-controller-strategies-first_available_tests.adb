@@ -6,6 +6,7 @@ with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Strategies.First_Available;
 with Podmander.Database;
 with Podmander.Types;
@@ -17,8 +18,9 @@ package body Podmander.Controller.Strategies.First_Available_Tests is
    use AUnit.Assertions;
 
    package DB renames Podmander.Database;
-   package Agent_Repo renames Podmander.Controller.Agent.Repository;
-   package FA renames Podmander.Controller.Strategies.First_Available;
+    package Agent_Repo renames Podmander.Controller.Agent.Repository;
+    package Node_Repo renames Podmander.Controller.Node.Repository;
+    package FA renames Podmander.Controller.Strategies.First_Available;
 
    use type Podmander.Types.Agent_State;
 
@@ -33,17 +35,19 @@ package body Podmander.Controller.Strategies.First_Available_Tests is
 
    --  Register an agent; if State differs from Registered, update it after
    --  registration so the DB row has the requested state.
-   procedure Seed_Agent
-     (Handle : in out DB.DB_Handle;
-      Name   : String;
-      State  : Podmander.Types.Agent_State := Podmander.Types.Registered)
-   is
-      Info : constant Podmander.Types.Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String (Name),
-         Connection_Id => To_Unbounded_String ("node-" & Name),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Clock);
+    procedure Seed_Agent
+      (Handle : in out DB.DB_Handle;
+       Name   : String;
+       State  : Podmander.Types.Agent_State := Podmander.Types.Registered)
+    is
+       Node_Id : constant Integer := Node_Repo.Create_Or_Get (Handle, Name);
+       Info    : constant Podmander.Types.Agent_Info :=
+         (Id            => 0,
+          Name          => To_Unbounded_String (Name),
+          Connection_Id => To_Unbounded_String ("node-" & Name),
+          State         => Podmander.Types.Registered,
+          Last_Seen     => Clock,
+          Node_Id       => Node_Id);
    begin
       Agent_Repo.Register (Handle, Info);
       if State /= Podmander.Types.Registered then

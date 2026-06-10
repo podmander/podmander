@@ -387,7 +387,16 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
-           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, connection_id, state, last_seen FROM agents");
+           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
+      begin
+         -- Preparing the query should not raise  -- table exists with correct columns
+         null;
+      end;
+      -- Verify nodes table exists through a second connection
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare (Conn, "SELECT id, machine_name FROM nodes");
       begin
          -- Preparing the query should not raise  -- table exists with correct columns
          null;
@@ -946,6 +955,137 @@ package body Podmander.Database_Tests is
          raise;
    end Test_Catalog_Agent_FK;
 
+   -- Test: Migration 013 creates nodes table and agents.node_id column
+   --  on a fresh database (no pre-existing data).
+   procedure Test_Migration_Nodes_Table_And_Backfill (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      --  Fresh database: all migrations run, including 013.
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+         pragma Unreferenced (Handle);
+      begin
+         null;
+      end;
+      --  Verify nodes table exists with correct columns
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare (Conn, "SELECT id, machine_name FROM nodes");
+      begin
+         null;  --  Preparing should not raise
+      end;
+      --  Verify agents table has node_id column
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
+      begin
+         null;  --  Preparing should not raise
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Migration_Nodes_Table_And_Backfill;
+
+   -- Test: Migration 013 backfill creates one node per existing agent
+   --  and links each agent to its node by name.
+   --  This test simulates a pre-migration database by manually creating
+   --  the schema at version 12, inserting agents, then re-opening to
+   --  trigger migration 013.
+   procedure Test_Migration_013_Backfill (T : in out AUnit.Test_Cases.Test_Case'Class) is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      --  Step 1: Create a database at schema version 12.
+      --  We build the pre-013 schema manually: agents table without
+      --  node_id, no nodes table, schema_version = 12.
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+      begin
+         Ada_Sqlite3.Execute (Conn, "PRAGMA journal_mode=WAL;");
+         Ada_Sqlite3.Execute (Conn, "PRAGMA foreign_keys=ON;");
+         Ada_Sqlite3.Execute
+           (Conn,
+            "CREATE TABLE schema_version (version INTEGER PRIMARY KEY);"
+            & "INSERT INTO schema_version (version) VALUES (12);");
+         --  Create the agents table at schema version 12
+         --  (id, name, connection_id, state, last_seen — no node_id)
+         Ada_Sqlite3.Execute
+           (Conn,
+            "CREATE TABLE agents ("
+            & "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            & "name TEXT NOT NULL UNIQUE,"
+            & "connection_id TEXT NOT NULL,"
+            & "state TEXT NOT NULL CHECK (state IN ('registered', 'unresponsive', 'lost')),"
+            & "last_seen TEXT NOT NULL);");
+         --  Insert two agents with the old schema
+         Ada_Sqlite3.Execute
+           (Conn,
+            "INSERT INTO agents (name, connection_id, state, last_seen)"
+            & " VALUES ('alpha', 'conn-001', 'registered', '2026-01-01T00:00:00Z');");
+         Ada_Sqlite3.Execute
+           (Conn,
+            "INSERT INTO agents (name, connection_id, state, last_seen)"
+            & " VALUES ('beta', 'conn-002', 'registered', '2026-01-02T00:00:00Z');");
+      end;
+      --  Step 2: Re-open the database, which triggers migration 013.
+      --  The migration should create nodes from agent names and link
+      --  each agent to its node via node_id.
+      declare
+         Handle : DB.DB_Handle := DB.Open (Path);
+         pragma Unreferenced (Handle);
+      begin
+         null;
+      end;
+      --  Step 3: Verify the backfill through a second connection.
+      declare
+         Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
+      begin
+         --  Verify schema version is now 13
+         declare
+            Stmt : Ada_Sqlite3.Statement :=
+              Ada_Sqlite3.Prepare (Conn, "SELECT version FROM schema_version");
+         begin
+            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "schema_version should have a row");
+            Assert (Ada_Sqlite3.Column_Int (Stmt, 0) = 13, "schema_version should be 13 after migration");
+         end;
+         --  Verify two nodes were created with matching machine names
+         declare
+            Stmt : Ada_Sqlite3.Statement :=
+              Ada_Sqlite3.Prepare (Conn, "SELECT COUNT(*) FROM nodes");
+         begin
+            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "nodes should exist");
+            Assert (Ada_Sqlite3.Column_Int (Stmt, 0) = 2, "Should have two nodes (one per agent)");
+         end;
+         --  Verify each agent is linked to its node by name
+         declare
+            Stmt : Ada_Sqlite3.Statement :=
+              Ada_Sqlite3.Prepare
+                (Conn,
+                 "SELECT a.name, n.machine_name FROM agents a"
+                 & " JOIN nodes n ON n.id = a.node_id"
+                 & " ORDER BY a.name");
+         begin
+            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "First agent should have a node");
+            Assert (Ada_Sqlite3.Column_Text (Stmt, 0) = "alpha", "First agent name should be alpha");
+            Assert (Ada_Sqlite3.Column_Text (Stmt, 1) = "alpha", "First node name should match alpha");
+            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "Second agent should have a node");
+            Assert (Ada_Sqlite3.Column_Text (Stmt, 0) = "beta", "Second agent name should be beta");
+            Assert (Ada_Sqlite3.Column_Text (Stmt, 1) = "beta", "Second node name should match beta");
+            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.DONE, "Should have exactly two agents with nodes");
+         end;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Migration_013_Backfill;
+
    -- Register all test routines
    overriding
    procedure Register_Tests (T : in out Database_Test) is
@@ -972,6 +1112,10 @@ package body Podmander.Database_Tests is
       Register_Routine
         (T, Test_Migration_Service_Versions_Table'Access, "Migration 004 creates service_versions table");
       Register_Routine (T, Test_Migration_Service_Catalog_Table'Access, "Migration 008 creates service_catalog table");
+      Register_Routine
+        (T, Test_Migration_Nodes_Table_And_Backfill'Access, "Migration 013 creates nodes table and agents.node_id");
+      Register_Routine
+        (T, Test_Migration_013_Backfill'Access, "Migration 013 backfill links existing agents to new nodes");
       Register_Routine (T, Test_Open_Error_Path'Access, "Open raises Database_Error for invalid path");
       -- Query API tests
       Register_Routine (T, Test_Prepare_And_Step'Access, "Prepare/Bind/Step/Column_Text round-trip");

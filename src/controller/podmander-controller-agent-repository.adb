@@ -64,13 +64,14 @@ package body Podmander.Controller.Agent.Repository is
       QH : Query_Handle :=
         Prepare
           (DB,
-           "INSERT INTO agents (name, connection_id, state, last_seen) "
-           & "VALUES (?, ?, ?, ?)");
+           "INSERT INTO agents (name, connection_id, state, last_seen, node_id) "
+           & "VALUES (?, ?, ?, ?, ?)");
    begin
       Bind_Text (QH, 1, To_String (Agent.Name));
       Bind_Text (QH, 2, To_String (Agent.Connection_Id));
       Bind_Text (QH, 3, State_To_String (Agent.State));
       Bind_Text (QH, 4, Time_To_ISO8601 (Agent.Last_Seen));
+      Bind_Int (QH, 5, Agent.Node_Id);
       while Step (QH) loop
          null;  --  INSERT returns no rows
       end loop;
@@ -138,7 +139,8 @@ package body Podmander.Controller.Agent.Repository is
    is
       QH  : Query_Handle :=
         Prepare
-          (DB, "SELECT id, name, connection_id, state, last_seen FROM agents");
+          (DB,
+           "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
       Map : Podmander.Types.Agent_Maps.Map;
       Rec : Agent_Info;
    begin
@@ -148,6 +150,7 @@ package body Podmander.Controller.Agent.Repository is
          Rec.Connection_Id := To_Unbounded_String (Column_Text (QH, 2));
          Rec.State := String_To_State (Column_Text (QH, 3));
          Rec.Last_Seen := ISO8601_To_Time (Column_Text (QH, 4));
+         Rec.Node_Id := Column_Int (QH, 5);
          Map.Insert (To_String (Rec.Name), Rec);
       end loop;
       return Map;

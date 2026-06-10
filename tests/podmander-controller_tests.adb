@@ -10,6 +10,7 @@ with AUnit.Test_Cases;
 with Podmander.Controller;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
+with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service;
 with Podmander.Controller.Service.Repository;
 with Podmander.Controller.Stack_Submission;
@@ -34,7 +35,8 @@ package body Podmander.Controller_Tests is
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
 
-   package Svc_Repo renames Podmander.Controller.Service.Repository;
+    package Svc_Repo renames Podmander.Controller.Service.Repository;
+    package Node_Repo renames Podmander.Controller.Node.Repository;
 
    type Controller_Test is new AUnit.Test_Cases.Test_Case with null record;
 
@@ -241,27 +243,29 @@ package body Podmander.Controller_Tests is
    end Test_Controller_Make_With_DB;
 
    -- Test: Agents persist across database connections (simulating restart)
-   procedure Test_Startup_Loading (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      use type Podmander.Types.Agent_State;
-      DB_Path : constant String := "/tmp/podmander_test_startup.db";
-      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Info    : constant Podmander.Types.Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("persisted-agent"),
-         Connection_Id => To_Unbounded_String ("node-001"),
-         State         => Podmander.Types.Registered,
-         Last_Seen     => Now);
-      Loaded  : Podmander.Types.Agent_Maps.Map;
-      Cur     : Podmander.Types.Agent_Maps.Cursor;
-      Element : Podmander.Types.Agent_Info;
-   begin
-      -- Phase 1: Open DB, register an agent, close (handle auto-finalized)
-      declare
-         D : Podmander.Database.DB_Handle := Podmander.Database.Open (DB_Path);
-      begin
-         Podmander.Controller.Agent.Repository.Register (D, Info);
-      end;
+    procedure Test_Startup_Loading (T : in out AUnit.Test_Cases.Test_Case'Class) is
+       pragma Unreferenced (T);
+       use type Podmander.Types.Agent_State;
+       DB_Path : constant String := "/tmp/podmander_test_startup.db";
+       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+       Loaded  : Podmander.Types.Agent_Maps.Map;
+       Cur     : Podmander.Types.Agent_Maps.Cursor;
+       Element : Podmander.Types.Agent_Info;
+    begin
+       -- Phase 1: Open DB, register an agent, close (handle auto-finalized)
+       declare
+          D       : Podmander.Database.DB_Handle := Podmander.Database.Open (DB_Path);
+          Node_Id : constant Integer := Node_Repo.Create_Or_Get (D, "persisted-agent");
+       begin
+          Podmander.Controller.Agent.Repository.Register
+            (D,
+             (Id            => 0,
+              Name          => To_Unbounded_String ("persisted-agent"),
+              Connection_Id => To_Unbounded_String ("node-001"),
+              State         => Podmander.Types.Registered,
+              Last_Seen     => Now,
+              Node_Id       => Node_Id));
+       end;
 
       -- Phase 2: Open same DB (simulating controller restart), load agents
       declare
@@ -378,21 +382,23 @@ package body Podmander.Controller_Tests is
    end Test_Handle_Registration_Request_Adds_Agent;
 
    -- Test: Handle_Heartbeat on a registered agent updates Last_Seen.
-   procedure Test_Handle_Heartbeat_Updates_Last_Seen (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      use type Ada.Calendar.Time;
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      H    : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "node-xyz");
-      Past : constant Ada.Calendar.Time := Ada.Calendar.Clock - 60.0;
-      Info : constant Podmander.Types.Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("web-1"),
-         Connection_Id => To_Unbounded_String ("node-xyz"),
-         State         => Podmander.Types.Registered,
-         Last_Seen     => Past);
-      HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Connection_Id => To_Unbounded_String ("node-xyz"), Timestamp => Ada.Calendar.Clock);
-   begin
+    procedure Test_Handle_Heartbeat_Updates_Last_Seen (T : in out AUnit.Test_Cases.Test_Case'Class) is
+       pragma Unreferenced (T);
+       use type Ada.Calendar.Time;
+       Ctrl    : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+       H       : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "node-xyz");
+       Past    : constant Ada.Calendar.Time := Ada.Calendar.Clock - 60.0;
+       Node_Id : constant Integer := Node_Repo.Create_Or_Get (Ctrl.DB, "web-1");
+       Info    : constant Podmander.Types.Agent_Info :=
+          (Id            => 0,
+           Name          => To_Unbounded_String ("web-1"),
+           Connection_Id => To_Unbounded_String ("node-xyz"),
+           State         => Podmander.Types.Registered,
+           Last_Seen     => Past,
+           Node_Id       => Node_Id);
+       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
+         (Connection_Id => To_Unbounded_String ("node-xyz"), Timestamp => Ada.Calendar.Clock);
+    begin
       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
       H.Handle_Heartbeat (HB);
       declare
@@ -422,21 +428,23 @@ package body Podmander.Controller_Tests is
 
    -- Test: Handle_Heartbeat transitions a non-Registered agent back
    -- to Registered.
-   procedure Test_Handle_Heartbeat_Reconnect (T : in out AUnit.Test_Cases.Test_Case'Class) is
-      pragma Unreferenced (T);
-      use type Podmander.Types.Agent_State;
-      use type Ada.Calendar.Time;
-      Ctrl : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
-      H    : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "lost-node");
-      Info : constant Podmander.Types.Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("web-1"),
-         Connection_Id => To_Unbounded_String ("lost-node"),
-         State         => Podmander.Types.Lost,
-         Last_Seen     => Ada.Calendar.Clock - 300.0);
-      HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
-        (Connection_Id => To_Unbounded_String ("lost-node"), Timestamp => Ada.Calendar.Clock);
-   begin
+    procedure Test_Handle_Heartbeat_Reconnect (T : in out AUnit.Test_Cases.Test_Case'Class) is
+       pragma Unreferenced (T);
+       use type Podmander.Types.Agent_State;
+       use type Ada.Calendar.Time;
+       Ctrl    : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
+       H       : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "lost-node");
+       Node_Id : constant Integer := Node_Repo.Create_Or_Get (Ctrl.DB, "web-1");
+       Info    : constant Podmander.Types.Agent_Info :=
+          (Id            => 0,
+           Name          => To_Unbounded_String ("web-1"),
+           Connection_Id => To_Unbounded_String ("lost-node"),
+           State         => Podmander.Types.Lost,
+           Last_Seen     => Ada.Calendar.Clock - 300.0,
+           Node_Id       => Node_Id);
+       HB   : constant Podmander.Messages.Heartbeats.Heartbeat_Message :=
+         (Connection_Id => To_Unbounded_String ("lost-node"), Timestamp => Ada.Calendar.Clock);
+    begin
       Podmander.Controller.Agent.Repository.Register (Ctrl.DB, Info);
       H.Handle_Heartbeat (HB);
       declare

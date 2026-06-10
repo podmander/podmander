@@ -7,6 +7,7 @@ with Ada.Calendar;
 with Ada.Calendar.Formatting;
 with Ada.Strings.Unbounded;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Node.Repository;
 with Podmander.Database;
 with Podmander.Types;
 
@@ -19,6 +20,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    package DB renames Podmander.Database;
    package Repo renames Podmander.Controller.Agent.Repository;
+   package Node_Repo renames Podmander.Controller.Node.Repository;
 
    use type DB.Error_Kind;
 
@@ -30,6 +32,12 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    overriding
    procedure Register_Tests (T : in out Repository_Test);
+
+   --  Helper: create a node with the given machine name and return its id.
+   --  Every agent must reference a valid node (FK constraint).
+    function Seed_Node
+      (D : in out DB.DB_Handle; Machine_Name : String) return Integer
+    is (Node_Repo.Create_Or_Get (D, Machine_Name));
 
    -- Format time as ISO 8601 for string comparison
    function Format_Time (T : Ada.Calendar.Time) return String is
@@ -44,17 +52,19 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    procedure Test_Register_And_Load_All (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D      : DB.DB_Handle := DB.Open (":memory:");
-      Now    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Info   : constant Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("test-agent"),
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Node_Id : constant Integer := Seed_Node (D, "test-agent");
+      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Info    : constant Agent_Info :=
+        (Id            => 0,
+         Name          => To_Unbounded_String ("test-agent"),
          Connection_Id => To_Unbounded_String ("node-001"),
-         State     => Registered,
-         Last_Seen => Now);
-      Map    : Podmander.Types.Agent_Maps.Map;
-      Cur    : Podmander.Types.Agent_Maps.Cursor;
-      Loaded : Agent_Info;
+         State         => Registered,
+         Last_Seen     => Now,
+         Node_Id       => Node_Id);
+      Map     : Podmander.Types.Agent_Maps.Map;
+      Cur     : Podmander.Types.Agent_Maps.Cursor;
+      Loaded  : Agent_Info;
    begin
       Repo.Register (D, Info);
       Map := Repo.Load_All (D);
@@ -65,6 +75,7 @@ package body Podmander.Controller.Agent.Repository_Tests is
       Assert (To_String (Loaded.Name) = "test-agent", "Agent name should match");
       Assert (To_String (Loaded.Connection_Id) = "node-001", "Connection ID should match");
       Assert (Loaded.State = Registered, "Agent state should be Registered");
+      Assert (Loaded.Node_Id = Node_Id, "Agent node_id should match");
       Assert (Format_Time (Loaded.Last_Seen) = Format_Time (Now), "Last_Seen should match");
    end Test_Register_And_Load_All;
 
@@ -75,13 +86,15 @@ package body Podmander.Controller.Agent.Repository_Tests is
    procedure Test_Register_Duplicate_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D         : DB.DB_Handle := DB.Open (":memory:");
+      Node_Id   : constant Integer := Seed_Node (D, "dup-agent");
       Now       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Info      : constant Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("dup-agent"),
+        (Id            => 0,
+         Name          => To_Unbounded_String ("dup-agent"),
          Connection_Id => To_Unbounded_String ("node-001"),
-         State     => Registered,
-         Last_Seen => Now);
+         State         => Registered,
+         Last_Seen     => Now,
+         Node_Id       => Node_Id);
       Got_Error : Boolean := False;
    begin
       Repo.Register (D, Info);
@@ -105,27 +118,30 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    procedure Test_Touch_Updates_Last_Seen (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D      : DB.DB_Handle := DB.Open (":memory:");
-      Now    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Later  : constant Ada.Calendar.Time := Now + 60.0;
-      Info   : constant Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("touch-agent"),
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Node_Id : constant Integer := Seed_Node (D, "touch-agent");
+      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Later   : constant Ada.Calendar.Time := Now + 60.0;
+      Info    : constant Agent_Info :=
+        (Id            => 0,
+         Name          => To_Unbounded_String ("touch-agent"),
          Connection_Id => To_Unbounded_String ("node-001"),
-         State     => Registered,
-         Last_Seen => Now);
-      Map    : Podmander.Types.Agent_Maps.Map;
-      Cur    : Podmander.Types.Agent_Maps.Cursor;
-      Loaded : Agent_Info;
+         State         => Registered,
+         Last_Seen     => Now,
+         Node_Id       => Node_Id);
+      Map     : Podmander.Types.Agent_Maps.Map;
+      Cur     : Podmander.Types.Agent_Maps.Cursor;
+      Loaded  : Agent_Info;
    begin
       Repo.Register (D, Info);
       Repo.Touch
         (D,
-         (Id        => 0,
-          Name      => To_Unbounded_String ("touch-agent"),
+         (Id            => 0,
+          Name          => To_Unbounded_String ("touch-agent"),
           Connection_Id => To_Unbounded_String ("node-001"),
-          State     => Registered,
-          Last_Seen => Later));
+          State         => Registered,
+          Last_Seen     => Later,
+          Node_Id       => Node_Id));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("touch-agent");
       Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Agent should be in map after touch");
@@ -146,11 +162,12 @@ package body Podmander.Controller.Agent.Repository_Tests is
       begin
          Repo.Touch
            (D,
-            (Id        => 0,
-             Name      => To_Unbounded_String ("nonexistent"),
+            (Id            => 0,
+             Name          => To_Unbounded_String ("nonexistent"),
              Connection_Id => To_Unbounded_String (""),
-             State     => Registered,
-             Last_Seen => Now));
+             State         => Registered,
+             Last_Seen     => Now,
+             Node_Id       => 0));
       exception
          when E : DB.Database_Error =>
             declare
@@ -169,26 +186,29 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    procedure Test_Set_State_Updates_State (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D      : DB.DB_Handle := DB.Open (":memory:");
-      Now    : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Info   : constant Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("state-agent"),
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Node_Id : constant Integer := Seed_Node (D, "state-agent");
+      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Info    : constant Agent_Info :=
+        (Id            => 0,
+         Name          => To_Unbounded_String ("state-agent"),
          Connection_Id => To_Unbounded_String ("node-001"),
-         State     => Registered,
-         Last_Seen => Now);
-      Map    : Podmander.Types.Agent_Maps.Map;
-      Cur    : Podmander.Types.Agent_Maps.Cursor;
-      Loaded : Agent_Info;
+         State         => Registered,
+         Last_Seen     => Now,
+         Node_Id       => Node_Id);
+      Map     : Podmander.Types.Agent_Maps.Map;
+      Cur     : Podmander.Types.Agent_Maps.Cursor;
+      Loaded  : Agent_Info;
    begin
       Repo.Register (D, Info);
       Repo.Set_State
         (D,
-         (Id        => 0,
-          Name      => To_Unbounded_String ("state-agent"),
+         (Id            => 0,
+          Name          => To_Unbounded_String ("state-agent"),
           Connection_Id => To_Unbounded_String ("node-001"),
-          State     => Unresponsive,
-          Last_Seen => Now));
+          State         => Unresponsive,
+          Last_Seen     => Now,
+          Node_Id       => Node_Id));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("state-agent");
       Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Agent should be in map after set_state");
@@ -209,11 +229,12 @@ package body Podmander.Controller.Agent.Repository_Tests is
       begin
          Repo.Set_State
            (D,
-            (Id        => 0,
-             Name      => To_Unbounded_String ("nonexistent"),
+            (Id            => 0,
+             Name          => To_Unbounded_String ("nonexistent"),
              Connection_Id => To_Unbounded_String (""),
-             State     => Lost,
-             Last_Seen => Now));
+             State         => Lost,
+             Last_Seen     => Now,
+             Node_Id       => 0));
       exception
          when E : DB.Database_Error =>
             declare
@@ -232,24 +253,27 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    procedure Test_Remove_Deletes_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D    : DB.DB_Handle := DB.Open (":memory:");
-      Now  : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Info : constant Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("remove-agent"),
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Node_Id : constant Integer := Seed_Node (D, "remove-agent");
+      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Info    : constant Agent_Info :=
+        (Id            => 0,
+         Name          => To_Unbounded_String ("remove-agent"),
          Connection_Id => To_Unbounded_String ("node-001"),
-         State     => Registered,
-         Last_Seen => Now);
-      Map  : Podmander.Types.Agent_Maps.Map;
+         State         => Registered,
+         Last_Seen     => Now,
+         Node_Id       => Node_Id);
+      Map     : Podmander.Types.Agent_Maps.Map;
    begin
       Repo.Register (D, Info);
       Repo.Remove
         (D,
-         (Id        => 0,
-          Name      => To_Unbounded_String ("remove-agent"),
+         (Id            => 0,
+          Name          => To_Unbounded_String ("remove-agent"),
           Connection_Id => To_Unbounded_String ("node-001"),
-          State     => Registered,
-          Last_Seen => Now));
+          State         => Registered,
+          Last_Seen     => Now,
+          Node_Id       => Node_Id));
       Map := Repo.Load_All (D);
       Assert (Natural (Map.Length) = 0, "All agents should be removed");
    end Test_Remove_Deletes_Agent;
@@ -260,27 +284,30 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    procedure Test_Remove_Not_Found_Noop (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D    : DB.DB_Handle := DB.Open (":memory:");
-      Now  : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Info : constant Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String ("keep-agent"),
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Node_Id : constant Integer := Seed_Node (D, "keep-agent");
+      Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
+      Info    : constant Agent_Info :=
+        (Id            => 0,
+         Name          => To_Unbounded_String ("keep-agent"),
          Connection_Id => To_Unbounded_String ("node-001"),
-         State     => Registered,
-         Last_Seen => Now);
-      Map  : Podmander.Types.Agent_Maps.Map;
+         State         => Registered,
+         Last_Seen     => Now,
+         Node_Id       => Node_Id);
+      Map     : Podmander.Types.Agent_Maps.Map;
    begin
       Repo.Register (D, Info);
-      -- Remove a different (non-existent) agent
+      --  Remove a different (non-existent) agent
       Repo.Remove
         (D,
-         (Id        => 0,
-          Name      => To_Unbounded_String ("nonexistent"),
+         (Id            => 0,
+          Name          => To_Unbounded_String ("nonexistent"),
           Connection_Id => To_Unbounded_String (""),
-          State     => Registered,
-          Last_Seen => Now));
+          State         => Registered,
+          Last_Seen     => Now,
+          Node_Id       => 0));
       Map := Repo.Load_All (D);
-      Assert (Natural (Map.Length) = 1, "Original agent should still exist after " & "removing unknown agent");
+      Assert (Natural (Map.Length) = 1, "Original agent should still exist after removing unknown agent");
    end Test_Remove_Not_Found_Noop;
 
    ---------

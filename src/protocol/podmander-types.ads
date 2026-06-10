@@ -12,12 +12,18 @@ package Podmander.Types is
 
    type Agent_State is (Registered, Unresponsive, Lost);
 
+   type Node_Info is record
+      Id   : Integer := 0;
+      Name : Ada.Strings.Unbounded.Unbounded_String;
+   end record;
+
    type Agent_Info is record
       Id            : Integer := 0;
       Name          : Ada.Strings.Unbounded.Unbounded_String;
       Connection_Id : Ada.Strings.Unbounded.Unbounded_String;
       State         : Agent_State := Registered;
       Last_Seen     : Ada.Calendar.Time;
+      Node_Id       : Integer := 0;
    end record;
 
    package Agent_Maps is new

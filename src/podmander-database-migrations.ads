@@ -242,6 +242,37 @@ private
    Migration_012_SQL : constant String :=
      "ALTER TABLE agents RENAME COLUMN node_id TO connection_id;";
 
+   --  Migration 013: Introduce the Node entity and associate it 1:1
+   --  with the Agent. Create the nodes table (identity only), add
+   --  agents.node_id FK referencing nodes(id), and backfill one Node
+   --  per existing agent (using the agent's name as the node's
+   --  machine_name). SQLite cannot ALTER TABLE ADD COLUMN with a FK
+   --  constraint, so we recreate the agents table.
+   Migration_013_SQL : constant String :=
+   --  Step 1: Create nodes table with identity only (YAGNI)
+     "CREATE TABLE nodes ("
+     & "id           INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "machine_name TEXT NOT NULL UNIQUE);"
+     --  Step 2: Backfill nodes from existing agents (1:1)
+     & "INSERT INTO nodes (machine_name)"
+     & " SELECT name FROM agents;"
+     --  Step 3: Recreate agents table with node_id FK (NOT NULL)
+     & "CREATE TABLE agents_new ("
+     & "id             INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "name           TEXT NOT NULL UNIQUE,"
+     & "connection_id  TEXT NOT NULL,"
+     & "state          TEXT NOT NULL CHECK (state IN ('registered', 'unresponsive', 'lost')),"
+     & "last_seen      TEXT NOT NULL,"
+     & "node_id        INTEGER NOT NULL REFERENCES nodes(id));"
+     --  Step 4: Copy data, linking each agent to its node via name join
+     & "INSERT INTO agents_new (id, name, connection_id, state, last_seen, node_id)"
+     & " SELECT a.id, a.name, a.connection_id, a.state, a.last_seen, n.id"
+     & " FROM agents a"
+     & " JOIN nodes n ON n.machine_name = a.name;"
+     --  Step 5: Swap tables
+     & "DROP TABLE agents;"
+     & "ALTER TABLE agents_new RENAME TO agents;";
+
    Migration_History : constant Migration_Array :=
      [1  =>
         (Version => 1,
@@ -290,6 +321,10 @@ private
       12 =>
         (Version => 12,
          SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_012_SQL))];
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_012_SQL)),
+      13 =>
+        (Version => 13,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_013_SQL))];
 
 end Podmander.Database.Migrations;

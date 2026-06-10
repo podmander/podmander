@@ -11,6 +11,7 @@ with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Scheduler;
 with Podmander.Controller.Service.Repository;
 with Podmander.Controller.Strategies;
@@ -24,9 +25,10 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
    use AUnit.Assertions;
 
    package DB renames Podmander.Database;
-   package Svc_Repo renames Podmander.Controller.Service.Repository;
-   package Agent_Repo renames Podmander.Controller.Agent.Repository;
-   package Scheduler renames Podmander.Controller.Scheduler;
+    package Svc_Repo renames Podmander.Controller.Service.Repository;
+    package Agent_Repo renames Podmander.Controller.Agent.Repository;
+    package Node_Repo renames Podmander.Controller.Node.Repository;
+    package Scheduler renames Podmander.Controller.Scheduler;
    use Podmander.Controller.Strategies;
 
    use type Scheduler.Schedule_Error;
@@ -92,22 +94,24 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       return Svc_Rec.Id;
    end Seed_Service;
 
-   function Seed_Agent
-     (Handle : in out DB.DB_Handle; Name : String)
-      return Podmander.Controller.Agent_Id_Type
-   is
-      Info : constant Podmander.Types.Agent_Info :=
-        (Id        => 0,
-         Name      => To_Unbounded_String (Name),
-         Connection_Id => To_Unbounded_String ("node-" & Name),
-         State     => Podmander.Types.Registered,
-         Last_Seen => Clock);
-   begin
-      Agent_Repo.Register (Handle, Info);
-      return
-        Podmander.Controller.Agent_Id_Type
-          (Agent_Repo.Load_All (Handle).Element (Name).Id);
-   end Seed_Agent;
+    function Seed_Agent
+      (Handle : in out DB.DB_Handle; Name : String)
+       return Podmander.Controller.Agent_Id_Type
+    is
+       Node_Id : constant Integer := Node_Repo.Create_Or_Get (Handle, Name);
+       Info    : constant Podmander.Types.Agent_Info :=
+         (Id            => 0,
+          Name          => To_Unbounded_String (Name),
+          Connection_Id => To_Unbounded_String ("node-" & Name),
+          State         => Podmander.Types.Registered,
+          Last_Seen     => Clock,
+          Node_Id       => Node_Id);
+    begin
+       Agent_Repo.Register (Handle, Info);
+       return
+         Podmander.Controller.Agent_Id_Type
+           (Agent_Repo.Load_All (Handle).Element (Name).Id);
+    end Seed_Agent;
 
    -----------------------------------------------
    -- Test_Schedule_Persists_Strategy_Agent

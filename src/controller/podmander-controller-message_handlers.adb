@@ -4,6 +4,7 @@
 with Ada.Calendar;
 with CZMQ.Messages;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Types;
 with Podmander.Database;
@@ -61,12 +62,15 @@ package body Podmander.Controller.Message_Handlers is
       end if;
 
       declare
-         Info : constant Podmander.Types.Agent_Info :=
+         Node_Id : constant Integer :=
+           Node.Repository.Create_Or_Get (H.Ctrl.DB, Name);
+         Info    : constant Podmander.Types.Agent_Info :=
            (Id            => 0,
             Name          => Req.Agent_Name,
             Connection_Id => To_Unbounded_String (Connection_Id),
             State         => Podmander.Types.Registered,
-            Last_Seen     => Ada.Calendar.Clock);
+            Last_Seen     => Ada.Calendar.Clock,
+            Node_Id       => Node_Id);
       begin
          -- Persist to DB
          begin

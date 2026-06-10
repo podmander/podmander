@@ -7,6 +7,7 @@ with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with Podmander.Controller;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Controller.Service.Repository;
 with Podmander.Database;
@@ -19,8 +20,9 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    use AUnit.Assertions;
 
    package DB renames Podmander.Database;
-   package Svc_Repo renames Podmander.Controller.Service.Repository;
-   package Repo renames Podmander.Controller.Service_Catalog.Repository;
+    package Svc_Repo renames Podmander.Controller.Service.Repository;
+    package Node_Repo renames Podmander.Controller.Node.Repository;
+    package Repo renames Podmander.Controller.Service_Catalog.Repository;
 
    use type DB.Error_Kind;
 
@@ -50,21 +52,23 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       return Svc_Rec.Id;
    end Seed_Service;
 
-   -- Helper: register an agent and return its auto-generated id.
-   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Agent_Id_Type is
-      use Podmander.Types;
-      Info       : constant Agent_Info :=
-        (Id            => 0,
-         Name          => To_Unbounded_String (Name),
-         Connection_Id => To_Unbounded_String (Connection_Id),
-         State     => Registered,
-         Last_Seen => Ada.Calendar.Clock);
-      All_Agents : Agent_Maps.Map;
-   begin
-      Podmander.Controller.Agent.Repository.Register (Handle, Info);
-      All_Agents := Podmander.Controller.Agent.Repository.Load_All (Handle);
-      return Podmander.Controller.Agent_Id_Type (All_Agents.Element (Name).Id);
-   end Seed_Agent;
+    -- Helper: register an agent and return its auto-generated id.
+    function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Agent_Id_Type is
+       use Podmander.Types;
+       Node_Id    : constant Integer := Node_Repo.Create_Or_Get (Handle, Name);
+       Info       : constant Agent_Info :=
+         (Id            => 0,
+          Name          => To_Unbounded_String (Name),
+          Connection_Id => To_Unbounded_String (Connection_Id),
+          State         => Registered,
+          Last_Seen     => Ada.Calendar.Clock,
+          Node_Id       => Node_Id);
+       All_Agents : Agent_Maps.Map;
+    begin
+       Podmander.Controller.Agent.Repository.Register (Handle, Info);
+       All_Agents := Podmander.Controller.Agent.Repository.Load_All (Handle);
+       return Podmander.Controller.Agent_Id_Type (All_Agents.Element (Name).Id);
+    end Seed_Agent;
 
    ---------------------
    -- Test_Create_Entry
