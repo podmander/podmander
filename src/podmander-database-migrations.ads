@@ -273,6 +273,38 @@ private
      & "DROP TABLE agents;"
      & "ALTER TABLE agents_new RENAME TO agents;";
 
+   --  Migration 014: Retarget service_catalog placement from agent_id to
+   --  node_id. The catalog now references the stable Node entity; Agent is
+   --  reached only at deploy time via the resolution path Node -> Agent ->
+   --  Connection_Id. Recreate the table (SQLite cannot ALTER column type or
+   --  FK inline) and convert existing rows by joining agents on agent_id to
+   --  obtain the corresponding node_id.
+   Migration_014_SQL : constant String :=
+     "CREATE TABLE service_catalog_new ("
+     & "id              INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "service_id      INTEGER NOT NULL,"
+     & "node_id         INTEGER REFERENCES nodes(id),"
+     & "current_version INTEGER NOT NULL DEFAULT 0 CHECK (current_version >= 0),"
+     & "target_version  INTEGER NOT NULL,"
+     & "state           INTEGER NOT NULL DEFAULT 0 CHECK (state IN (0, 1, 2, 3)),"
+     & "updated_at      TEXT NOT NULL,"
+     & "FOREIGN KEY (service_id) REFERENCES services(id),"
+     & "FOREIGN KEY (service_id, target_version)"
+     & "    REFERENCES service_versions(service_id, version)"
+     & ");"
+     & "INSERT INTO service_catalog_new"
+     & " (id, service_id, node_id, current_version, target_version,"
+     & "  state, updated_at)"
+     & " SELECT sc.id, sc.service_id, a.node_id, sc.current_version,"
+     & "  sc.target_version, sc.state, sc.updated_at"
+     & " FROM service_catalog sc"
+     & " LEFT JOIN agents a ON a.id = sc.agent_id;"
+     & "DROP TABLE service_catalog;"
+     & "ALTER TABLE service_catalog_new RENAME TO service_catalog;"
+     & "CREATE UNIQUE INDEX idx_catalog_scheduled"
+     & "    ON service_catalog(service_id, node_id)"
+     & "    WHERE node_id IS NOT NULL;";
+
    Migration_History : constant Migration_Array :=
      [1  =>
         (Version => 1,
@@ -325,6 +357,10 @@ private
       13 =>
         (Version => 13,
          SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_013_SQL))];
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_013_SQL)),
+      14 =>
+        (Version => 14,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_014_SQL))];
 
 end Podmander.Database.Migrations;

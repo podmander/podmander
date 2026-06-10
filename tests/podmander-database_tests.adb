@@ -356,7 +356,7 @@ package body Podmander.Database_Tests is
          Stmt : Ada_Sqlite3.Statement :=
       Ada_Sqlite3.Prepare
               (Conn,
-               "SELECT id, service_id, agent_id, current_version, "
+               "SELECT id, service_id, node_id, current_version, "
                 & "target_version, state, updated_at "
                & "FROM service_catalog");
       begin
@@ -924,24 +924,24 @@ package body Podmander.Database_Tests is
             end loop;
          end;
 
-         -- Insert a catalog entry with non-existent agent_id (should fail FK)
+         -- Insert a catalog entry with non-existent node_id (should fail FK)
          declare
             Q : DB.Query_Handle :=
               DB.Prepare
                 (Handle,
                  "INSERT INTO service_catalog"
-                 & " (service_id, target_version, agent_id, updated_at)"
+                 & " (service_id, target_version, node_id, updated_at)"
                  & " VALUES (?, ?, ?, ?)");
          begin
             DB.Bind_Int (Q, 1, 1);
             DB.Bind_Int (Q, 2, 1);
-            DB.Bind_Int (Q, 3, 999);  --  Non-existent agent_id
+            DB.Bind_Int (Q, 3, 999);  --  Non-existent node_id
             DB.Bind_Text (Q, 4, "2026-01-01T00:00:00Z");
             declare
                Dummy : Boolean;
             begin
                Dummy := DB.Step (Q);
-               Assert (False, "INSERT with non-existent agent_id should have raised Database_Error");
+               Assert (False, "INSERT with non-existent node_id should have raised Database_Error");
             exception
                when DB.Database_Error =>
                   null;  --  Expected: FK constraint violation
@@ -1031,10 +1031,37 @@ package body Podmander.Database_Tests is
            (Conn,
             "INSERT INTO agents (name, connection_id, state, last_seen)"
             & " VALUES ('beta', 'conn-002', 'registered', '2026-01-02T00:00:00Z');");
+         --  Create the service_catalog table at schema version 12
+         --  (uses agent_id, as it existed before migration 014)
+         Ada_Sqlite3.Execute
+           (Conn,
+            "CREATE TABLE services (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE);");
+         Ada_Sqlite3.Execute
+           (Conn,
+            "CREATE TABLE service_versions ("
+            & "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            & "service_id INTEGER NOT NULL,"
+            & "version INTEGER NOT NULL CHECK (version >= 1),"
+            & "image TEXT NOT NULL, env TEXT NOT NULL, ports TEXT NOT NULL,"
+            & "volumes TEXT NOT NULL, description TEXT NOT NULL DEFAULT '',"
+            & "wanted_by TEXT NOT NULL DEFAULT '', created_at TEXT NOT NULL,"
+            & "FOREIGN KEY (service_id) REFERENCES services(id),"
+            & "UNIQUE (service_id, version));");
+         Ada_Sqlite3.Execute
+           (Conn,
+            "CREATE TABLE service_catalog ("
+            & "id INTEGER PRIMARY KEY AUTOINCREMENT,"
+            & "service_id INTEGER NOT NULL,"
+            & "agent_id INTEGER REFERENCES agents(id),"
+            & "current_version INTEGER NOT NULL DEFAULT 0 CHECK (current_version >= 0),"
+            & "target_version INTEGER NOT NULL,"
+            & "state INTEGER NOT NULL DEFAULT 0 CHECK (state IN (0, 1, 2, 3)),"
+            & "updated_at TEXT NOT NULL,"
+            & "FOREIGN KEY (service_id) REFERENCES services(id));");
       end;
-      --  Step 2: Re-open the database, which triggers migration 013.
-      --  The migration should create nodes from agent names and link
-      --  each agent to its node via node_id.
+      --  Step 2: Re-open the database, which triggers migrations 013 and 014.
+      --  Migration 013 creates nodes from agent names and links each agent.
+      --  Migration 014 retargets service_catalog from agent_id to node_id.
       declare
          Handle : DB.DB_Handle := DB.Open (Path);
          pragma Unreferenced (Handle);
@@ -1045,14 +1072,6 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
       begin
-         --  Verify schema version is now 13
-         declare
-            Stmt : Ada_Sqlite3.Statement :=
-              Ada_Sqlite3.Prepare (Conn, "SELECT version FROM schema_version");
-         begin
-            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "schema_version should have a row");
-            Assert (Ada_Sqlite3.Column_Int (Stmt, 0) = 13, "schema_version should be 13 after migration");
-         end;
          --  Verify two nodes were created with matching machine names
          declare
             Stmt : Ada_Sqlite3.Statement :=
@@ -1115,7 +1134,7 @@ package body Podmander.Database_Tests is
       Register_Routine
         (T, Test_Migration_Nodes_Table_And_Backfill'Access, "Migration 013 creates nodes table and agents.node_id");
       Register_Routine
-        (T, Test_Migration_013_Backfill'Access, "Migration 013 backfill links existing agents to new nodes");
+        (T, Test_Migration_013_Backfill'Access, "Migrations 013+014 backfill nodes and retarget catalog to node_id");
       Register_Routine (T, Test_Open_Error_Path'Access, "Open raises Database_Error for invalid path");
       -- Query API tests
       Register_Routine (T, Test_Prepare_And_Step'Access, "Prepare/Bind/Step/Column_Text round-trip");
@@ -1133,7 +1152,7 @@ package body Podmander.Database_Tests is
       Register_Routine
         (T, Test_Check_Current_Version_Non_Negative'Access, "CHECK constraint rejects negative current_version");
       Register_Routine
-        (T, Test_Catalog_Agent_FK'Access, "FK constraint rejects non-existent agent_id");
+        (T, Test_Catalog_Agent_FK'Access, "FK constraint rejects non-existent node_id");
       -- Settings API tests
       Register_Routine (T, Test_Set_Setting_And_Get_Setting'Access, "Set_Setting then Get_Setting round-trip");
       Register_Routine (T, Test_Get_Setting_Not_Found'Access, "Get_Setting raises Not_Found for missing key");

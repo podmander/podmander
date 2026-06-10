@@ -63,69 +63,69 @@ procedure Seed_Agent
    end Seed_Agent;
 
    ------------------------------------
-   -- Test_No_Agents_Returns_No_Agent
+   -- Test_No_Agents_Returns_No_Node
    ------------------------------------
 
-   procedure Test_No_Agents_Returns_No_Agent
+   procedure Test_No_Agents_Returns_No_Node
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Result : Podmander.Controller.Agent_Option;
+      Result : Podmander.Controller.Node_Option;
    begin
       Result :=
-        FA.Instance.Select_Agent
+        FA.Instance.Select_Node
           (DB             => D,
            Service_Id     => Podmander.Controller.Service_Id_Type'First,
            Target_Version => Podmander.Controller.Service_Version_Type'First);
       Assert (not Result.Present, "No agents should return Present => False");
-   end Test_No_Agents_Returns_No_Agent;
+   end Test_No_Agents_Returns_No_Node;
 
    ------------------------------------------
-   -- Test_One_Registered_Agent_Returns_It
+   -- Test_One_Registered_Agent_Returns_Node
    ------------------------------------------
 
-   procedure Test_One_Registered_Agent_Returns_It
+   procedure Test_One_Registered_Agent_Returns_Node
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Result : Podmander.Controller.Agent_Option;
+      Result : Podmander.Controller.Node_Option;
    begin
       Seed_Agent (D, "agent-1");
       Result :=
-        FA.Instance.Select_Agent
+        FA.Instance.Select_Node
           (DB             => D,
            Service_Id     => Podmander.Controller.Service_Id_Type'First,
            Target_Version => Podmander.Controller.Service_Version_Type'First);
       Assert
         (Result.Present, "One registered agent should return Present => True");
-      Assert (Result.Agent_Id > 0, "Agent_Id should be positive");
-   end Test_One_Registered_Agent_Returns_It;
+      Assert (Result.Node_Id > 0, "Node_Id should be positive");
+   end Test_One_Registered_Agent_Returns_Node;
 
    -------------------------------------------
-   -- Test_Multiple_Agents_Returns_A_Registered
+   -- Test_Multiple_Agents_Returns_A_Node
    -------------------------------------------
 
-   procedure Test_Multiple_Agents_Returns_A_Registered
+   procedure Test_Multiple_Agents_Returns_A_Node
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Result : Podmander.Controller.Agent_Option;
+      Result : Podmander.Controller.Node_Option;
    begin
       Seed_Agent (D, "agent-1");
       Seed_Agent (D, "agent-2");
       Result :=
-        FA.Instance.Select_Agent
+        FA.Instance.Select_Node
           (DB             => D,
            Service_Id     => Podmander.Controller.Service_Id_Type'First,
            Target_Version => Podmander.Controller.Service_Version_Type'First);
       Assert
         (Result.Present,
          "Multiple registered agents should return Present => True");
-      Assert (Result.Agent_Id > 0, "Agent_Id should be assigned");
-   end Test_Multiple_Agents_Returns_A_Registered;
+      Assert (Result.Node_Id > 0, "Node_Id should be assigned");
+   end Test_Multiple_Agents_Returns_A_Node;
 
    ----------------------------------------
    -- Test_Unresponsive_Agent_Is_Skipped
@@ -136,11 +136,11 @@ procedure Seed_Agent
    is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Result : Podmander.Controller.Agent_Option;
+      Result : Podmander.Controller.Node_Option;
    begin
       Seed_Agent (D, "agent-1", Podmander.Types.Unresponsive);
       Result :=
-        FA.Instance.Select_Agent
+        FA.Instance.Select_Node
           (DB             => D,
            Service_Id     => Podmander.Controller.Service_Id_Type'First,
            Target_Version => Podmander.Controller.Service_Version_Type'First);
@@ -155,16 +155,16 @@ procedure Seed_Agent
    begin
       Register_Routine
         (T,
-         Test_No_Agents_Returns_No_Agent'Access,
+         Test_No_Agents_Returns_No_Node'Access,
          "No agents returns Present => False");
       Register_Routine
         (T,
-         Test_One_Registered_Agent_Returns_It'Access,
-         "One registered agent returns that agent");
+         Test_One_Registered_Agent_Returns_Node'Access,
+         "One registered agent returns that node");
       Register_Routine
         (T,
-         Test_Multiple_Agents_Returns_A_Registered'Access,
-         "Multiple agents returns a registered agent");
+         Test_Multiple_Agents_Returns_A_Node'Access,
+         "Multiple agents returns a node");
       Register_Routine
         (T,
          Test_Unresponsive_Agent_Is_Skipped'Access,

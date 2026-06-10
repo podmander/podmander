@@ -9,11 +9,11 @@ package body Podmander.Controller.Strategies.First_Available is
    use Podmander.Types;
 
    overriding
-   function Select_Agent
+   function Select_Node
      (Strategy       : First_Available_Strategy;
       DB             : in out DB_Handle;
       Service_Id     : Service_Id_Type;
-      Target_Version : Service_Version_Type) return Agent_Option
+      Target_Version : Service_Version_Type) return Node_Option
    is
       pragma Unreferenced (Strategy, Service_Id, Target_Version);
       All_Agents : constant Podmander.Types.Agent_Maps.Map :=
@@ -25,11 +25,11 @@ package body Podmander.Controller.Strategies.First_Available is
               Podmander.Types.Agent_Maps.Element (Cursor);
          begin
             if Info.State = Podmander.Types.Registered then
-               return (Present => True, Agent_Id => Agent_Id_Type (Info.Id));
+               return (Present => True, Node_Id => Info.Node_Id);
             end if;
          end;
       end loop;
       return (Present => False);
-   end Select_Agent;
+   end Select_Node;
 
 end Podmander.Controller.Strategies.First_Available;

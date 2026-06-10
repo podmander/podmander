@@ -72,12 +72,12 @@ Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
        Agent_Repo.Register (Handle, Info);
     end Register_Agent;
 
-   -- Helper: register an agent and return its auto-generated id.
-function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Agent_Id_Type is
+   -- Helper: register an agent and return its node id.
+   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Node_Id_Type is
    begin
       Register_Agent (Handle, Name, Connection_Id);
-      return Podmander.Controller.Agent_Id_Type
-        (Agent_Repo.Load_All (Handle).Element (Name).Id);
+      return Podmander.Controller.Node_Id_Type
+        (Agent_Repo.Load_All (Handle).Element (Name).Node_Id);
    end Seed_Agent;
 
    --------------------------
@@ -90,7 +90,7 @@ function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id 
       Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Result : Scheduler.Schedule_Result;
    begin
-      --  Register one agent so the Scheduler can assign it
+      --  Register one agent so the Scheduler can assign its node
       Register_Agent (D, "agent-1", "node-1");
 
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 2,
@@ -98,7 +98,7 @@ function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id 
       Assert (Result.Ok, "Schedule should succeed for new entry");
       Assert (Result.Catalog_Entry.Id > 0, "Id should be positive after create");
       Assert (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
-      Assert (Result.Catalog_Entry.Agent_Id > 0, "Agent_Id should be assigned");
+      Assert (Result.Catalog_Entry.Node_Id > 0, "Node_Id should be assigned");
       Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should be 0");
       Assert (Result.Catalog_Entry.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should be 2");
       Assert (Result.Catalog_Entry.State = Podmander.Controller.Pending, "State should be Pending");
@@ -106,22 +106,22 @@ function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id 
    end Test_Schedule_New_Entry;
 
    ---------------------------------
-   -- Test_Schedule_New_Entry_No_Agent
+   -- Test_Schedule_New_Entry_No_Node
    ---------------------------------
 
-   procedure Test_Schedule_New_Entry_No_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Schedule_New_Entry_No_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
       Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
       Result : Scheduler.Schedule_Result;
    begin
-      --  No agents registered - Scheduler should create entry with empty Connection_Id
+      --  No agents registered - Scheduler should create entry with Node_Id = 0
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1,
                                     Strategy => Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with no agent");
-      Assert (Result.Catalog_Entry.Agent_Id = 0, "Agent_Id should be 0 when no agent is connected");
+      Assert (Result.Catalog_Entry.Node_Id = 0, "Node_Id should be 0 when no node is connected");
       Assert (Result.Error = Scheduler.None, "Error should be None");
-   end Test_Schedule_New_Entry_No_Agent;
+   end Test_Schedule_New_Entry_No_Node;
 
    --------------------------------
    -- Test_Schedule_Update_Existing
@@ -131,10 +131,10 @@ function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id 
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
-      Agent   : constant Podmander.Controller.Agent_Id_Type :=
+      Node    : constant Podmander.Controller.Node_Id_Type :=
          Seed_Agent (D, "agent-1", "node-1");
       Created : Podmander.Controller.Service_Catalog_Entry :=
-        Cat_Repo.Create_Entry (D, Service_Id => Svc, Agent_Id => Agent, Target_Version => 1);
+        Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
       --  Mark as failed first to verify it gets cleared
@@ -169,7 +169,7 @@ function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id 
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
-      --  Register one agent so the Scheduler can assign it
+      --  Register one agent so the Scheduler can assign its node
       Register_Agent (D, "agent-1", "assigned-node");
 
       --  Schedule - the Scheduler should assign the registered agent's node
@@ -179,31 +179,31 @@ function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id 
       Assert (Result.Ok, "Schedule should succeed");
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
       Assert
-        (Result.Catalog_Entry.Agent_Id > 0, "Agent_Id should be assigned after assign");
+        (Result.Catalog_Entry.Node_Id > 0, "Node_Id should be assigned after assign");
       Assert (Result.Catalog_Entry.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should be updated");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Update_Assign_Node;
 
    ------------------------------------
-   -- Test_Schedule_Picks_First_Agent
+   -- Test_Schedule_Picks_First_Node
    ------------------------------------
 
-   procedure Test_Schedule_Picks_First_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Schedule_Picks_First_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
       Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "cache", 1);
       Result : Scheduler.Schedule_Result;
    begin
-      --  Register two agents - Scheduler should pick the first one and succeed
+      --  Register two agents - Scheduler should pick the first node and succeed
       Register_Agent (D, "agent-1", "node-1");
       Register_Agent (D, "agent-2", "node-2");
 
       Result := Scheduler.Schedule (D, Service_Id => Svc, Target_Version => 1,
                                     Strategy => Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with multiple agents");
-      Assert (Result.Catalog_Entry.Agent_Id /= 0, "Agent_Id should be assigned");
+      Assert (Result.Catalog_Entry.Node_Id /= 0, "Node_Id should be assigned");
       Assert (Result.Error = Scheduler.None, "Error should be None");
-   end Test_Schedule_Picks_First_Agent;
+   end Test_Schedule_Picks_First_Node;
 
    overriding
    procedure Register_Tests (T : in out Scheduler_Test) is
@@ -211,13 +211,13 @@ function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id 
    begin
       Register_Routine (T, Test_Schedule_New_Entry'Access, "Schedule creates a new catalog entry");
       Register_Routine
-        (T, Test_Schedule_New_Entry_No_Agent'Access, "Schedule creates entry with empty Connection_Id when no agent");
+        (T, Test_Schedule_New_Entry_No_Node'Access, "Schedule creates entry with Node_Id = 0 when no node connected");
       Register_Routine
         (T, Test_Schedule_Update_Existing'Access, "Schedule updates target and sets state = Pending on existing");
       Register_Routine
         (T, Test_Schedule_Update_Assign_Node'Access, "Schedule assigns node when updating existing entry");
       Register_Routine
-        (T, Test_Schedule_Picks_First_Agent'Access, "Schedule picks first agent when multiple are connected");
+        (T, Test_Schedule_Picks_First_Node'Access, "Schedule picks first node when multiple are connected");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

@@ -278,16 +278,16 @@ package body Podmander.Controller is
                  Podmander.Controller.Strategies.First_Available.Instance);
          begin
             if Result.Ok then
-               if Result.Catalog_Entry.Agent_Id /= 0 then
+               if Result.Catalog_Entry.Node_Id /= 0 then
                   Podmander.Logging.Info
                     ("controller",
                      "Scheduled catalog entry "
                      & Cat_Entry.Id'Image
-                     & " to agent "
-                     & Result.Catalog_Entry.Agent_Id'Image);
+                     & " to node "
+                     & Result.Catalog_Entry.Node_Id'Image);
                end if;
             end if;
-         -- If no agents connected, leave unscheduled and try next iteration
+         -- If no nodes connected, leave unscheduled and try next iteration
          end;
       end loop;
 
@@ -301,13 +301,14 @@ package body Podmander.Controller is
                Cat_Entry : constant Service_Catalog_Entry :=
                  Catalog_Entry_Vectors.Element (Cursor);
             begin
-               -- Skip entries without an agent assigned (shouldn't happen
+               -- Skip entries without a node assigned (shouldn't happen
                -- after step 1, but guard against race conditions)
-               if Cat_Entry.Agent_Id = 0 then
+               if Cat_Entry.Node_Id = 0 then
                   goto Continue;
                end if;
 
-               --  Only deploy to agents that are currently connected.
+               --  Resolve node -> agent -> connection_id; only deploy when
+               --  the node's agent is currently connected.
                declare
                   All_Agents          :
                     constant Podmander.Types.Agent_Maps.Map :=
@@ -320,7 +321,7 @@ package body Podmander.Controller is
                         Info : constant Podmander.Types.Agent_Info :=
                           Podmander.Types.Agent_Maps.Element (Cur);
                      begin
-                        if Info.Id = Integer (Cat_Entry.Agent_Id)
+                        if Info.Node_Id = Cat_Entry.Node_Id
                           and then Info.State = Podmander.Types.Registered
                         then
                            Agent_Found := True;

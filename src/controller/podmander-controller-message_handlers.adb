@@ -134,10 +134,10 @@ Node_Id : constant Node_Id_Type :=
                if Info.State /= Podmander.Types.Registered then
                   Info.State := Podmander.Types.Registered;
                   Agent.Repository.Set_State (H.Ctrl.DB, Info);
-                  --  Reset any In_Progress deploys for this agent so they
+                  --  Reset any In_Progress deploys for this node so they
                   --  are retried now that the agent is connected again.
-                  Reset_In_Progress_For_Agent
-                    (H.Ctrl.DB, Podmander.Controller.Agent_Id_Type (Info.Id));
+                  Reset_In_Progress_For_Node
+                    (H.Ctrl.DB, Info.Node_Id);
                   Podmander.Logging.Info
                     ("controller", "Agent " & Connection_Id & " reconnected");
                end if;

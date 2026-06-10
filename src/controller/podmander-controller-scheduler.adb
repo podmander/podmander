@@ -3,17 +3,19 @@
 
 with Ada.Calendar;
 with Podmander.Controller.Service_Catalog.Repository;
+with Podmander.Types;
 
 package body Podmander.Controller.Scheduler is
 
    use Ada.Calendar;
    use Podmander.Controller.Service_Catalog.Repository;
+   use type Podmander.Types.Node_Id_Type;
 
    --  Dummy entry returned in error cases where no real entry exists.
    Dummy_Entry : constant Podmander.Controller.Service_Catalog_Entry :=
      (Id              => 0,
       Service_Id      => Podmander.Controller.Service_Id_Type'First,
-      Agent_Id        => 0,
+      Node_Id         => 0,
       Current_Version => 0,
       Target_Version  => Podmander.Controller.Service_Version_Type'First,
       State           => Pending,
@@ -30,10 +32,10 @@ package body Podmander.Controller.Scheduler is
       Strategy       : Podmander.Controller.Strategies.Strategy_Type'Class)
       return Schedule_Result
    is
-      Selected        : constant Podmander.Controller.Agent_Option :=
-        Strategy.Select_Agent (DB, Service_Id, Target_Version);
-      Target_Agent_Id : constant Podmander.Controller.Agent_Id_Type :=
-        (if Selected.Present then Selected.Agent_Id else 0);
+      Selected        : constant Podmander.Controller.Node_Option :=
+        Strategy.Select_Node (DB, Service_Id, Target_Version);
+      Target_Node_Id  : constant Podmander.Controller.Node_Id_Type :=
+        (if Selected.Present then Selected.Node_Id else 0);
    begin
       begin
          --  Try to update an existing entry
@@ -45,8 +47,8 @@ package body Podmander.Controller.Scheduler is
          begin
             Updated := Set_Target (DB, Existing.Id, Target_Version);
 
-            if Target_Agent_Id > 0 then
-               Updated := Assign_Agent (DB, Existing.Id, Target_Agent_Id);
+            if Target_Node_Id /= 0 then
+               Updated := Assign_Node (DB, Existing.Id, Target_Node_Id);
             end if;
 
             return
@@ -66,7 +68,7 @@ package body Podmander.Controller.Scheduler is
                        Create_Entry
                          (DB,
                           Service_Id     => Service_Id,
-                          Agent_Id       => Target_Agent_Id,
+                          Node_Id        => Target_Node_Id,
                           Target_Version => Target_Version),
                      Error         => None);
                end if;

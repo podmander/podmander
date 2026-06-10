@@ -2,7 +2,7 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 --  The Scheduler creates or updates service_catalog entries to schedule
---  a service for deployment. Agent selection is delegated to the injected
+--  a service for deployment. Node selection is delegated to the injected
 --  Scheduling Strategy; the Scheduler owns only persistence.
 
 with Podmander.Controller.Strategies;
@@ -27,9 +27,9 @@ package Podmander.Controller.Scheduler is
       Strategy       : Podmander.Controller.Strategies.Strategy_Type'Class)
       return Schedule_Result;
    --  Create or update a catalog entry for the given service, using the
-   --  provided Scheduling Strategy to select the target agent.
+   --  provided Scheduling Strategy to select the target node.
    --  If an entry already exists, updates target_version and state = Pending.
    --  If no entry exists, creates one with current_version = 0.
-   --  Agent_Id = 0 when Strategy finds no eligible agent (entry unscheduled).
+   --  Node_Id = 0 when Strategy finds no eligible node (entry unscheduled).
 
 end Podmander.Controller.Scheduler;

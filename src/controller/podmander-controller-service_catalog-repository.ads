@@ -13,10 +13,10 @@ package Podmander.Controller.Service_Catalog.Repository is
    function Create_Entry
      (DB             : in out DB_Handle;
       Service_Id     : Podmander.Controller.Service_Id_Type;
-      Agent_Id       : Podmander.Controller.Agent_Id_Type := 0;
+      Node_Id        : Podmander.Controller.Node_Id_Type := 0;
       Target_Version : Podmander.Controller.Service_Version_Type)
       return Podmander.Controller.Service_Catalog_Entry;
-   -- Insert a new catalog entry. Agent_Id 0 means unscheduled.
+   -- Insert a new catalog entry. Node_Id 0 means unscheduled.
    -- Returns the created entry with its auto-generated id.
 
    function Get_By_Id
@@ -30,12 +30,12 @@ package Podmander.Controller.Service_Catalog.Repository is
       return Podmander.Controller.Service_Catalog_Entry;
    -- Return the catalog entry for the given service_id.
    -- Raises Database_Error with Not_Found if no entry exists.
-   -- If multiple entries exist (different agents), returns the first one.
+   -- If multiple entries exist (different nodes), returns the first one.
 
    function Get_Unscheduled
      (DB : in out DB_Handle)
       return Podmander.Controller.Catalog_Entry_Vectors.Vector;
-   -- Return all catalog entries where agent_id IS NULL.
+   -- Return all catalog entries where node_id IS NULL.
 
    function Get_Pending
      (DB : in out DB_Handle)
@@ -53,11 +53,11 @@ package Podmander.Controller.Service_Catalog.Repository is
    -- Set state = Failed, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
-   function Assign_Agent
-     (DB       : in out DB_Handle;
-      Id       : Integer;
-      Agent_Id : Podmander.Controller.Agent_Id_Type) return Boolean;
-   -- Set agent_id = Agent_Id, update updated_at.
+   function Assign_Node
+     (DB      : in out DB_Handle;
+      Id      : Integer;
+      Node_Id : Podmander.Controller.Node_Id_Type) return Boolean;
+   -- Set node_id = Node_Id, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Set_Target
@@ -74,10 +74,10 @@ package Podmander.Controller.Service_Catalog.Repository is
    --  Set state = State, update updated_at.
    --  Returns True if a row was updated, False otherwise.
 
-   procedure Reset_In_Progress_For_Agent
-     (DB : in out DB_Handle; Agent_Id : Podmander.Controller.Agent_Id_Type);
-   --  Reset all In_Progress catalog entries for the given agent
-   --  back to Pending. Called when an agent reconnects to ensure
+   procedure Reset_In_Progress_For_Node
+     (DB : in out DB_Handle; Node_Id : Podmander.Controller.Node_Id_Type);
+   --  Reset all In_Progress catalog entries for the given node
+   --  back to Pending. Called when a node's agent reconnects to ensure
    --  any lost deploy commands are retried.
 
    procedure Reset_In_Progress (DB : in out DB_Handle);

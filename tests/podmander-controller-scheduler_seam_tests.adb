@@ -3,14 +3,13 @@
 
 --  DI-seam tests for the Scheduler's Strategy parameter. Each test injects
 --  a test-only Strategy_Type implementation to verify that Schedule persists
---  exactly the agent the strategy chose (or leaves the entry unscheduled when
---  the strategy returns no agent).
+--  exactly the node the strategy chose (or leaves the entry unscheduled when
+--  the strategy returns no node).
 
 with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
-with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Scheduler;
 with Podmander.Controller.Service.Repository;
@@ -27,47 +26,46 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
 
    package DB renames Podmander.Database;
    package Svc_Repo renames Podmander.Controller.Service.Repository;
-   package Agent_Repo renames Podmander.Controller.Agent.Repository;
    package Node_Repo renames Podmander.Controller.Node.Repository;
    package Scheduler renames Podmander.Controller.Scheduler;
    use Podmander.Controller.Strategies;
 
    use type Scheduler.Schedule_Error;
 
-   --  Test-only strategy: always returns the fixed agent id it was initialised
+   --  Test-only strategy: always returns the fixed node id it was initialised
    --  with. Does not touch DB.
-   type Fixed_Agent_Strategy is new Strategy_Type with record
-      Fixed_Id : Podmander.Controller.Agent_Id_Type;
+   type Fixed_Node_Strategy is new Strategy_Type with record
+      Fixed_Id : Podmander.Controller.Node_Id_Type;
    end record;
 
    overriding
-   function Select_Agent
-     (Strategy       : Fixed_Agent_Strategy;
+   function Select_Node
+     (Strategy       : Fixed_Node_Strategy;
       DB             : in out Podmander.Database.DB_Handle;
       Service_Id     : Podmander.Controller.Service_Id_Type;
       Target_Version : Podmander.Controller.Service_Version_Type)
-      return Podmander.Controller.Agent_Option
+      return Podmander.Controller.Node_Option
    is
       pragma Unreferenced (DB, Service_Id, Target_Version);
    begin
-      return (Present => True, Agent_Id => Strategy.Fixed_Id);
-   end Select_Agent;
+      return (Present => True, Node_Id => Strategy.Fixed_Id);
+   end Select_Node;
 
-   --  Test-only strategy: always reports no eligible agent.
-   type No_Agent_Strategy is new Strategy_Type with null record;
+   --  Test-only strategy: always reports no eligible node.
+   type No_Node_Strategy is new Strategy_Type with null record;
 
    overriding
-   function Select_Agent
-     (Strategy       : No_Agent_Strategy;
+   function Select_Node
+     (Strategy       : No_Node_Strategy;
       DB             : in out Podmander.Database.DB_Handle;
       Service_Id     : Podmander.Controller.Service_Id_Type;
       Target_Version : Podmander.Controller.Service_Version_Type)
-      return Podmander.Controller.Agent_Option
+      return Podmander.Controller.Node_Option
    is
       pragma Unreferenced (Strategy, DB, Service_Id, Target_Version);
    begin
       return (Present => False);
-   end Select_Agent;
+   end Select_Node;
 
    type Seam_Test is new AUnit.Test_Cases.Test_Case with null record;
 
@@ -95,40 +93,29 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       return Svc_Rec.Id;
    end Seed_Service;
 
-    function Seed_Agent
-      (Handle : in out DB.DB_Handle; Name : String)
-       return Podmander.Controller.Agent_Id_Type
-    is
-       Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
-       Info    : constant Agent_Info :=
-         (Id            => 0,
-          Name          => To_Unbounded_String (Name),
-          Connection_Id => To_Unbounded_String ("node-" & Name),
-          State         => Registered,
-          Last_Seen     => Clock,
-          Node_Id       => Node_Id);
-    begin
-       Agent_Repo.Register (Handle, Info);
-       return
-         Podmander.Controller.Agent_Id_Type
-           (Agent_Repo.Load_All (Handle).Element (Name).Id);
-    end Seed_Agent;
+   function Seed_Node
+     (Handle : in out DB.DB_Handle; Name : String)
+      return Podmander.Controller.Node_Id_Type
+   is
+   begin
+      return Node_Repo.Create_Or_Get (Handle, Name);
+   end Seed_Node;
 
    -----------------------------------------------
-   -- Test_Schedule_Persists_Strategy_Agent
+   -- Test_Schedule_Persists_Strategy_Node
    -----------------------------------------------
 
-   procedure Test_Schedule_Persists_Strategy_Agent
+   procedure Test_Schedule_Persists_Strategy_Node
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       D        : DB.DB_Handle := DB.Open (":memory:");
       Svc      : constant Podmander.Controller.Service_Id_Type :=
         Seed_Service (D, "app");
-      Agent    : constant Podmander.Controller.Agent_Id_Type :=
-        Seed_Agent (D, "agent-1");
-      Strategy : constant Fixed_Agent_Strategy :=
-        Fixed_Agent_Strategy'(Fixed_Id => Agent);
+      Node     : constant Podmander.Controller.Node_Id_Type :=
+        Seed_Node (D, "node-1");
+      Strategy : constant Fixed_Node_Strategy :=
+        Fixed_Node_Strategy'(Fixed_Id => Node);
       Result   : Scheduler.Schedule_Result;
    begin
       Result :=
@@ -140,22 +127,22 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       Assert (Result.Ok, "Schedule should succeed");
       Assert (Result.Error = Scheduler.None, "Error should be None");
       Assert
-        (Result.Catalog_Entry.Agent_Id = Agent,
-         "Scheduler should persist the agent chosen by the injected strategy");
-   end Test_Schedule_Persists_Strategy_Agent;
+        (Result.Catalog_Entry.Node_Id = Node,
+         "Scheduler should persist the node chosen by the injected strategy");
+   end Test_Schedule_Persists_Strategy_Node;
 
    -----------------------------------------------
-   -- Test_Schedule_Unscheduled_On_No_Agent
+   -- Test_Schedule_Unscheduled_On_No_Node
    -----------------------------------------------
 
-   procedure Test_Schedule_Unscheduled_On_No_Agent
+   procedure Test_Schedule_Unscheduled_On_No_Node
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       D        : DB.DB_Handle := DB.Open (":memory:");
       Svc      : constant Podmander.Controller.Service_Id_Type :=
         Seed_Service (D, "app");
-      Strategy : No_Agent_Strategy;
+      Strategy : No_Node_Strategy;
       Result   : Scheduler.Schedule_Result;
    begin
       Result :=
@@ -166,12 +153,12 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
            Strategy       => Strategy);
       Assert
         (Result.Ok,
-         "Schedule should succeed even when strategy returns no agent");
+         "Schedule should succeed even when strategy returns no node");
       Assert (Result.Error = Scheduler.None, "Error should be None");
       Assert
-        (Result.Catalog_Entry.Agent_Id = 0,
-         "Catalog entry should be unscheduled (Agent_Id = 0) when strategy returns no agent");
-   end Test_Schedule_Unscheduled_On_No_Agent;
+        (Result.Catalog_Entry.Node_Id = 0,
+         "Catalog entry should be unscheduled (Node_Id = 0) when strategy returns no node");
+   end Test_Schedule_Unscheduled_On_No_Node;
 
    overriding
    procedure Register_Tests (T : in out Seam_Test) is
@@ -179,12 +166,12 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
    begin
       Register_Routine
         (T,
-         Test_Schedule_Persists_Strategy_Agent'Access,
-         "Scheduler persists agent chosen by injected strategy");
+         Test_Schedule_Persists_Strategy_Node'Access,
+         "Scheduler persists node chosen by injected strategy");
       Register_Routine
         (T,
-         Test_Schedule_Unscheduled_On_No_Agent'Access,
-         "Scheduler leaves entry unscheduled when strategy returns no agent");
+         Test_Schedule_Unscheduled_On_No_Node'Access,
+         "Scheduler leaves entry unscheduled when strategy returns no node");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
