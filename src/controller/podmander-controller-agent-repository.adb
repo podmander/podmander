@@ -150,7 +150,7 @@ package body Podmander.Controller.Agent.Repository is
          Rec.Connection_Id := To_Unbounded_String (Column_Text (QH, 2));
          Rec.State := String_To_State (Column_Text (QH, 3));
          Rec.Last_Seen := ISO8601_To_Time (Column_Text (QH, 4));
-         Rec.Node_Id := Podmander.Types.Node_Id_Type (Column_Int (QH, 5));
+         Rec.Node_Id := Node_Id_Type (Column_Int (QH, 5));
          Map.Insert (To_String (Rec.Name), Rec);
       end loop;
       return Map;

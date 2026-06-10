@@ -23,6 +23,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
    use Ada.Calendar;
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
+   use Podmander.Types;
 
    package DB renames Podmander.Database;
    package Svc_Repo renames Podmander.Controller.Service.Repository;
@@ -98,12 +99,12 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       (Handle : in out DB.DB_Handle; Name : String)
        return Podmander.Controller.Agent_Id_Type
     is
-       Node_Id : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
-       Info    : constant Podmander.Types.Agent_Info :=
+       Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
+       Info    : constant Agent_Info :=
          (Id            => 0,
           Name          => To_Unbounded_String (Name),
           Connection_Id => To_Unbounded_String ("node-" & Name),
-          State         => Podmander.Types.Registered,
+          State         => Registered,
           Last_Seen     => Clock,
           Node_Id       => Node_Id);
     begin

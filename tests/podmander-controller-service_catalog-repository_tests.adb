@@ -18,6 +18,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    use Ada.Calendar;
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
+   use Podmander.Types;
 
    package DB renames Podmander.Database;
    package Svc_Repo renames Podmander.Controller.Service.Repository;
@@ -54,9 +55,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
     -- Helper: register an agent and return its auto-generated id.
     function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Agent_Id_Type is
-       use Podmander.Types;
-       Node_Id    : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
-       Info       : constant Agent_Info :=
+      Node_Id    : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
+      Info       : constant Agent_Info :=
          (Id            => 0,
           Name          => To_Unbounded_String (Name),
           Connection_Id => To_Unbounded_String (Connection_Id),

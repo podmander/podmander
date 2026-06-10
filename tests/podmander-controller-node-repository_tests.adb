@@ -10,6 +10,7 @@ with Podmander.Types;
 package body Podmander.Controller.Node.Repository_Tests is
 
    use AUnit.Assertions;
+   use Podmander.Types;
 
    package DB renames Podmander.Database;
    package Repo renames Podmander.Controller.Node.Repository;
@@ -29,7 +30,7 @@ package body Podmander.Controller.Node.Repository_Tests is
    procedure Test_Create_Or_Get_New_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D : DB.DB_Handle := DB.Open (":memory:");
-      Node_Id : constant Podmander.Types.Node_Id_Type := Repo.Create_Or_Get (D, "worker-01");
+      Node_Id : constant Node_Id_Type := Repo.Create_Or_Get (D, "worker-01");
    begin
       Assert (Node_Id > 0, "Create_Or_Get should return a positive id for new node");
    end Test_Create_Or_Get_New_Node;
@@ -38,8 +39,8 @@ package body Podmander.Controller.Node.Repository_Tests is
    procedure Test_Create_Or_Get_Idempotent (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Id_First  : constant Podmander.Types.Node_Id_Type := Repo.Create_Or_Get (D, "worker-02");
-      Id_Second : constant Podmander.Types.Node_Id_Type := Repo.Create_Or_Get (D, "worker-02");
+      Id_First  : constant Node_Id_Type := Repo.Create_Or_Get (D, "worker-02");
+      Id_Second : constant Node_Id_Type := Repo.Create_Or_Get (D, "worker-02");
    begin
       Assert (Id_First = Id_Second, "Create_Or_Get should return same id for same name");
    end Test_Create_Or_Get_Idempotent;
@@ -48,8 +49,8 @@ package body Podmander.Controller.Node.Repository_Tests is
    procedure Test_Create_Or_Get_Different_Names (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D        : DB.DB_Handle := DB.Open (":memory:");
-      Id_Alpha : constant Podmander.Types.Node_Id_Type := Repo.Create_Or_Get (D, "alpha");
-      Id_Beta  : constant Podmander.Types.Node_Id_Type := Repo.Create_Or_Get (D, "beta");
+      Id_Alpha : constant Node_Id_Type := Repo.Create_Or_Get (D, "alpha");
+      Id_Beta  : constant Node_Id_Type := Repo.Create_Or_Get (D, "beta");
    begin
       Assert (Id_Alpha /= Id_Beta, "Create_Or_Get should return different ids for different names");
       Assert (Id_Alpha > 0, "Alpha id should be positive");
@@ -60,8 +61,8 @@ package body Podmander.Controller.Node.Repository_Tests is
    procedure Test_Load_By_Name_Existing (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D        : DB.DB_Handle := DB.Open (":memory:");
-      Created_Id : constant Podmander.Types.Node_Id_Type := Repo.Create_Or_Get (D, "worker-03");
-      Loaded_Id  : constant Podmander.Types.Node_Id_Type := Repo.Load_By_Name (D, "worker-03");
+      Created_Id : constant Node_Id_Type := Repo.Create_Or_Get (D, "worker-03");
+      Loaded_Id  : constant Node_Id_Type := Repo.Load_By_Name (D, "worker-03");
    begin
       Assert (Loaded_Id = Created_Id, "Load_By_Name should return the same id as Create_Or_Get");
    end Test_Load_By_Name_Existing;
@@ -74,7 +75,7 @@ package body Podmander.Controller.Node.Repository_Tests is
    begin
       begin
          declare
-            Id : constant Podmander.Types.Node_Id_Type := Repo.Load_By_Name (D, "nonexistent");
+            Id : constant Node_Id_Type := Repo.Load_By_Name (D, "nonexistent");
             pragma Unreferenced (Id);
          begin
             null;

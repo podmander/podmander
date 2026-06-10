@@ -34,6 +34,7 @@ package body Podmander.Controller_Tests is
 
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
+   use Podmander.Types;
 
     package Svc_Repo renames Podmander.Controller.Service.Repository;
     package Node_Repo renames Podmander.Controller.Node.Repository;
@@ -255,7 +256,7 @@ package body Podmander.Controller_Tests is
        -- Phase 1: Open DB, register an agent, close (handle auto-finalized)
        declare
           D       : Podmander.Database.DB_Handle := Podmander.Database.Open (DB_Path);
-          Node_Id : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (D, "persisted-agent");
+          Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (D, "persisted-agent");
        begin
           Podmander.Controller.Agent.Repository.Register
             (D,
@@ -388,7 +389,7 @@ package body Podmander.Controller_Tests is
        Ctrl    : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
        H       : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "node-xyz");
        Past    : constant Ada.Calendar.Time := Ada.Calendar.Clock - 60.0;
-       Node_Id : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (Ctrl.DB, "web-1");
+       Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Ctrl.DB, "web-1");
        Info    : constant Podmander.Types.Agent_Info :=
           (Id            => 0,
            Name          => To_Unbounded_String ("web-1"),
@@ -434,7 +435,7 @@ package body Podmander.Controller_Tests is
        use type Ada.Calendar.Time;
        Ctrl    : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
        H       : Podmander.Controller.Message_Handlers.Controller_Handler := Make_Handler (Ctrl'Access, "lost-node");
-       Node_Id : constant Podmander.Types.Node_Id_Type := Node_Repo.Create_Or_Get (Ctrl.DB, "web-1");
+       Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Ctrl.DB, "web-1");
        Info    : constant Podmander.Types.Agent_Info :=
           (Id            => 0,
            Name          => To_Unbounded_String ("web-1"),
