@@ -9,7 +9,7 @@ package body Podmander.Controller.Scheduler is
 
    use Ada.Calendar;
    use Podmander.Controller.Service_Catalog.Repository;
-   use type Podmander.Types.Node_Id_Type;
+   use Podmander.Types;
 
    --  Dummy entry returned in error cases where no real entry exists.
    Dummy_Entry : constant Podmander.Controller.Service_Catalog_Entry :=
@@ -34,7 +34,7 @@ package body Podmander.Controller.Scheduler is
    is
       Selected        : constant Podmander.Controller.Node_Option :=
         Strategy.Select_Node (DB, Service_Id, Target_Version);
-      Target_Node_Id  : constant Podmander.Controller.Node_Id_Type :=
+      Target_Node_Id  : constant Node_Id_Type :=
         (if Selected.Present then Selected.Node_Id else 0);
    begin
       begin

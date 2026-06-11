@@ -5,7 +5,6 @@ with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
-with Podmander.Controller;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Scheduler;
@@ -17,7 +16,6 @@ with Podmander.Types;
 
 package body Podmander.Controller.Scheduler_Tests is
 
-   use Ada.Calendar;
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
    use Podmander.Types;
@@ -29,7 +27,6 @@ package body Podmander.Controller.Scheduler_Tests is
    package Node_Repo renames Podmander.Controller.Node.Repository;
    package Scheduler renames Podmander.Controller.Scheduler;
 
-   use type DB.Error_Kind;
    use type Scheduler.Schedule_Error;
 
    type Scheduler_Test is new AUnit.Test_Cases.Test_Case with null record;
@@ -58,9 +55,9 @@ package body Podmander.Controller.Scheduler_Tests is
       return Svc_Rec.Id;
    end Seed_Service;
 
-    -- Helper: register a single agent in Registered state.
-    procedure Register_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) is
-Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
+   -- Helper: register a single agent in Registered state.
+   procedure Register_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) is
+      Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
       Info    : constant Agent_Info :=
         (Id            => 0,
          Name          => To_Unbounded_String (Name),
@@ -68,16 +65,15 @@ Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
          State         => Registered,
          Last_Seen     => Ada.Calendar.Clock,
          Node_Id       => Node_Id);
-    begin
-       Agent_Repo.Register (Handle, Info);
-    end Register_Agent;
+   begin
+      Agent_Repo.Register (Handle, Info);
+   end Register_Agent;
 
    -- Helper: register an agent and return its node id.
-   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Podmander.Controller.Node_Id_Type is
+   function Seed_Agent (Handle : in out DB.DB_Handle; Name : String; Connection_Id : String) return Node_Id_Type is
    begin
       Register_Agent (Handle, Name, Connection_Id);
-      return Podmander.Controller.Node_Id_Type
-        (Agent_Repo.Load_All (Handle).Element (Name).Node_Id);
+      return Agent_Repo.Load_All (Handle).Element (Name).Node_Id;
    end Seed_Agent;
 
    --------------------------
@@ -87,7 +83,7 @@ Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
    procedure Test_Schedule_New_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Svc    : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
       Result : Scheduler.Schedule_Result;
    begin
       --  Register one agent so the Scheduler can assign its node
@@ -112,7 +108,7 @@ Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
    procedure Test_Schedule_New_Entry_No_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
+      Svc    : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
       Result : Scheduler.Schedule_Result;
    begin
       --  No agents registered - Scheduler should create entry with Node_Id = 0
@@ -130,10 +126,10 @@ Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
    procedure Test_Schedule_Update_Existing (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
-      Node    : constant Podmander.Controller.Node_Id_Type :=
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
+      Node    : constant Node_Id_Type :=
          Seed_Agent (D, "agent-1", "node-1");
-      Created : Podmander.Controller.Service_Catalog_Entry :=
+      Created : constant Podmander.Controller.Service_Catalog_Entry :=
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
@@ -164,8 +160,8 @@ Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
    procedure Test_Schedule_Update_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      Created : Podmander.Controller.Service_Catalog_Entry :=
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Created : constant Podmander.Controller.Service_Catalog_Entry :=
         Cat_Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
@@ -191,7 +187,7 @@ Node_Id : constant Node_Id_Type := Node_Repo.Create_Or_Get (Handle, Name);
    procedure Test_Schedule_Picks_First_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D      : DB.DB_Handle := DB.Open (":memory:");
-      Svc    : Podmander.Controller.Service_Id_Type := Seed_Service (D, "cache", 1);
+      Svc    : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "cache", 1);
       Result : Scheduler.Schedule_Result;
    begin
       --  Register two agents - Scheduler should pick the first node and succeed

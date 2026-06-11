@@ -5,7 +5,6 @@ with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
-with Podmander.Controller;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Controller.Service.Repository;
@@ -14,7 +13,6 @@ with Podmander.Types;
 
 package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
-   use Ada.Calendar;
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
    use Podmander.Types;
@@ -53,7 +51,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    end Seed_Service;
 
    -- Helper: create a node and return its id.
-   function Seed_Node (Handle : in out DB.DB_Handle; Name : String) return Podmander.Controller.Node_Id_Type is
+   function Seed_Node (Handle : in out DB.DB_Handle; Name : String) return Node_Id_Type is
    begin
       return Node_Repo.Create_Or_Get (Handle, Name);
    end Seed_Node;
@@ -65,9 +63,9 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Create_Entry (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      Node    : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
-      Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
+      Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
@@ -85,8 +83,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Create_Entry_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
-      Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "db", 1);
+      Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
@@ -99,12 +97,12 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Get_By_Id (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D     : DB.DB_Handle := DB.Open (":memory:");
-      Svc   : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      Node  : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
-      Created : Podmander.Controller.Service_Catalog_Entry :=
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
+      Created : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
-      Loaded  : Podmander.Controller.Service_Catalog_Entry := Repo.Get_By_Id (D, Created.Id);
+      Loaded  : constant Podmander.Controller.Service_Catalog_Entry := Repo.Get_By_Id (D, Created.Id);
    begin
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
@@ -147,13 +145,13 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Get_Unscheduled (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D           : DB.DB_Handle := DB.Open (":memory:");
-      Svc         : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
-      Node        : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
+      Svc         : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
+      Node        : constant Node_Id_Type := Seed_Node (D, "node-1");
       Ignored1    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 1);
       Ignored2    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
-      Unscheduled : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Unscheduled (D);
+      Unscheduled : constant Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Unscheduled (D);
    begin
       pragma Unreferenced (Ignored1);
       Assert (Natural (Unscheduled.Length) = 1, "Should find 1 unscheduled entry");
@@ -168,13 +166,13 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Get_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D    : DB.DB_Handle := DB.Open (":memory:");
-      Svc  : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      Node : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
       --  Entry with pending deployment: current_version defaults to 0, target is 2
-      E     : Podmander.Controller.Service_Catalog_Entry :=
+      E       : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
-      Pending : Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Pending (D);
+      Pending : constant Podmander.Controller.Catalog_Entry_Vectors.Vector := Repo.Get_Pending (D);
    begin
       pragma Unreferenced (E);
       Assert (Natural (Pending.Length) = 1, "Should find 1 pending entry");
@@ -182,10 +180,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Get_Pending_Excludes_Non_Pending (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D    : DB.DB_Handle := DB.Open (":memory:");
-      Svc  : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      Node : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
-      E1   : Podmander.Controller.Service_Catalog_Entry :=
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
+      E1      : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
       Ignored : Boolean;
       Pending : Podmander.Controller.Catalog_Entry_Vectors.Vector;
@@ -203,10 +201,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Update_On_Success (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D    : DB.DB_Handle := DB.Open (":memory:");
-      Svc  : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      Node : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
-      Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
+      Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
@@ -239,10 +237,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Update_On_Failure (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D    : DB.DB_Handle := DB.Open (":memory:");
-      Svc  : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
-      Node : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
-      Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 2);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
+      Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
@@ -270,9 +268,9 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    procedure Test_Assign_Node (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
-      Svc     : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
-      Node    : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
-      Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 1);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
+      Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
@@ -299,10 +297,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
    procedure Test_Set_Target (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      D    : DB.DB_Handle := DB.Open (":memory:");
-      Svc  : Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
-      Node : constant Podmander.Controller.Node_Id_Type := Seed_Node (D, "node-1");
-      Cat_Ent : Podmander.Controller.Service_Catalog_Entry :=
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      Svc     : constant Podmander.Controller.Service_Id_Type := Seed_Service (D, "web", 3);
+      Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
+      Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;

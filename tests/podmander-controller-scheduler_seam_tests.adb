@@ -35,7 +35,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
    --  Test-only strategy: always returns the fixed node id it was initialised
    --  with. Does not touch DB.
    type Fixed_Node_Strategy is new Strategy_Type with record
-      Fixed_Id : Podmander.Controller.Node_Id_Type;
+      Fixed_Id : Node_Id_Type;
    end record;
 
    overriding
@@ -95,7 +95,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
 
    function Seed_Node
      (Handle : in out DB.DB_Handle; Name : String)
-      return Podmander.Controller.Node_Id_Type
+      return Node_Id_Type
    is
    begin
       return Node_Repo.Create_Or_Get (Handle, Name);
@@ -112,7 +112,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       D        : DB.DB_Handle := DB.Open (":memory:");
       Svc      : constant Podmander.Controller.Service_Id_Type :=
         Seed_Service (D, "app");
-      Node     : constant Podmander.Controller.Node_Id_Type :=
+      Node     : constant Node_Id_Type :=
         Seed_Node (D, "node-1");
       Strategy : constant Fixed_Node_Strategy :=
         Fixed_Node_Strategy'(Fixed_Id => Node);

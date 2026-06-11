@@ -5,6 +5,7 @@
 --  The catalog is the single source of truth for deployment intent and status.
 
 with Podmander.Database;
+with Podmander.Types;
 
 package Podmander.Controller.Service_Catalog.Repository is
 
@@ -13,7 +14,7 @@ package Podmander.Controller.Service_Catalog.Repository is
    function Create_Entry
      (DB             : in out DB_Handle;
       Service_Id     : Podmander.Controller.Service_Id_Type;
-      Node_Id        : Podmander.Controller.Node_Id_Type := 0;
+      Node_Id        : Podmander.Types.Node_Id_Type := 0;
       Target_Version : Podmander.Controller.Service_Version_Type)
       return Podmander.Controller.Service_Catalog_Entry;
    -- Insert a new catalog entry. Node_Id 0 means unscheduled.
@@ -56,7 +57,7 @@ package Podmander.Controller.Service_Catalog.Repository is
    function Assign_Node
      (DB      : in out DB_Handle;
       Id      : Integer;
-      Node_Id : Podmander.Controller.Node_Id_Type) return Boolean;
+      Node_Id : Podmander.Types.Node_Id_Type) return Boolean;
    -- Set node_id = Node_Id, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
@@ -75,7 +76,7 @@ package Podmander.Controller.Service_Catalog.Repository is
    --  Returns True if a row was updated, False otherwise.
 
    procedure Reset_In_Progress_For_Node
-     (DB : in out DB_Handle; Node_Id : Podmander.Controller.Node_Id_Type);
+     (DB : in out DB_Handle; Node_Id : Podmander.Types.Node_Id_Type);
    --  Reset all In_Progress catalog entries for the given node
    --  back to Pending. Called when a node's agent reconnects to ensure
    --  any lost deploy commands are retried.

@@ -5,13 +5,12 @@ with Ada.Calendar;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Podmander.Database.Time_Utils;
-with Podmander.Types;
 
 package body Podmander.Controller.Service_Catalog.Repository is
 
    use Ada.Strings.Unbounded;
    use Podmander.Database.Time_Utils;
-   use type Podmander.Types.Node_Id_Type;
+   use Podmander.Types;
 
    ---------------
    -- Row to entry
@@ -52,7 +51,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    function Create_Entry
      (DB             : in out DB_Handle;
       Service_Id     : Podmander.Controller.Service_Id_Type;
-      Node_Id        : Podmander.Controller.Node_Id_Type := 0;
+      Node_Id        : Node_Id_Type := 0;
       Target_Version : Podmander.Controller.Service_Version_Type)
       return Podmander.Controller.Service_Catalog_Entry
    is
@@ -259,7 +258,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    function Assign_Node
      (DB      : in out DB_Handle;
       Id      : Integer;
-      Node_Id : Podmander.Controller.Node_Id_Type) return Boolean
+      Node_Id : Node_Id_Type) return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=
@@ -308,7 +307,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    --------------------------------
 
    procedure Reset_In_Progress_For_Node
-     (DB : in out DB_Handle; Node_Id : Podmander.Controller.Node_Id_Type)
+     (DB : in out DB_Handle; Node_Id : Node_Id_Type)
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=

@@ -32,14 +32,10 @@ package Podmander.Controller is
    --  has been scheduled for this catalog entry). Distinct from Integer
    --  so a generic integer cannot be passed by mistake.
 
-   subtype Node_Id_Type is Podmander.Types.Node_Id_Type;
-   --  Row identifier in the nodes table. Subtype of the canonical type
-   --  defined in Podmander.Types, for convenient use in controller code.
-
    type Node_Option (Present : Boolean := False) is record
       case Present is
          when True =>
-            Node_Id : Node_Id_Type;
+            Node_Id : Podmander.Types.Node_Id_Type;
 
          when False =>
             null;
@@ -80,7 +76,7 @@ package Podmander.Controller is
    type Service_Catalog_Entry is record
       Id              : Integer;
       Service_Id      : Service_Id_Type;
-      Node_Id         : Node_Id_Type := 0;
+      Node_Id         : Podmander.Types.Node_Id_Type := 0;
       Current_Version : Natural := 0;
       Target_Version  : Service_Version_Type;
       State           : Catalog_Entry_State := Pending;
