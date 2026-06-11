@@ -34,10 +34,13 @@ distrobox enter ada_dev
 
 ### Labels
 
-- `kind/` prefix: `epic`, `feature`, `refactor`, `bug`, `docs`, `infra`
-- `area/` prefix: `controller`, `agent`, `protocol`, `cli`, `generator`, `ssh`, `secrets`
+Issue **category** is an organization-level label (no prefix), shared across org repos: `bug`, `documentation`, `epic`, `feature`, `infra`, `refactor`, `test`.
 
-Epic issues (label: `kind/epic`) are top-level tracking issues with a checklist breakdown of work items.
+Issue **triage state** is a repo-level `triage/` label: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `blocked`. See `notes/agents/triage-labels.md`.
+
+Issues that will not be actioned get the organization-level `wontfix` label.
+
+Epic issues (label: `epic`) are top-level tracking issues with a checklist breakdown of work items.
 
 ### Milestones
 
@@ -87,7 +90,7 @@ Issues live as Forgejo issues (owner: `podmander`, repo: `podmander`). Use the F
 
 ### Triage labels
 
-Triage labels use a `triage/` prefix to match the existing `kind/` and `area/` convention. See `notes/agents/triage-labels.md`.
+Triage state uses a repo-level `triage/` prefix; issue category uses shared organization-level labels. See `notes/agents/triage-labels.md`.
 
 ### Domain docs
 
@@ -95,8 +98,7 @@ Single-context repo. See `notes/agents/domain-docs.md`.
 
 ## Desired practices
 
-- **Boy scout rule:** When you encounter pre-existing issues, fix them and
-  commit these changes separately.
+- **Boy scout rule:** When you encounter pre-existing issues such as compiler warnings, fix them and commit these changes separately.
 
 ## Subagent Delegation Strategy
 
