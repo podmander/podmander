@@ -16,7 +16,7 @@ system.
 mise run build        # compile all binaries
 mise run build:clean  # build everything from scratch
 mise run test         # build and run the AUnit test suite
-mise run format       # auto-format Ada sources (run this IMMEDIATELY when build shows style warnings)
+mise run format       # auto-format Ada sources
 mise run format:check # check formatting without modifying files
 ```
 
@@ -65,7 +65,7 @@ The main worktree is reserved for `wt switch` operations only.
 
 1. Create a tracking issue if it doesn't exist yet. See "Issue Tracker" below.
 2. Use the /version-control skill to create or switch to a feature worktree.
-3. Do all coding work in the feature worktree.
+3. Use the /ada-coding skill to do all coding work in the feature worktree.
 4. If the session pauses, leave a handoff comment on the issue.
 5. Push the branch and submit a pull request.
 6. After merge, update the main worktree and remove the feature worktree.
