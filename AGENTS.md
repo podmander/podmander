@@ -55,13 +55,11 @@ When work on an epic pauses, leave a comment on the epic issue describing:
 
 This is the handoff point for resuming work in a later session.
 
-## Multi-Agent Workflow
+## Implementation Process
 
 All work happens in git worktrees managed by `wt`. Use the /version-control skill for details.
 
 The main worktree is reserved for `wt switch` operations only.
-
-## Implementation Process
 
 1. Create a tracking issue if it doesn't exist yet. See "Issue Tracker" below.
 2. Use the /version-control skill to create or switch to a feature worktree.
@@ -83,6 +81,8 @@ These recur whenever we touch the database layer.
   connection won't see the first connection's schema.
 
 ## Agent skills
+
+The documents referenced in this section contain important information for working on this project. Read them all now.
 
 ### Issue tracker
 
