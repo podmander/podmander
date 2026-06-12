@@ -343,13 +343,11 @@ package body Podmander.Controller is
       end;
    end Try_Deploy_Entry;
 
-   procedure Reconcile_State (Self : in out Controller_Instance) is
+   procedure Schedule_Unscheduled (Self : in out Controller_Instance) is
       use Podmander.Controller.Service_Catalog.Repository;
-
       Unscheduled : constant Catalog_Entry_Vectors.Vector :=
         Get_Unscheduled (Self.DB);
    begin
-      -- Step 1: Schedule unscheduled entries
       for Cursor in Unscheduled.Iterate loop
          declare
             Cat_Entry : constant Service_Catalog_Entry :=
@@ -372,17 +370,22 @@ package body Podmander.Controller is
             end if;
          end;
       end loop;
+   end Schedule_Unscheduled;
 
-      -- Step 2: Deploy pending entries
-      declare
-         Pending_Entries : constant Catalog_Entry_Vectors.Vector :=
-           Get_Pending (Self.DB);
-      begin
-         for Cursor in Pending_Entries.Iterate loop
-            Try_Deploy_Entry
-              (Self, Catalog_Entry_Vectors.Element (Cursor));
-         end loop;
-      end;
+   procedure Deploy_Pending (Self : in out Controller_Instance) is
+      use Podmander.Controller.Service_Catalog.Repository;
+      Pending_Entries : constant Catalog_Entry_Vectors.Vector :=
+        Get_Pending (Self.DB);
+   begin
+      for Cursor in Pending_Entries.Iterate loop
+         Try_Deploy_Entry (Self, Catalog_Entry_Vectors.Element (Cursor));
+      end loop;
+   end Deploy_Pending;
+
+   procedure Reconcile_State (Self : in out Controller_Instance) is
+   begin
+      Schedule_Unscheduled (Self);
+      Deploy_Pending (Self);
    end Reconcile_State;
 
    procedure Stop (Self : in out Controller_Instance) is
