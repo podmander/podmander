@@ -27,11 +27,6 @@ package Podmander.Controller is
    --  Semantic version number for a service deployment (always >= 1).
    --  Used for both Service_Version.Version and catalog Target_Version.
 
-   type Agent_Id_Type is new Integer;
-   --  Row identifier in the agents table. 0 means unassigned (no agent
-   --  has been scheduled for this catalog entry). Distinct from Integer
-   --  so a generic integer cannot be passed by mistake.
-
    type Node_Option (Present : Boolean := False) is record
       case Present is
          when True =>

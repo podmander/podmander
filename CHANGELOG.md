@@ -20,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- Dead `Agent_Id_Type` declaration from `Podmander.Controller`; leftover from the Agent→Node refactor with no remaining references (#154)
 - `Node_Id_Type` subtype alias from `Podmander.Controller`; callers now depend on `Podmander.Types` directly (#152)
 - `--test-config` CLI flag and `Load_Test_Deploy` from the controller; replaced by `podctl deploy` (#121)
 - Obsolete `notes/spec/` document directory
