@@ -81,7 +81,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
       Assert
-        (Cat_Ent.Assigned_Node.Present and then Cat_Ent.Assigned_Node.Node_Id = Node,
+        (Cat_Ent.Assigned_Node.Present
+         and then Cat_Ent.Assigned_Node.Node_Id = Node,
          "Assigned_Node should match");
       Assert
         (not Cat_Ent.Current_Version.Present,
@@ -137,7 +138,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
       Assert
-        (Loaded.Assigned_Node.Present and then Loaded.Assigned_Node.Node_Id = Node,
+        (Loaded.Assigned_Node.Present
+         and then Loaded.Assigned_Node.Node_Id = Node,
          "Assigned_Node should match");
       Assert
         (Loaded.Target_Version = Podmander.Controller.Service_Version_Type (2),
@@ -383,7 +385,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
       Assert
-        (Loaded.Assigned_Node.Present and then Loaded.Assigned_Node.Node_Id = Node,
+        (Loaded.Assigned_Node.Present
+         and then Loaded.Assigned_Node.Node_Id = Node,
          "Node_Id should match after assign");
    end Test_Assign_Node;
 

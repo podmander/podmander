@@ -114,7 +114,8 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert
         (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
       Assert
-        (Result.Catalog_Entry.Assigned_Node.Present, "Assigned_Node should be set");
+        (Result.Catalog_Entry.Assigned_Node.Present,
+         "Assigned_Node should be set");
       Assert
         (not Result.Catalog_Entry.Current_Version.Present,
          "Current_Version should be absent for new entry");
@@ -277,7 +278,8 @@ package body Podmander.Controller.Scheduler_Tests is
              Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with multiple agents");
       Assert
-        (Result.Catalog_Entry.Assigned_Node.Present, "Assigned_Node should be set");
+        (Result.Catalog_Entry.Assigned_Node.Present,
+         "Assigned_Node should be set");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Picks_First_Node;
 

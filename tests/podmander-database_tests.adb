@@ -1153,7 +1153,7 @@ package body Podmander.Database_Tests is
             "CREATE TABLE schema_version (version INTEGER PRIMARY KEY);"
             & "INSERT INTO schema_version (version) VALUES (12);");
          --  Create the agents table at schema version 12
-         --  (id, name, connection_id, state, last_seen â no node_id)
+         --  (id, name, connection_id, state, last_seen Ã¢ÂÂ no node_id)
          Ada_Sqlite3.Execute
            (Conn,
             "CREATE TABLE agents ("

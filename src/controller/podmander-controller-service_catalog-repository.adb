@@ -30,8 +30,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
            (if Column_Is_Null (QH, 2)
             then (Present => False)
             else
-              (Present => True,
-               Node_Id => Node_Id_Type (Column_Int (QH, 2)))),
+              (Present => True, Node_Id => Node_Id_Type (Column_Int (QH, 2)))),
          Current_Version =>
            (if Column_Is_Null (QH, 3)
             then (Present => False)

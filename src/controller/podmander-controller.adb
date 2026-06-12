@@ -259,8 +259,7 @@ package body Podmander.Controller is
    end To_Service_Definition;
 
    procedure Try_Deploy_Entry
-     (Self      : in out Controller_Instance;
-      Cat_Entry : Service_Catalog_Entry)
+     (Self : in out Controller_Instance; Cat_Entry : Service_Catalog_Entry)
    is
       use Podmander.Controller.Service_Catalog.Repository;
       use Podmander.Messages.Deployment_Commands;
