@@ -81,8 +81,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
       Assert
-        (Cat_Ent.Node_Id.Present and then Cat_Ent.Node_Id.Node_Id = Node,
-         "Node_Id should match");
+        (Cat_Ent.Assigned_Node.Present and then Cat_Ent.Assigned_Node.Node_Id = Node,
+         "Assigned_Node should match");
       Assert
         (not Cat_Ent.Current_Version.Present,
          "Current_Version should be absent for new entry");
@@ -111,8 +111,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert
-        (not Cat_Ent.Node_Id.Present,
-         "Node_Id should be absent for unscheduled entry");
+        (not Cat_Ent.Assigned_Node.Present,
+         "Assigned_Node should be absent for unscheduled entry");
    end Test_Create_Entry_Unscheduled;
 
    -----------------
@@ -137,8 +137,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
       Assert
-        (Loaded.Node_Id.Present and then Loaded.Node_Id.Node_Id = Node,
-         "Node_Id should match");
+        (Loaded.Assigned_Node.Present and then Loaded.Assigned_Node.Node_Id = Node,
+         "Assigned_Node should match");
       Assert
         (Loaded.Target_Version = Podmander.Controller.Service_Version_Type (2),
          "Target_Version should match");
@@ -206,7 +206,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
         (Natural (Unscheduled.Length) = 1, "Should find 1 unscheduled entry");
       if not Unscheduled.Is_Empty then
          Assert
-           (not Unscheduled.First_Element.Node_Id.Present,
+           (not Unscheduled.First_Element.Assigned_Node.Present,
             "Unscheduled entry should have no node assigned");
       end if;
    end Test_Get_Unscheduled;
@@ -383,7 +383,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
       Assert
-        (Loaded.Node_Id.Present and then Loaded.Node_Id.Node_Id = Node,
+        (Loaded.Assigned_Node.Present and then Loaded.Assigned_Node.Node_Id = Node,
          "Node_Id should match after assign");
    end Test_Assign_Node;
 

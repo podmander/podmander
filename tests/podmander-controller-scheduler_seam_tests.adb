@@ -124,8 +124,8 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       Assert (Result.Ok, "Schedule should succeed");
       Assert (Result.Error = Scheduler.None, "Error should be None");
       Assert
-        (Result.Catalog_Entry.Node_Id.Present
-         and then Result.Catalog_Entry.Node_Id.Node_Id = Node,
+        (Result.Catalog_Entry.Assigned_Node.Present
+         and then Result.Catalog_Entry.Assigned_Node.Node_Id = Node,
          "Scheduler should persist the node chosen by the injected strategy");
    end Test_Schedule_Persists_Strategy_Node;
 
@@ -154,7 +154,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
          "Schedule should succeed even when strategy returns no node");
       Assert (Result.Error = Scheduler.None, "Error should be None");
       Assert
-        (not Result.Catalog_Entry.Node_Id.Present,
+        (not Result.Catalog_Entry.Assigned_Node.Present,
          "Catalog entry should be unscheduled when strategy returns no node");
    end Test_Schedule_Unscheduled_On_No_Node;
 

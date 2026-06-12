@@ -26,12 +26,12 @@ package body Podmander.Controller.Service_Catalog.Repository is
         (Id              => Column_Int (QH, 0),
          Service_Id      =>
            Podmander.Controller.Service_Id_Type (Column_Int (QH, 1)),
-         Node_Id         =>
+         Assigned_Node   =>
            (if Column_Is_Null (QH, 2)
             then (Present => False)
             else
               (Present => True,
-               Node_Id  => Node_Id_Type (Column_Int (QH, 2)))),
+               Node_Id => Node_Id_Type (Column_Int (QH, 2)))),
          Current_Version =>
            (if Column_Is_Null (QH, 3)
             then (Present => False)

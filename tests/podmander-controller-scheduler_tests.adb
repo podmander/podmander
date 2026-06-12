@@ -114,7 +114,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert
         (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
       Assert
-        (Result.Catalog_Entry.Node_Id.Present, "Node_Id should be assigned");
+        (Result.Catalog_Entry.Assigned_Node.Present, "Assigned_Node should be set");
       Assert
         (not Result.Catalog_Entry.Current_Version.Present,
          "Current_Version should be absent for new entry");
@@ -151,8 +151,8 @@ package body Podmander.Controller.Scheduler_Tests is
              Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with no agent");
       Assert
-        (not Result.Catalog_Entry.Node_Id.Present,
-         "Node_Id should be absent when no node is connected");
+        (not Result.Catalog_Entry.Assigned_Node.Present,
+         "Assigned_Node should be absent when no node is connected");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_New_Entry_No_Node;
 
@@ -242,8 +242,8 @@ package body Podmander.Controller.Scheduler_Tests is
         (Result.Catalog_Entry.Id = Created.Id,
          "Entry id should remain the same");
       Assert
-        (Result.Catalog_Entry.Node_Id.Present,
-         "Node_Id should be assigned after assign");
+        (Result.Catalog_Entry.Assigned_Node.Present,
+         "Assigned_Node should be set after assign");
       Assert
         (Result.Catalog_Entry.Target_Version
          = Podmander.Controller.Service_Version_Type (2),
@@ -277,7 +277,7 @@ package body Podmander.Controller.Scheduler_Tests is
              Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with multiple agents");
       Assert
-        (Result.Catalog_Entry.Node_Id.Present, "Node_Id should be assigned");
+        (Result.Catalog_Entry.Assigned_Node.Present, "Assigned_Node should be set");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Picks_First_Node;
 

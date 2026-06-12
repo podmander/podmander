@@ -13,7 +13,7 @@ package body Podmander.Controller.Scheduler is
    Dummy_Entry : constant Podmander.Controller.Service_Catalog_Entry :=
      (Id              => 0,
       Service_Id      => Podmander.Controller.Service_Id_Type'First,
-      Node_Id         => (Present => False),
+      Assigned_Node   => (Present => False),
       Current_Version => (Present => False),
       Target_Version  => Podmander.Controller.Service_Version_Type'First,
       State           => Pending,
