@@ -253,6 +253,13 @@ package body Podmander.Database is
       return Ada_Sqlite3.Column_Int (QH.Stmt, Index);
    end Column_Int;
 
+   function Column_Is_Null
+     (QH : Query_Handle; Index : Natural) return Boolean
+   is
+   begin
+      return Ada_Sqlite3.Column_Is_Null (QH.Stmt, Index);
+   end Column_Is_Null;
+
    function Changes (DB : in out DB_Handle) return Integer is
    begin
       return Ada_Sqlite3.Changes (DB.DB);

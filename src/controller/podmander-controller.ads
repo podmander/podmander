@@ -39,6 +39,18 @@ package Podmander.Controller is
    --  Scheduling strategy return type: Present => True carries the selected
    --  node; Present => False means no eligible node was found.
 
+   type Version_Option (Present : Boolean := False) is record
+      case Present is
+         when True =>
+            Version : Service_Version_Type;
+
+         when False =>
+            null;
+      end case;
+   end record;
+   --  Option type for Current_Version in Service_Catalog_Entry.
+   --  Present => False means the service has not yet been deployed.
+
    -- State tracking types
 
    type Service_Version is record
@@ -72,7 +84,7 @@ package Podmander.Controller is
       Id              : Integer;
       Service_Id      : Service_Id_Type;
       Node_Id         : Podmander.Types.Node_Id_Type := 0;
-      Current_Version : Natural := 0;
+      Current_Version : Version_Option;
       Target_Version  : Service_Version_Type;
       State           : Catalog_Entry_State := Pending;
       Updated_At      : Ada.Calendar.Time;

@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Version_Option` variant record in `Podmander.Controller`; `Service_Catalog_Entry.Current_Version` now uses `Version_Option` instead of a `Natural` sentinel 0 (#92)
+- `Column_Is_Null` helper in `Podmander.Database` for nullable column reads
+
 - `Podmander.Controller.Strategies` pluggable agent-selection abstraction; `First_Available` strategy extracted from Scheduler; `Schedule` gains a Strategy parameter (#137)
 - `Agent_Option` variant record in `Podmander.Controller` for strategy return values (#137)
 

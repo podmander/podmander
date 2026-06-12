@@ -71,7 +71,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
       Assert (Cat_Ent.Node_Id = Node, "Node_Id should match");
-      Assert (Cat_Ent.Current_Version = 0, "Current_Version should be 0");
+      Assert (not Cat_Ent.Current_Version.Present, "Current_Version should be absent for new entry");
       Assert (Cat_Ent.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should be 2");
       Assert (Cat_Ent.State = Podmander.Controller.Pending, "State should be Pending");
    end Test_Create_Entry;
@@ -214,11 +214,17 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Updated, "Update_On_Failure should return True");
 
       -- Then mark as success
-      Updated := Repo.Update_On_Success (D, Cat_Ent.Id, Current_Version => 2);
+      Updated := Repo.Update_On_Success
+        (D, Cat_Ent.Id,
+         Current_Version => Podmander.Controller.Service_Version_Type (2));
       Assert (Updated, "Update_On_Success should return True");
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
-      Assert (Loaded.Current_Version = 2, "Current_Version should be 2");
+      Assert
+        (Loaded.Current_Version.Present
+         and then Loaded.Current_Version.Version
+            = Podmander.Controller.Service_Version_Type (2),
+         "Current_Version should be 2 after success");
       Assert (Loaded.State = Podmander.Controller.Deployed, "State should be Deployed after success");
    end Test_Update_On_Success;
 
@@ -227,7 +233,9 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       D       : DB.DB_Handle := DB.Open (":memory:");
       Updated : Boolean;
    begin
-      Updated := Repo.Update_On_Success (D, 999, Current_Version => 1);
+      Updated := Repo.Update_On_Success
+        (D, 999,
+         Current_Version => Podmander.Controller.Service_Version_Type (1));
       Assert (not Updated, "Update_On_Success should return False for unknown id");
    end Test_Update_On_Success_Not_Found;
 

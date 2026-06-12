@@ -44,7 +44,9 @@ package Podmander.Controller.Service_Catalog.Repository is
    -- Return all catalog entries where state = Pending.
 
    function Update_On_Success
-     (DB : in out DB_Handle; Id : Integer; Current_Version : Natural)
+     (DB              : in out DB_Handle;
+      Id              : Integer;
+      Current_Version : Podmander.Controller.Service_Version_Type)
       return Boolean;
    -- Set current_version = Current_Version, state = Deployed, update updated_at.
    -- Returns True if a row was updated, False otherwise.

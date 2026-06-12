@@ -305,6 +305,36 @@ private
      & "    ON service_catalog(service_id, node_id)"
      & "    WHERE node_id IS NOT NULL;";
 
+   --  Migration 015: Make service_catalog.current_version nullable so that
+   --  NULL represents "not yet deployed" rather than the sentinel value 0.
+   --  Recreate the table (SQLite cannot ALTER column constraints inline).
+   --  Existing rows with current_version = 0 are converted to NULL.
+   Migration_015_SQL : constant String :=
+     "CREATE TABLE service_catalog_new ("
+     & "id              INTEGER PRIMARY KEY AUTOINCREMENT,"
+     & "service_id      INTEGER NOT NULL,"
+     & "node_id         INTEGER REFERENCES nodes(id),"
+     & "current_version INTEGER CHECK (current_version >= 1),"
+     & "target_version  INTEGER NOT NULL,"
+     & "state           INTEGER NOT NULL DEFAULT 0 CHECK (state IN (0, 1, 2, 3)),"
+     & "updated_at      TEXT NOT NULL,"
+     & "FOREIGN KEY (service_id) REFERENCES services(id),"
+     & "FOREIGN KEY (service_id, target_version)"
+     & "    REFERENCES service_versions(service_id, version)"
+     & ");"
+     & "INSERT INTO service_catalog_new"
+     & " (id, service_id, node_id, current_version, target_version,"
+     & "  state, updated_at)"
+     & " SELECT id, service_id, node_id,"
+     & "  CASE WHEN current_version = 0 THEN NULL ELSE current_version END,"
+     & "  target_version, state, updated_at"
+     & " FROM service_catalog;"
+     & "DROP TABLE service_catalog;"
+     & "ALTER TABLE service_catalog_new RENAME TO service_catalog;"
+     & "CREATE UNIQUE INDEX idx_catalog_scheduled"
+     & "    ON service_catalog(service_id, node_id)"
+     & "    WHERE node_id IS NOT NULL;";
+
    Migration_History : constant Migration_Array :=
      [1  =>
         (Version => 1,
@@ -361,6 +391,10 @@ private
       14 =>
         (Version => 14,
          SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_014_SQL))];
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_014_SQL)),
+      15 =>
+        (Version => 15,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_015_SQL))];
 
 end Podmander.Database.Migrations;

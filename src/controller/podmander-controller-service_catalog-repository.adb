@@ -27,7 +27,13 @@ package body Podmander.Controller.Service_Catalog.Repository is
          Service_Id      =>
            Podmander.Controller.Service_Id_Type (Column_Int (QH, 1)),
          Node_Id         => Node_Id_Type (Column_Int (QH, 2)),
-         Current_Version => Column_Int (QH, 3),
+         Current_Version =>
+           (if Column_Is_Null (QH, 3)
+            then (Present => False)
+            else (Present => True,
+                  Version =>
+                    Podmander.Controller.Service_Version_Type
+                      (Column_Int (QH, 3)))),
          Target_Version  =>
            Podmander.Controller.Service_Version_Type (Column_Int (QH, 4)),
          State           => Catalog_Entry_State'Val (Column_Int (QH, 5)),
@@ -208,7 +214,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
    ----------------------
 
    function Update_On_Success
-     (DB : in out DB_Handle; Id : Integer; Current_Version : Natural)
+     (DB              : in out DB_Handle;
+      Id              : Integer;
+      Current_Version : Podmander.Controller.Service_Version_Type)
       return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);

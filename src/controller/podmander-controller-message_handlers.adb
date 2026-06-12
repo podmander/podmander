@@ -190,7 +190,7 @@ Node_Id : constant Node_Id_Type :=
                  Update_On_Success
                    (H.Ctrl.DB,
                     Cat_Entry.Id,
-                    Natural (Cat_Entry.Target_Version));
+                    Cat_Entry.Target_Version);
                pragma Unreferenced (Ok);
             begin
                Podmander.Logging.Info

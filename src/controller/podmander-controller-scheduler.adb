@@ -16,7 +16,7 @@ package body Podmander.Controller.Scheduler is
      (Id              => 0,
       Service_Id      => Podmander.Controller.Service_Id_Type'First,
       Node_Id         => 0,
-      Current_Version => 0,
+      Current_Version => (Present => False),
       Target_Version  => Podmander.Controller.Service_Version_Type'First,
       State           => Pending,
       Updated_At      => Clock);

@@ -95,7 +95,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert (Result.Catalog_Entry.Id > 0, "Id should be positive after create");
       Assert (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
       Assert (Result.Catalog_Entry.Node_Id > 0, "Node_Id should be assigned");
-      Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should be 0");
+      Assert (not Result.Catalog_Entry.Current_Version.Present, "Current_Version should be absent for new entry");
       Assert (Result.Catalog_Entry.Target_Version = Podmander.Controller.Service_Version_Type (2), "Target_Version should be 2");
       Assert (Result.Catalog_Entry.State = Podmander.Controller.Pending, "State should be Pending");
       Assert (Result.Error = Scheduler.None, "Error should be None");
@@ -148,7 +148,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Assert (Result.Ok, "Schedule should succeed for existing entry");
       Assert (Result.Catalog_Entry.Id = Created.Id, "Entry id should remain the same");
       Assert (Result.Catalog_Entry.Target_Version = Podmander.Controller.Service_Version_Type (3), "Target_Version should be updated to 3");
-      Assert (Result.Catalog_Entry.Current_Version = 0, "Current_Version should remain 0");
+      Assert (not Result.Catalog_Entry.Current_Version.Present, "Current_Version should remain absent after reschedule");
       Assert (Result.Catalog_Entry.State = Podmander.Controller.Pending, "State should be Pending after schedule");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Update_Existing;
