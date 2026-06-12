@@ -14,11 +14,11 @@ package Podmander.Controller.Service_Catalog.Repository is
    function Create_Entry
      (DB             : in out DB_Handle;
       Service_Id     : Podmander.Controller.Service_Id_Type;
-      Node_Id        : Podmander.Types.Node_Id_Type := 0;
+      Node_Id        : Podmander.Controller.Node_Option := (Present => False);
       Target_Version : Podmander.Controller.Service_Version_Type)
       return Podmander.Controller.Service_Catalog_Entry;
-   -- Insert a new catalog entry. Node_Id 0 means unscheduled.
-   -- Returns the created entry with its auto-generated id.
+   -- Insert a new catalog entry. Returns the created entry with its
+   -- auto-generated id.
 
    function Get_By_Id
      (DB : in out DB_Handle; Id : Integer)

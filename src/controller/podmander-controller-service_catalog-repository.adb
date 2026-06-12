@@ -26,7 +26,12 @@ package body Podmander.Controller.Service_Catalog.Repository is
         (Id              => Column_Int (QH, 0),
          Service_Id      =>
            Podmander.Controller.Service_Id_Type (Column_Int (QH, 1)),
-         Node_Id         => Node_Id_Type (Column_Int (QH, 2)),
+         Node_Id         =>
+           (if Column_Is_Null (QH, 2)
+            then (Present => False)
+            else
+              (Present => True,
+               Node_Id  => Node_Id_Type (Column_Int (QH, 2)))),
          Current_Version =>
            (if Column_Is_Null (QH, 3)
             then (Present => False)
@@ -58,7 +63,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    function Create_Entry
      (DB             : in out DB_Handle;
       Service_Id     : Podmander.Controller.Service_Id_Type;
-      Node_Id        : Node_Id_Type := 0;
+      Node_Id        : Podmander.Controller.Node_Option := (Present => False);
       Target_Version : Podmander.Controller.Service_Version_Type)
       return Podmander.Controller.Service_Catalog_Entry
    is
@@ -77,10 +82,10 @@ package body Podmander.Controller.Service_Catalog.Repository is
            & "FROM service_catalog WHERE id = last_insert_rowid()");
    begin
       Bind_Int (QH, 1, Integer (Service_Id));
-      if Node_Id = 0 then
-         Bind_Null (QH, 2);
+      if Node_Id.Present then
+         Bind_Int (QH, 2, Integer (Node_Id.Node_Id));
       else
-         Bind_Int (QH, 2, Integer (Node_Id));
+         Bind_Null (QH, 2);
       end if;
       Bind_Int (QH, 3, Integer (Target_Version));
       Bind_Text (QH, 4, Now_Str);

@@ -113,7 +113,8 @@ package body Podmander.Controller.Scheduler_Tests is
         (Result.Catalog_Entry.Id > 0, "Id should be positive after create");
       Assert
         (Result.Catalog_Entry.Service_Id = Svc, "Service_Id should match");
-      Assert (Result.Catalog_Entry.Node_Id > 0, "Node_Id should be assigned");
+      Assert
+        (Result.Catalog_Entry.Node_Id.Present, "Node_Id should be assigned");
       Assert
         (not Result.Catalog_Entry.Current_Version.Present,
          "Current_Version should be absent for new entry");
@@ -140,7 +141,7 @@ package body Podmander.Controller.Scheduler_Tests is
         Seed_Service (D, "db", 1);
       Result : Scheduler.Schedule_Result;
    begin
-      --  No agents registered - Scheduler should create entry with Node_Id = 0
+      --  No agents registered - Scheduler should create entry with no node
       Result :=
         Scheduler.Schedule
           (D,
@@ -150,8 +151,8 @@ package body Podmander.Controller.Scheduler_Tests is
              Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with no agent");
       Assert
-        (Result.Catalog_Entry.Node_Id = 0,
-         "Node_Id should be 0 when no node is connected");
+        (not Result.Catalog_Entry.Node_Id.Present,
+         "Node_Id should be absent when no node is connected");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_New_Entry_No_Node;
 
@@ -169,7 +170,10 @@ package body Podmander.Controller.Scheduler_Tests is
       Node    : constant Node_Id_Type := Seed_Agent (D, "agent-1", "node-1");
       Created : constant Podmander.Controller.Service_Catalog_Entry :=
         Cat_Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 1);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 1);
       Result  : Scheduler.Schedule_Result;
    begin
       --  Mark as failed first to verify it gets cleared
@@ -238,7 +242,7 @@ package body Podmander.Controller.Scheduler_Tests is
         (Result.Catalog_Entry.Id = Created.Id,
          "Entry id should remain the same");
       Assert
-        (Result.Catalog_Entry.Node_Id > 0,
+        (Result.Catalog_Entry.Node_Id.Present,
          "Node_Id should be assigned after assign");
       Assert
         (Result.Catalog_Entry.Target_Version
@@ -272,7 +276,8 @@ package body Podmander.Controller.Scheduler_Tests is
            Strategy       =>
              Podmander.Controller.Strategies.First_Available.Instance);
       Assert (Result.Ok, "Schedule should succeed with multiple agents");
-      Assert (Result.Catalog_Entry.Node_Id /= 0, "Node_Id should be assigned");
+      Assert
+        (Result.Catalog_Entry.Node_Id.Present, "Node_Id should be assigned");
       Assert (Result.Error = Scheduler.None, "Error should be None");
    end Test_Schedule_Picks_First_Node;
 
@@ -287,7 +292,7 @@ package body Podmander.Controller.Scheduler_Tests is
       Register_Routine
         (T,
          Test_Schedule_New_Entry_No_Node'Access,
-         "Schedule creates entry with Node_Id = 0 when no node connected");
+         "Schedule creates entry with no node when none is connected");
       Register_Routine
         (T,
          Test_Schedule_Update_Existing'Access,

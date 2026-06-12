@@ -83,7 +83,7 @@ package Podmander.Controller is
    type Service_Catalog_Entry is record
       Id              : Integer;
       Service_Id      : Service_Id_Type;
-      Node_Id         : Podmander.Types.Node_Id_Type := 0;
+      Node_Id         : Node_Option;
       Current_Version : Version_Option;
       Target_Version  : Service_Version_Type;
       State           : Catalog_Entry_State := Pending;

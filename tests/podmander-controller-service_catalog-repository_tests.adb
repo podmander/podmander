@@ -73,11 +73,16 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
       Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 2);
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert (Cat_Ent.Service_Id = Svc, "Service_Id should match");
-      Assert (Cat_Ent.Node_Id = Node, "Node_Id should match");
+      Assert
+        (Cat_Ent.Node_Id.Present and then Cat_Ent.Node_Id.Node_Id = Node,
+         "Node_Id should match");
       Assert
         (not Cat_Ent.Current_Version.Present,
          "Current_Version should be absent for new entry");
@@ -106,7 +111,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
    begin
       Assert (Cat_Ent.Id > 0, "Id should be positive after create");
       Assert
-        (Cat_Ent.Node_Id = 0, "Node_Id should be 0 for unscheduled entry");
+        (not Cat_Ent.Node_Id.Present,
+         "Node_Id should be absent for unscheduled entry");
    end Test_Create_Entry_Unscheduled;
 
    -----------------
@@ -121,13 +127,18 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
       Created : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 2);
       Loaded  : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Get_By_Id (D, Created.Id);
    begin
       Assert (Loaded.Id = Created.Id, "Id should match");
       Assert (Loaded.Service_Id = Svc, "Service_Id should match");
-      Assert (Loaded.Node_Id = Node, "Node_Id should match");
+      Assert
+        (Loaded.Node_Id.Present and then Loaded.Node_Id.Node_Id = Node,
+         "Node_Id should match");
       Assert
         (Loaded.Target_Version = Podmander.Controller.Service_Version_Type (2),
          "Target_Version should match");
@@ -180,7 +191,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Node        : constant Node_Id_Type := Seed_Node (D, "node-1");
       Ignored1    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 1);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 1);
       Ignored2    : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry (D, Service_Id => Svc, Target_Version => 1);
       Unscheduled :
@@ -192,8 +206,8 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
         (Natural (Unscheduled.Length) = 1, "Should find 1 unscheduled entry");
       if not Unscheduled.Is_Empty then
          Assert
-           (Unscheduled.First_Element.Node_Id = 0,
-            "Unscheduled entry should have Node_Id = 0");
+           (not Unscheduled.First_Element.Node_Id.Present,
+            "Unscheduled entry should have no node assigned");
       end if;
    end Test_Get_Unscheduled;
 
@@ -210,7 +224,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       --  Entry with pending deployment: current_version defaults to 0, target is 2
       E       : Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 2);
       Pending : constant Podmander.Controller.Catalog_Entry_Vectors.Vector :=
         Repo.Get_Pending (D);
    begin
@@ -228,7 +245,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
       E1      : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 2);
       Ignored : Boolean;
       Pending : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
@@ -255,7 +275,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
       Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -312,7 +335,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
       Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -356,7 +382,9 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Assert (Updated, "Assign_Node should return True");
 
       Loaded := Repo.Get_By_Id (D, Cat_Ent.Id);
-      Assert (Loaded.Node_Id = Node, "Node_Id should match after assign");
+      Assert
+        (Loaded.Node_Id.Present and then Loaded.Node_Id.Node_Id = Node,
+         "Node_Id should match after assign");
    end Test_Assign_Node;
 
    procedure Test_Assign_Node_Not_Found
@@ -382,7 +410,10 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Node    : constant Node_Id_Type := Seed_Node (D, "node-1");
       Cat_Ent : constant Podmander.Controller.Service_Catalog_Entry :=
         Repo.Create_Entry
-          (D, Service_Id => Svc, Node_Id => Node, Target_Version => 2);
+          (D,
+           Service_Id     => Svc,
+           Node_Id        => (Present => True, Node_Id => Node),
+           Target_Version => 2);
       Updated : Boolean;
       Loaded  : Podmander.Controller.Service_Catalog_Entry;
    begin
@@ -425,7 +456,7 @@ package body Podmander.Controller.Service_Catalog.Repository_Tests is
       Register_Routine
         (T,
          Test_Create_Entry_Unscheduled'Access,
-         "Create a catalog entry with Node_Id = 0 (unscheduled)");
+         "Create a catalog entry with no node assigned (unscheduled)");
       Register_Routine (T, Test_Get_By_Id'Access, "Get a catalog entry by id");
       Register_Routine
         (T,

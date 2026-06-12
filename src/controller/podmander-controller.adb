@@ -278,13 +278,13 @@ package body Podmander.Controller is
                  Podmander.Controller.Strategies.First_Available.Instance);
          begin
             if Result.Ok then
-               if Result.Catalog_Entry.Node_Id /= 0 then
+               if Result.Catalog_Entry.Node_Id.Present then
                   Podmander.Logging.Info
                     ("controller",
                      "Scheduled catalog entry "
                      & Cat_Entry.Id'Image
                      & " to node "
-                     & Result.Catalog_Entry.Node_Id'Image);
+                     & Result.Catalog_Entry.Node_Id.Node_Id'Image);
                end if;
             end if;
          -- If no nodes connected, leave unscheduled and try next iteration
@@ -303,7 +303,7 @@ package body Podmander.Controller is
             begin
                -- Skip entries without a node assigned (shouldn't happen
                -- after step 1, but guard against race conditions)
-               if Cat_Entry.Node_Id = 0 then
+               if not Cat_Entry.Node_Id.Present then
                   goto Continue;
                end if;
 
@@ -321,7 +321,7 @@ package body Podmander.Controller is
                         Info : constant Podmander.Types.Agent_Info :=
                           Podmander.Types.Agent_Maps.Element (Cur);
                      begin
-                        if Info.Node_Id = Cat_Entry.Node_Id
+                        if Info.Node_Id = Cat_Entry.Node_Id.Node_Id
                           and then Info.State = Podmander.Types.Registered
                         then
                            Agent_Found := True;
