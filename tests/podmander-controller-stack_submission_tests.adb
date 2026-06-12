@@ -20,7 +20,8 @@ package body Podmander.Controller.Stack_Submission_Tests is
    package Cat_Repo renames Podmander.Controller.Service_Catalog.Repository;
    use type Submission.Submission_Error;
 
-   type Stack_Submission_Test is new AUnit.Test_Cases.Test_Case with null record;
+   type Stack_Submission_Test is new AUnit.Test_Cases.Test_Case
+   with null record;
 
    overriding
    function Name (T : Stack_Submission_Test) return AUnit.Message_String
@@ -31,16 +32,14 @@ package body Podmander.Controller.Stack_Submission_Tests is
 
    -- Minimal valid TOML content
    Valid_TOML : constant String :=
-     "[service.web]" & ASCII.LF
-     & "image = ""nginx:latest""" & ASCII.LF;
+     "[service.web]" & ASCII.LF & "image = ""nginx:latest""" & ASCII.LF;
 
    -- Invalid TOML syntax
    Invalid_TOML : constant String := "this is not valid toml";
 
    -- Valid TOML but missing [service] section
    No_Service_TOML : constant String :=
-     "[database]" & ASCII.LF
-     & "path = ""/data""" & ASCII.LF;
+     "[database]" & ASCII.LF & "path = ""/data""" & ASCII.LF;
 
    ---------------------------------------------------
    -- Test_Submit_Happy_Path
@@ -55,7 +54,8 @@ package body Podmander.Controller.Stack_Submission_Tests is
    begin
       Result := Submission.Submit (D, Valid_TOML);
       Assert (Result.Ok, "Submit should succeed for valid TOML");
-      Assert (Result.Error = Submission.None, "Error should be None on success");
+      Assert
+        (Result.Error = Submission.None, "Error should be None on success");
    end Test_Submit_Happy_Path;
 
    ---------------------------------------------------
@@ -120,8 +120,7 @@ package body Podmander.Controller.Stack_Submission_Tests is
         (Cat.Target_Version = Podmander.Controller.Service_Version_Type (1),
          "Target_Version should be 1");
       Assert
-        (Cat.State = Podmander.Controller.Pending,
-         "State should be Pending");
+        (Cat.State = Podmander.Controller.Pending, "State should be Pending");
    end Test_Submit_Registration_And_Schedule_Success;
 
    ---------------------------------------------------

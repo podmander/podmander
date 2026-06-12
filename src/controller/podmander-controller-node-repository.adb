@@ -14,8 +14,7 @@ package body Podmander.Controller.Node.Repository is
    -------------------
 
    function Create_Or_Get
-      (DB : in out DB_Handle; Machine_Name : String) return Node_Id_Type
-   is
+     (DB : in out DB_Handle; Machine_Name : String) return Node_Id_Type is
    begin
       --  Try to insert a new node. If the machine_name already exists,
       --  the UNIQUE constraint will fire; catch that and select instead.
@@ -78,7 +77,7 @@ package body Podmander.Controller.Node.Repository is
    ------------------
 
    function Load_By_Name
-      (DB : in out DB_Handle; Machine_Name : String) return Node_Id_Type
+     (DB : in out DB_Handle; Machine_Name : String) return Node_Id_Type
    is
       QH : Query_Handle :=
         Prepare (DB, "SELECT id FROM nodes WHERE machine_name = ?");

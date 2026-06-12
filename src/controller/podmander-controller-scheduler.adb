@@ -32,9 +32,9 @@ package body Podmander.Controller.Scheduler is
       Strategy       : Podmander.Controller.Strategies.Strategy_Type'Class)
       return Schedule_Result
    is
-      Selected        : constant Podmander.Controller.Node_Option :=
+      Selected       : constant Podmander.Controller.Node_Option :=
         Strategy.Select_Node (DB, Service_Id, Target_Version);
-      Target_Node_Id  : constant Node_Id_Type :=
+      Target_Node_Id : constant Node_Id_Type :=
         (if Selected.Present then Selected.Node_Id else 0);
    begin
       begin

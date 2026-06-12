@@ -28,30 +28,45 @@ package body Podmander.Config_Tests is
    is (Fixture_Dir & Name);
 
    -- Test parsing a valid TOML file
-   procedure Test_Parse_Valid_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Valid_File
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse (Fixture_Path ("valid.toml"));
    begin
       Assert (Result.Success, "Parsing valid.toml should succeed");
       if Result.Success then
-         Assert (To_String (Result.Config.Image) = "nginx:latest", "Image should be 'nginx:latest'");
+         Assert
+           (To_String (Result.Config.Image) = "nginx:latest",
+            "Image should be 'nginx:latest'");
          Assert (Result.Config.Ports_Count = 2, "Should have 2 port mappings");
          if Result.Config.Ports_Count >= 1 then
-            Assert (Result.Config.Ports (1).Host = 80, "First port host should be 80");
-            Assert (Result.Config.Ports (1).Container = 80, "First port container should be 80");
+            Assert
+              (Result.Config.Ports (1).Host = 80,
+               "First port host should be 80");
+            Assert
+              (Result.Config.Ports (1).Container = 80,
+               "First port container should be 80");
          end if;
          if Result.Config.Ports_Count >= 2 then
-            Assert (Result.Config.Ports (2).Host = 443, "Second port host should be 443");
-            Assert (Result.Config.Ports (2).Container = 443, "Second port container should be 443");
+            Assert
+              (Result.Config.Ports (2).Host = 443,
+               "Second port host should be 443");
+            Assert
+              (Result.Config.Ports (2).Container = 443,
+               "Second port container should be 443");
          end if;
-         Assert (Result.Config.Volumes_Count = 2, "Should have 2 volume mappings");
+         Assert
+           (Result.Config.Volumes_Count = 2, "Should have 2 volume mappings");
          Assert (Result.Config.Env_Count = 2, "Should have 2 env entries");
       end if;
    end Test_Parse_Valid_File;
 
    -- Test parsing a TOML file with missing image field
-   procedure Test_Parse_Missing_Image (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Missing_Image
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse (Fixture_Path ("missing_image.toml"));
@@ -60,7 +75,9 @@ package body Podmander.Config_Tests is
    end Test_Parse_Missing_Image;
 
    -- Test parsing a file that doesn't exist
-   procedure Test_Parse_Nonexistent_File (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Nonexistent_File
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse ("/nonexistent/path/file.toml");
@@ -69,7 +86,9 @@ package body Podmander.Config_Tests is
    end Test_Parse_Nonexistent_File;
 
    -- Test parsing TOML syntax error
-   procedure Test_Parse_Invalid_Syntax (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Invalid_Syntax
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse (Fixture_Path ("invalid_syntax.toml"));
@@ -78,183 +97,251 @@ package body Podmander.Config_Tests is
    end Test_Parse_Invalid_Syntax;
 
    -- Test valid config passes validation
-   procedure Test_Valid_Config_Passes_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Valid_Config_Passes_Validation
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-(Service_Name  => Null_Unbounded_String,
-          Image         => To_Unbounded_String ("nginx:latest"),
-          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-          Env_Count     => 0,
-          Ports         => [others => (Host => 1, Container => 1)],
-          Ports_Count   => 0,
-          Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-          Volumes_Count => 0,
-          Description   => Null_Unbounded_String,
-          WantedBy      => Null_Unbounded_String);
-      Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
+        (Service_Name  => Null_Unbounded_String,
+         Image         => To_Unbounded_String ("nginx:latest"),
+         Env           =>
+           [others =>
+              (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others => (Host => 1, Container => 1)],
+         Ports_Count   => 0,
+         Volumes       =>
+           [others =>
+              (Host      => Null_Unbounded_String,
+               Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Validate (Config);
    begin
       Assert (Result.Success, "Valid config should pass validation");
    end Test_Valid_Config_Passes_Validation;
 
    -- Test empty image fails validation
-   procedure Test_Empty_Image_Fails_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Empty_Image_Fails_Validation
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
         (Service_Name  => Null_Unbounded_String,
-          Image         => Null_Unbounded_String,
-          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-          Env_Count     => 0,
-          Ports         => [others => (Host => 1, Container => 1)],
-          Ports_Count   => 0,
-          Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-          Volumes_Count => 0,
-          Description   => Null_Unbounded_String,
-          WantedBy      => Null_Unbounded_String);
-      Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
+         Image         => Null_Unbounded_String,
+         Env           =>
+           [others =>
+              (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others => (Host => 1, Container => 1)],
+         Ports_Count   => 0,
+         Volumes       =>
+           [others =>
+              (Host      => Null_Unbounded_String,
+               Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Validate (Config);
    begin
       Assert (not Result.Success, "Empty image should fail validation");
    end Test_Empty_Image_Fails_Validation;
 
    -- Test port out of range fails validation (65536)
-   procedure Test_Port_Out_Of_Range_Fails_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Port_Out_Of_Range_Fails_Validation
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
         (Service_Name  => Null_Unbounded_String,
-          Image         => To_Unbounded_String ("nginx:latest"),
-          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-          Env_Count     => 0,
-          Ports         => [1 => (Host => 65536, Container => 80), others => (Host => 1, Container => 1)],
-          Ports_Count   => 1,
-          Volumes       => [others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-          Volumes_Count => 0,
-          Description   => Null_Unbounded_String,
-          WantedBy      => Null_Unbounded_String);
-      Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
+         Image         => To_Unbounded_String ("nginx:latest"),
+         Env           =>
+           [others =>
+              (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         =>
+           [1      => (Host => 65536, Container => 80),
+            others => (Host => 1, Container => 1)],
+         Ports_Count   => 1,
+         Volumes       =>
+           [others =>
+              (Host      => Null_Unbounded_String,
+               Container => Null_Unbounded_String)],
+         Volumes_Count => 0,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Validate (Config);
    begin
       Assert (not Result.Success, "Port host 65536 should fail validation");
    end Test_Port_Out_Of_Range_Fails_Validation;
 
    -- Test empty volume path fails validation
-   procedure Test_Empty_Volume_Path_Fails_Validation (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Empty_Volume_Path_Fails_Validation
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
         (Service_Name  => Null_Unbounded_String,
-          Image         => To_Unbounded_String ("nginx:latest"),
-          Env           => [others => (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-          Env_Count     => 0,
-          Ports         => [others => (Host => 1, Container => 1)],
-          Ports_Count   => 0,
-          Volumes       =>
-            [1      => (Host => Null_Unbounded_String, Container => To_Unbounded_String ("/data")),
-             others => (Host => Null_Unbounded_String, Container => Null_Unbounded_String)],
-          Volumes_Count => 1,
-          Description   => Null_Unbounded_String,
-          WantedBy      => Null_Unbounded_String);
-      Result : constant Podmander.Config.Parser.Parse_Result := Podmander.Config.Parser.Validate (Config);
+         Image         => To_Unbounded_String ("nginx:latest"),
+         Env           =>
+           [others =>
+              (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
+         Env_Count     => 0,
+         Ports         => [others => (Host => 1, Container => 1)],
+         Ports_Count   => 0,
+         Volumes       =>
+           [1      =>
+              (Host      => Null_Unbounded_String,
+               Container => To_Unbounded_String ("/data")),
+            others =>
+              (Host      => Null_Unbounded_String,
+               Container => Null_Unbounded_String)],
+         Volumes_Count => 1,
+         Description   => Null_Unbounded_String,
+         WantedBy      => Null_Unbounded_String);
+      Result : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Validate (Config);
    begin
-      Assert (not Result.Success, "Empty volume host path should fail validation");
+      Assert
+        (not Result.Success, "Empty volume host path should fail validation");
    end Test_Empty_Volume_Path_Fails_Validation;
 
    -- Test that parser extracts service name from TOML section header
-   procedure Test_Parse_Extracts_Service_Name (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Extracts_Service_Name
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse (Fixture_Path ("valid.toml"));
    begin
       Assert (Result.Success, "Parsing valid.toml should succeed");
       if Result.Success then
-         Assert (To_String (Result.Config.Service_Name) = "web", "Service name should be 'web' from [service.web] header");
+         Assert
+           (To_String (Result.Config.Service_Name) = "web",
+            "Service name should be 'web' from [service.web] header");
       end if;
    end Test_Parse_Extracts_Service_Name;
 
    -- Test parsing valid TOML content from a string
-   procedure Test_Parse_Content_Valid (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Content_Valid
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Content : constant String :=
-        "[service.web]" & ASCII.LF
-        & "image = ""nginx:latest""" & ASCII.LF;
-      Result : constant Podmander.Config.Parser.Parse_Result :=
+        "[service.web]" & ASCII.LF & "image = ""nginx:latest""" & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse_Content (Content);
    begin
-      Assert (Result.Success, "Parse_Content with valid content should succeed");
+      Assert
+        (Result.Success, "Parse_Content with valid content should succeed");
       if Result.Success then
-         Assert (To_String (Result.Config.Image) = "nginx:latest",
-                 "Image should be 'nginx:latest'");
+         Assert
+           (To_String (Result.Config.Image) = "nginx:latest",
+            "Image should be 'nginx:latest'");
       end if;
    end Test_Parse_Content_Valid;
 
    -- Test parsing invalid TOML content from a string
-   procedure Test_Parse_Content_Invalid (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Content_Invalid
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Content : constant String := "this is not valid toml";
-      Result : constant Podmander.Config.Parser.Parse_Result :=
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse_Content (Content);
    begin
-      Assert (not Result.Success,
-              "Parse_Content with invalid content should fail");
+      Assert
+        (not Result.Success, "Parse_Content with invalid content should fail");
    end Test_Parse_Content_Invalid;
 
    -- Test that a port string without a colon separator fails parsing
-   procedure Test_Parse_Port_Without_Colon (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Port_Without_Colon
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Content : constant String :=
-        "[service.web]" & ASCII.LF
-        & "image = ""nginx:latest""" & ASCII.LF
-        & "ports = [""80""]" & ASCII.LF;
-      Result : constant Podmander.Config.Parser.Parse_Result :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [""80""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse_Content (Content);
    begin
-      Assert (not Result.Success,
-              "Port string without colon should fail parsing");
+      Assert
+        (not Result.Success, "Port string without colon should fail parsing");
    end Test_Parse_Port_Without_Colon;
 
    -- Test that a volume string without a colon separator fails parsing
-   procedure Test_Parse_Volume_Without_Colon (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Volume_Without_Colon
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Content : constant String :=
-        "[service.web]" & ASCII.LF
-        & "image = ""nginx:latest""" & ASCII.LF
-        & "volumes = [""/data""]" & ASCII.LF;
-      Result : constant Podmander.Config.Parser.Parse_Result :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "volumes = [""/data""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse_Content (Content);
    begin
-      Assert (not Result.Success,
-              "Volume string without colon should fail parsing");
+      Assert
+        (not Result.Success,
+         "Volume string without colon should fail parsing");
    end Test_Parse_Volume_Without_Colon;
 
    -- Test that exceeding MAX_ENV_ENTRIES fails parsing
-   procedure Test_Parse_Too_Many_Env_Entries (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Too_Many_Env_Entries
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Header  : constant String :=
-        "[service.web]" & ASCII.LF
-        & "image = ""nginx:latest""" & ASCII.LF
-        & "[service.web.env]" & ASCII.LF;
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "[service.web.env]"
+        & ASCII.LF;
       Content : Unbounded_String := To_Unbounded_String (Header);
    begin
       for I in 1 .. Podmander.Config.MAX_ENV_ENTRIES + 1 loop
          declare
             I_Img : constant String := I'Image;
          begin
-            Append (Content,
-                    "KEY_" & I_Img (2 .. I_Img'Last) & " = ""value""" & ASCII.LF);
+            Append
+              (Content,
+               "KEY_" & I_Img (2 .. I_Img'Last) & " = ""value""" & ASCII.LF);
          end;
       end loop;
       declare
          Result : constant Podmander.Config.Parser.Parse_Result :=
            Podmander.Config.Parser.Parse_Content (To_String (Content));
       begin
-         Assert (not Result.Success,
-                 "Exceeding MAX_ENV_ENTRIES should fail parsing");
+         Assert
+           (not Result.Success,
+            "Exceeding MAX_ENV_ENTRIES should fail parsing");
       end;
    end Test_Parse_Too_Many_Env_Entries;
 
    -- Test that exceeding MAX_PORTS_ENTRIES fails parsing
-   procedure Test_Parse_Too_Many_Ports_Entries (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Too_Many_Ports_Entries
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Header  : constant String :=
-        "[service.web]" & ASCII.LF
-        & "image = ""nginx:latest""" & ASCII.LF
-        & "ports = [" & ASCII.LF;
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = ["
+        & ASCII.LF;
       Content : Unbounded_String := To_Unbounded_String (Header);
    begin
       for I in 1 .. Podmander.Config.MAX_PORTS_ENTRIES + 1 loop
@@ -270,18 +357,24 @@ package body Podmander.Config_Tests is
          Result : constant Podmander.Config.Parser.Parse_Result :=
            Podmander.Config.Parser.Parse_Content (To_String (Content));
       begin
-         Assert (not Result.Success,
-                 "Exceeding MAX_PORTS_ENTRIES should fail parsing");
+         Assert
+           (not Result.Success,
+            "Exceeding MAX_PORTS_ENTRIES should fail parsing");
       end;
    end Test_Parse_Too_Many_Ports_Entries;
 
    -- Test that exceeding MAX_VOLUMES_ENTRIES fails parsing
-   procedure Test_Parse_Too_Many_Volumes_Entries (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Too_Many_Volumes_Entries
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Header  : constant String :=
-        "[service.web]" & ASCII.LF
-        & "image = ""nginx:latest""" & ASCII.LF
-        & "volumes = [" & ASCII.LF;
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "volumes = ["
+        & ASCII.LF;
       Content : Unbounded_String := To_Unbounded_String (Header);
    begin
       for I in 1 .. Podmander.Config.MAX_VOLUMES_ENTRIES + 1 loop
@@ -289,8 +382,9 @@ package body Podmander.Config_Tests is
             I_Img : constant String := I'Image;
             Idx   : constant String := I_Img (2 .. I_Img'Last);
          begin
-            Append (Content,
-                    "  ""/host/" & Idx & ":/cont/" & Idx & """," & ASCII.LF);
+            Append
+              (Content,
+               "  ""/host/" & Idx & ":/cont/" & Idx & """," & ASCII.LF);
          end;
       end loop;
       Append (Content, "]" & ASCII.LF);
@@ -298,8 +392,9 @@ package body Podmander.Config_Tests is
          Result : constant Podmander.Config.Parser.Parse_Result :=
            Podmander.Config.Parser.Parse_Content (To_String (Content));
       begin
-         Assert (not Result.Success,
-                 "Exceeding MAX_VOLUMES_ENTRIES should fail parsing");
+         Assert
+           (not Result.Success,
+            "Exceeding MAX_VOLUMES_ENTRIES should fail parsing");
       end;
    end Test_Parse_Too_Many_Volumes_Entries;
 
@@ -308,31 +403,70 @@ package body Podmander.Config_Tests is
    procedure Register_Tests (T : in out Config_Test) is
       use AUnit.Test_Cases.Registration;
    begin
-      Register_Routine (T, Test_Parse_Valid_File'Access, "Parsing a valid TOML file with all fields");
-      Register_Routine (T, Test_Parse_Missing_Image'Access, "Parsing a TOML file with missing image field should fail");
-      Register_Routine (T, Test_Parse_Nonexistent_File'Access, "Parsing a nonexistent file should fail with error");
-      Register_Routine (T, Test_Parse_Invalid_Syntax'Access, "Parsing TOML syntax error should fail");
-      Register_Routine (T, Test_Valid_Config_Passes_Validation'Access, "Valid config passes validation");
-      Register_Routine (T, Test_Empty_Image_Fails_Validation'Access, "Empty image fails validation");
       Register_Routine
-        (T, Test_Port_Out_Of_Range_Fails_Validation'Access, "Port out of range (65536) fails validation");
-      Register_Routine (T, Test_Empty_Volume_Path_Fails_Validation'Access, "Empty volume path fails validation");
+        (T,
+         Test_Parse_Valid_File'Access,
+         "Parsing a valid TOML file with all fields");
       Register_Routine
-        (T, Test_Parse_Extracts_Service_Name'Access, "Parser extracts service name from [service.<name>] header");
+        (T,
+         Test_Parse_Missing_Image'Access,
+         "Parsing a TOML file with missing image field should fail");
       Register_Routine
-        (T, Test_Parse_Content_Valid'Access, "Parse_Content with valid TOML content succeeds");
+        (T,
+         Test_Parse_Nonexistent_File'Access,
+         "Parsing a nonexistent file should fail with error");
       Register_Routine
-        (T, Test_Parse_Content_Invalid'Access, "Parse_Content with invalid TOML content fails");
+        (T,
+         Test_Parse_Invalid_Syntax'Access,
+         "Parsing TOML syntax error should fail");
       Register_Routine
-        (T, Test_Parse_Port_Without_Colon'Access, "Port string without colon should fail parsing");
+        (T,
+         Test_Valid_Config_Passes_Validation'Access,
+         "Valid config passes validation");
       Register_Routine
-        (T, Test_Parse_Volume_Without_Colon'Access, "Volume string without colon should fail parsing");
+        (T,
+         Test_Empty_Image_Fails_Validation'Access,
+         "Empty image fails validation");
       Register_Routine
-        (T, Test_Parse_Too_Many_Env_Entries'Access, "Exceeding MAX_ENV_ENTRIES should fail parsing");
+        (T,
+         Test_Port_Out_Of_Range_Fails_Validation'Access,
+         "Port out of range (65536) fails validation");
       Register_Routine
-        (T, Test_Parse_Too_Many_Ports_Entries'Access, "Exceeding MAX_PORTS_ENTRIES should fail parsing");
+        (T,
+         Test_Empty_Volume_Path_Fails_Validation'Access,
+         "Empty volume path fails validation");
       Register_Routine
-        (T, Test_Parse_Too_Many_Volumes_Entries'Access, "Exceeding MAX_VOLUMES_ENTRIES should fail parsing");
+        (T,
+         Test_Parse_Extracts_Service_Name'Access,
+         "Parser extracts service name from [service.<name>] header");
+      Register_Routine
+        (T,
+         Test_Parse_Content_Valid'Access,
+         "Parse_Content with valid TOML content succeeds");
+      Register_Routine
+        (T,
+         Test_Parse_Content_Invalid'Access,
+         "Parse_Content with invalid TOML content fails");
+      Register_Routine
+        (T,
+         Test_Parse_Port_Without_Colon'Access,
+         "Port string without colon should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Volume_Without_Colon'Access,
+         "Volume string without colon should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Too_Many_Env_Entries'Access,
+         "Exceeding MAX_ENV_ENTRIES should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Too_Many_Ports_Entries'Access,
+         "Exceeding MAX_PORTS_ENTRIES should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Too_Many_Volumes_Entries'Access,
+         "Exceeding MAX_VOLUMES_ENTRIES should fail parsing");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

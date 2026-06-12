@@ -94,9 +94,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
    end Seed_Service;
 
    function Seed_Node
-     (Handle : in out DB.DB_Handle; Name : String)
-      return Node_Id_Type
-   is
+     (Handle : in out DB.DB_Handle; Name : String) return Node_Id_Type is
    begin
       return Node_Repo.Create_Or_Get (Handle, Name);
    end Seed_Node;
@@ -112,8 +110,7 @@ package body Podmander.Controller.Scheduler_Seam_Tests is
       D        : DB.DB_Handle := DB.Open (":memory:");
       Svc      : constant Podmander.Controller.Service_Id_Type :=
         Seed_Service (D, "app");
-      Node     : constant Node_Id_Type :=
-        Seed_Node (D, "node-1");
+      Node     : constant Node_Id_Type := Seed_Node (D, "node-1");
       Strategy : constant Fixed_Node_Strategy :=
         Fixed_Node_Strategy'(Fixed_Id => Node);
       Result   : Scheduler.Schedule_Result;

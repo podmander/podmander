@@ -62,8 +62,8 @@ package body Podmander.Controller.Message_Handlers is
       end if;
 
       declare
-Node_Id : constant Node_Id_Type :=
-            Node.Repository.Create_Or_Get (H.Ctrl.DB, Name);
+         Node_Id : constant Node_Id_Type :=
+           Node.Repository.Create_Or_Get (H.Ctrl.DB, Name);
          Info    : constant Podmander.Types.Agent_Info :=
            (Id            => 0,
             Name          => Req.Agent_Name,
@@ -136,8 +136,7 @@ Node_Id : constant Node_Id_Type :=
                   Agent.Repository.Set_State (H.Ctrl.DB, Info);
                   --  Reset any In_Progress deploys for this node so they
                   --  are retried now that the agent is connected again.
-                  Reset_In_Progress_For_Node
-                    (H.Ctrl.DB, Info.Node_Id);
+                  Reset_In_Progress_For_Node (H.Ctrl.DB, Info.Node_Id);
                   Podmander.Logging.Info
                     ("controller", "Agent " & Connection_Id & " reconnected");
                end if;
@@ -188,9 +187,7 @@ Node_Id : constant Node_Id_Type :=
                    Get_By_Id (H.Ctrl.DB, Result.Catalog_Id);
                Ok        : constant Boolean :=
                  Update_On_Success
-                   (H.Ctrl.DB,
-                    Cat_Entry.Id,
-                    Cat_Entry.Target_Version);
+                   (H.Ctrl.DB, Cat_Entry.Id, Cat_Entry.Target_Version);
                pragma Unreferenced (Ok);
             begin
                Podmander.Logging.Info

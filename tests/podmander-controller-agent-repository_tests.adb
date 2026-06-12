@@ -35,9 +35,9 @@ package body Podmander.Controller.Agent.Repository_Tests is
 
    --  Helper: create a node with the given machine name and return its id.
    --  Every agent must reference a valid node (FK constraint).
-function Seed_Node
-       (D : in out DB.DB_Handle; Machine_Name : String) return Node_Id_Type
-     is (Node_Repo.Create_Or_Get (D, Machine_Name));
+   function Seed_Node
+     (D : in out DB.DB_Handle; Machine_Name : String) return Node_Id_Type
+   is (Node_Repo.Create_Or_Get (D, Machine_Name));
 
    -- Format time as ISO 8601 for string comparison
    function Format_Time (T : Ada.Calendar.Time) return String is
@@ -50,7 +50,9 @@ function Seed_Node
    -- Register + Load_All
    ---------
 
-   procedure Test_Register_And_Load_All (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Register_And_Load_All
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Node_Id : constant Node_Id_Type := Seed_Node (D, "test-agent");
@@ -68,22 +70,32 @@ function Seed_Node
    begin
       Repo.Register (D, Info);
       Map := Repo.Load_All (D);
-      Assert (Natural (Map.Length) = 1, "Should have one agent after register");
+      Assert
+        (Natural (Map.Length) = 1, "Should have one agent after register");
       Cur := Map.Find ("test-agent");
-      Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Registered agent should be in map");
+      Assert
+        (Podmander.Types.Agent_Maps.Has_Element (Cur),
+         "Registered agent should be in map");
       Loaded := Podmander.Types.Agent_Maps.Element (Cur);
-      Assert (To_String (Loaded.Name) = "test-agent", "Agent name should match");
-      Assert (To_String (Loaded.Connection_Id) = "node-001", "Connection ID should match");
+      Assert
+        (To_String (Loaded.Name) = "test-agent", "Agent name should match");
+      Assert
+        (To_String (Loaded.Connection_Id) = "node-001",
+         "Connection ID should match");
       Assert (Loaded.State = Registered, "Agent state should be Registered");
       Assert (Loaded.Node_Id = Node_Id, "Agent node_id should match");
-      Assert (Format_Time (Loaded.Last_Seen) = Format_Time (Now), "Last_Seen should match");
+      Assert
+        (Format_Time (Loaded.Last_Seen) = Format_Time (Now),
+         "Last_Seen should match");
    end Test_Register_And_Load_All;
 
    ---------
    -- Register duplicate
    ---------
 
-   procedure Test_Register_Duplicate_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Register_Duplicate_Raises
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D         : DB.DB_Handle := DB.Open (":memory:");
       Node_Id   : constant Node_Id_Type := Seed_Node (D, "dup-agent");
@@ -105,18 +117,23 @@ function Seed_Node
             declare
                Err : constant DB.Error_Info := DB.Parse_Error (E);
             begin
-               Assert (Err.Kind = DB.Constraint_Violation, "Duplicate should raise Constraint_Violation");
+               Assert
+                 (Err.Kind = DB.Constraint_Violation,
+                  "Duplicate should raise Constraint_Violation");
                Got_Error := True;
             end;
       end;
-      Assert (Got_Error, "Duplicate register should have raised Database_Error");
+      Assert
+        (Got_Error, "Duplicate register should have raised Database_Error");
    end Test_Register_Duplicate_Raises;
 
    ---------
    -- Touch updates last_seen
    ---------
 
-   procedure Test_Touch_Updates_Last_Seen (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Touch_Updates_Last_Seen
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Node_Id : constant Node_Id_Type := Seed_Node (D, "touch-agent");
@@ -144,16 +161,22 @@ function Seed_Node
           Node_Id       => Node_Id));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("touch-agent");
-      Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Agent should be in map after touch");
+      Assert
+        (Podmander.Types.Agent_Maps.Has_Element (Cur),
+         "Agent should be in map after touch");
       Loaded := Podmander.Types.Agent_Maps.Element (Cur);
-      Assert (Format_Time (Loaded.Last_Seen) = Format_Time (Later), "Last_Seen should be updated to later time");
+      Assert
+        (Format_Time (Loaded.Last_Seen) = Format_Time (Later),
+         "Last_Seen should be updated to later time");
    end Test_Touch_Updates_Last_Seen;
 
    ---------
    -- Touch not found
    ---------
 
-   procedure Test_Touch_Not_Found_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Touch_Not_Found_Raises
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D         : DB.DB_Handle := DB.Open (":memory:");
       Now       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
@@ -173,18 +196,24 @@ function Seed_Node
             declare
                Err : constant DB.Error_Info := DB.Parse_Error (E);
             begin
-               Assert (Err.Kind = DB.Not_Found, "Touch of unknown agent should raise Not_Found");
+               Assert
+                 (Err.Kind = DB.Not_Found,
+                  "Touch of unknown agent should raise Not_Found");
                Got_Error := True;
             end;
       end;
-      Assert (Got_Error, "Touch of unknown agent should have raised Database_Error");
+      Assert
+        (Got_Error,
+         "Touch of unknown agent should have raised Database_Error");
    end Test_Touch_Not_Found_Raises;
 
    ---------
    -- Set_State updates state
    ---------
 
-   procedure Test_Set_State_Updates_State (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Set_State_Updates_State
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Node_Id : constant Node_Id_Type := Seed_Node (D, "state-agent");
@@ -211,16 +240,21 @@ function Seed_Node
           Node_Id       => Node_Id));
       Map := Repo.Load_All (D);
       Cur := Map.Find ("state-agent");
-      Assert (Podmander.Types.Agent_Maps.Has_Element (Cur), "Agent should be in map after set_state");
+      Assert
+        (Podmander.Types.Agent_Maps.Has_Element (Cur),
+         "Agent should be in map after set_state");
       Loaded := Podmander.Types.Agent_Maps.Element (Cur);
-      Assert (Loaded.State = Unresponsive, "Agent state should be Unresponsive");
+      Assert
+        (Loaded.State = Unresponsive, "Agent state should be Unresponsive");
    end Test_Set_State_Updates_State;
 
    ---------
    -- Set_State not found
    ---------
 
-   procedure Test_Set_State_Not_Found_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Set_State_Not_Found_Raises
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D         : DB.DB_Handle := DB.Open (":memory:");
       Now       : constant Ada.Calendar.Time := Ada.Calendar.Clock;
@@ -240,18 +274,24 @@ function Seed_Node
             declare
                Err : constant DB.Error_Info := DB.Parse_Error (E);
             begin
-               Assert (Err.Kind = DB.Not_Found, "Set_State on unknown agent should raise Not_Found");
+               Assert
+                 (Err.Kind = DB.Not_Found,
+                  "Set_State on unknown agent should raise Not_Found");
                Got_Error := True;
             end;
       end;
-      Assert (Got_Error, "Set_State on unknown agent should have raised Database_Error");
+      Assert
+        (Got_Error,
+         "Set_State on unknown agent should have raised Database_Error");
    end Test_Set_State_Not_Found_Raises;
 
    ---------
    -- Remove deletes agent
    ---------
 
-   procedure Test_Remove_Deletes_Agent (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Remove_Deletes_Agent
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Node_Id : constant Node_Id_Type := Seed_Node (D, "remove-agent");
@@ -282,7 +322,9 @@ function Seed_Node
    -- Remove not found is no-op
    ---------
 
-   procedure Test_Remove_Not_Found_Noop (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Remove_Not_Found_Noop
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       D       : DB.DB_Handle := DB.Open (":memory:");
       Node_Id : constant Node_Id_Type := Seed_Node (D, "keep-agent");
@@ -307,7 +349,9 @@ function Seed_Node
           Last_Seen     => Now,
           Node_Id       => 0));
       Map := Repo.Load_All (D);
-      Assert (Natural (Map.Length) = 1, "Original agent should still exist after removing unknown agent");
+      Assert
+        (Natural (Map.Length) = 1,
+         "Original agent should still exist after removing unknown agent");
    end Test_Remove_Not_Found_Noop;
 
    ---------
@@ -318,15 +362,38 @@ function Seed_Node
    procedure Register_Tests (T : in out Repository_Test) is
       use AUnit.Test_Cases.Registration;
    begin
-      Register_Routine (T, Test_Register_And_Load_All'Access, "Register an agent and verify it appears in Load_All");
       Register_Routine
-        (T, Test_Register_Duplicate_Raises'Access, "Register duplicate agent raises Constraint_Violation");
-      Register_Routine (T, Test_Touch_Updates_Last_Seen'Access, "Touch updates an agent's last_seen timestamp");
-      Register_Routine (T, Test_Touch_Not_Found_Raises'Access, "Touch on unknown agent raises Not_Found");
-      Register_Routine (T, Test_Set_State_Updates_State'Access, "Set_State updates an agent's state");
-      Register_Routine (T, Test_Set_State_Not_Found_Raises'Access, "Set_State on unknown agent raises Not_Found");
-      Register_Routine (T, Test_Remove_Deletes_Agent'Access, "Remove deletes an agent from the database");
-      Register_Routine (T, Test_Remove_Not_Found_Noop'Access, "Remove on unknown agent is a no-op");
+        (T,
+         Test_Register_And_Load_All'Access,
+         "Register an agent and verify it appears in Load_All");
+      Register_Routine
+        (T,
+         Test_Register_Duplicate_Raises'Access,
+         "Register duplicate agent raises Constraint_Violation");
+      Register_Routine
+        (T,
+         Test_Touch_Updates_Last_Seen'Access,
+         "Touch updates an agent's last_seen timestamp");
+      Register_Routine
+        (T,
+         Test_Touch_Not_Found_Raises'Access,
+         "Touch on unknown agent raises Not_Found");
+      Register_Routine
+        (T,
+         Test_Set_State_Updates_State'Access,
+         "Set_State updates an agent's state");
+      Register_Routine
+        (T,
+         Test_Set_State_Not_Found_Raises'Access,
+         "Set_State on unknown agent raises Not_Found");
+      Register_Routine
+        (T,
+         Test_Remove_Deletes_Agent'Access,
+         "Remove deletes an agent from the database");
+      Register_Routine
+        (T,
+         Test_Remove_Not_Found_Noop'Access,
+         "Remove on unknown agent is a no-op");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

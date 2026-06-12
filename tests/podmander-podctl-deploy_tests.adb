@@ -34,7 +34,7 @@ package body Podmander.Podctl.Deploy_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Cfg : constant Podmander.Podctl.Config.Connection_Config :=
+      Cfg    : constant Podmander.Podctl.Config.Connection_Config :=
         (Controller => To_Unbounded_String ("tcp://localhost:5555"),
          Token      => To_Unbounded_String ("not-a-valid-token"));
       Result : constant Deploy_Result :=
@@ -51,7 +51,7 @@ package body Podmander.Podctl.Deploy_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Cfg : constant Podmander.Podctl.Config.Connection_Config :=
+      Cfg    : constant Podmander.Podctl.Config.Connection_Config :=
         (Controller => To_Unbounded_String ("tcp://localhost:5555"),
          Token      => To_Unbounded_String (Valid_Token));
       Result : constant Deploy_Result :=
@@ -68,7 +68,7 @@ package body Podmander.Podctl.Deploy_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Cfg : constant Podmander.Podctl.Config.Connection_Config :=
+      Cfg    : constant Podmander.Podctl.Config.Connection_Config :=
         (Controller => To_Unbounded_String ("tcp://localhost:5555"),
          Token      => To_Unbounded_String (Valid_Token));
       Result : constant Deploy_Result :=
@@ -103,8 +103,7 @@ package body Podmander.Podctl.Deploy_Tests is
    end Test_Check_File_Empty;
 
    --  Check_TOML_File: non-empty readable file.
-   procedure Test_Check_File_Ok
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   procedure Test_Check_File_Ok (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
    begin
@@ -120,8 +119,7 @@ package body Podmander.Podctl.Deploy_Tests is
       pragma Unreferenced (T);
    begin
       Assert
-        (Exit_Code_For (Accepted) = 0,
-         "Accepted should map to exit code 0");
+        (Exit_Code_For (Accepted) = 0, "Accepted should map to exit code 0");
    end Test_Accepted_Exit_Code_Is_Zero;
 
    --  Exit code mapping: all failure outcomes map to non-zero codes.
@@ -182,9 +180,13 @@ package body Podmander.Podctl.Deploy_Tests is
          Test_Check_File_Not_Found'Access,
          "Check_TOML_File returns Not_Found for non-existent path");
       Register_Routine
-        (T, Test_Check_File_Empty'Access, "Check_TOML_File returns Empty for empty file");
+        (T,
+         Test_Check_File_Empty'Access,
+         "Check_TOML_File returns Empty for empty file");
       Register_Routine
-        (T, Test_Check_File_Ok'Access, "Check_TOML_File returns Ok for non-empty readable file");
+        (T,
+         Test_Check_File_Ok'Access,
+         "Check_TOML_File returns Ok for non-empty readable file");
       Register_Routine
         (T,
          Test_Accepted_Exit_Code_Is_Zero'Access,

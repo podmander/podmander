@@ -29,39 +29,61 @@ package body Podmander.Database_Tests is
    procedure Register_Tests (T : in out Database_Test);
 
    -- Test: Classify_Error maps known SQLite error codes to Error_Kind
-   procedure Test_Classify_Error_Known_Codes (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Classify_Error_Known_Codes
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
-      Info_19 : constant DB.Error_Info := DB.Classify_Error ("some constraint error (Error code: 19)");
-      Info_13 : constant DB.Error_Info := DB.Classify_Error ("disk full (Error code: 13)");
-      Info_17 : constant DB.Error_Info := DB.Classify_Error ("schema changed (Error code: 17)");
+      Info_19 : constant DB.Error_Info :=
+        DB.Classify_Error ("some constraint error (Error code: 19)");
+      Info_13 : constant DB.Error_Info :=
+        DB.Classify_Error ("disk full (Error code: 13)");
+      Info_17 : constant DB.Error_Info :=
+        DB.Classify_Error ("schema changed (Error code: 17)");
    begin
-      Assert (Info_19.Kind = DB.Constraint_Violation, "Code 19 should map to Constraint_Violation");
-      Assert (Info_13.Kind = DB.Device_Full, "Code 13 should map to Device_Full");
-      Assert (Info_17.Kind = DB.Schema_Error, "Code 17 should map to Schema_Error");
+      Assert
+        (Info_19.Kind = DB.Constraint_Violation,
+         "Code 19 should map to Constraint_Violation");
+      Assert
+        (Info_13.Kind = DB.Device_Full, "Code 13 should map to Device_Full");
+      Assert
+        (Info_17.Kind = DB.Schema_Error, "Code 17 should map to Schema_Error");
    end Test_Classify_Error_Known_Codes;
 
    -- Test: SQLite generic error (code 1) maps to Unknown
-   procedure Test_Classify_Error_Code_1_Unknown (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Classify_Error_Code_1_Unknown
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
-      Info : constant DB.Error_Info := DB.Classify_Error ("generic error (Error code: 1)");
+      Info : constant DB.Error_Info :=
+        DB.Classify_Error ("generic error (Error code: 1)");
    begin
-      Assert (Info.Kind = DB.Unknown, "Code 1 (SQLITE_ERROR) should map to Unknown");
+      Assert
+        (Info.Kind = DB.Unknown,
+         "Code 1 (SQLITE_ERROR) should map to Unknown");
    end Test_Classify_Error_Code_1_Unknown;
 
    -- Test: Unrecognized error code maps to Unknown
-   procedure Test_Classify_Error_Unknown_Code (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Classify_Error_Unknown_Code
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
-      Info : constant DB.Error_Info := DB.Classify_Error ("weird error (Error code: 999)");
+      Info : constant DB.Error_Info :=
+        DB.Classify_Error ("weird error (Error code: 999)");
    begin
-      Assert (Info.Kind = DB.Unknown, "Unrecognized code should map to Unknown");
+      Assert
+        (Info.Kind = DB.Unknown, "Unrecognized code should map to Unknown");
       Assert (Info.Code = 999, "Code should be preserved as 999");
    end Test_Classify_Error_Unknown_Code;
 
    -- Test: Format_Error and Parse_Error round-trip correctly
-   procedure Test_Format_Parse_Error_Roundtrip (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Format_Parse_Error_Roundtrip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Original  : constant DB.Error_Info :=
-        (Kind => DB.Constraint_Violation, Message => To_Unbounded_String ("UNIQUE violation"), Code => 19);
+        (Kind    => DB.Constraint_Violation,
+         Message => To_Unbounded_String ("UNIQUE violation"),
+         Code    => 19);
       Formatted : constant String := DB.Format_Error (Original);
       Parsed    : DB.Error_Info;
    begin
@@ -73,15 +95,22 @@ package body Podmander.Database_Tests is
          when E : DB.Database_Error =>
             Parsed := DB.Parse_Error (E);
       end;
-      Assert (Parsed.Kind = Original.Kind, "Parsed Kind should match original");
-      Assert (Parsed.Code = Original.Code, "Parsed Code should match original");
-      Assert (To_String (Parsed.Message) = To_String (Original.Message), "Parsed Message should match original");
+      Assert
+        (Parsed.Kind = Original.Kind, "Parsed Kind should match original");
+      Assert
+        (Parsed.Code = Original.Code, "Parsed Code should match original");
+      Assert
+        (To_String (Parsed.Message) = To_String (Original.Message),
+         "Parsed Message should match original");
    end Test_Format_Parse_Error_Roundtrip;
 
    -- Test: Format_Error with empty message string
-   procedure Test_Format_Error_Empty_Message (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Format_Error_Empty_Message
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
-      Original  : constant DB.Error_Info := (Kind => DB.Unknown, Message => To_Unbounded_String (""), Code => 0);
+      Original  : constant DB.Error_Info :=
+        (Kind => DB.Unknown, Message => To_Unbounded_String (""), Code => 0);
       Formatted : constant String := DB.Format_Error (Original);
       Parsed    : DB.Error_Info;
    begin
@@ -91,12 +120,17 @@ package body Podmander.Database_Tests is
          when E : DB.Database_Error =>
             Parsed := DB.Parse_Error (E);
       end;
-      Assert (Parsed.Kind = Original.Kind, "Parsed Kind should match original with empty message");
-      Assert (To_String (Parsed.Message) = "", "Parsed Message should be empty");
+      Assert
+        (Parsed.Kind = Original.Kind,
+         "Parsed Kind should match original with empty message");
+      Assert
+        (To_String (Parsed.Message) = "", "Parsed Message should be empty");
    end Test_Format_Error_Empty_Message;
 
    -- Test: Parse_Error on non-Database_Error message returns Unknown
-   procedure Test_Parse_Error_Non_Database_Error (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Parse_Error_Non_Database_Error
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       -- Simulate parsing a non-Database_Error exception message
       -- by calling Parse_Error with a string that doesn't match
@@ -108,7 +142,9 @@ package body Podmander.Database_Tests is
    exception
       when E : Constraint_Error =>
          Parsed := DB.Parse_Error (E);
-         Assert (Parsed.Kind = DB.Unknown, "Non-Database_Error message should parse as Unknown");
+         Assert
+           (Parsed.Kind = DB.Unknown,
+            "Non-Database_Error message should parse as Unknown");
    end Test_Parse_Error_Non_Database_Error;
 
    -- Test infrastructure for migration tests
@@ -119,7 +155,10 @@ package body Podmander.Database_Tests is
       -- Generate a unique temp file path for each test
    begin
       Test_Counter := Test_Counter + 1;
-      return "/tmp/podmander_test_" & Ada.Strings.Fixed.Trim (Test_Counter'Image, Ada.Strings.Both) & ".db";
+      return
+        "/tmp/podmander_test_"
+        & Ada.Strings.Fixed.Trim (Test_Counter'Image, Ada.Strings.Both)
+        & ".db";
    end Unique_Temp_Path;
 
    procedure Cleanup_DB (Path : String) is
@@ -147,7 +186,9 @@ package body Podmander.Database_Tests is
 
    -- Test: Open succeeds, creates the file, and bootstraps the
    -- schema_version table
-   procedure Test_Migration_Fresh_DB (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_Fresh_DB
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -159,14 +200,21 @@ package body Podmander.Database_Tests is
          null;
       end;
       -- Verify file was created
-      Assert (Ada.Directories.Exists (Path), "Database file should exist after Open");
+      Assert
+        (Ada.Directories.Exists (Path),
+         "Database file should exist after Open");
       -- Verify schema_version through a second SQLite connection
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
-         Stmt : Ada_Sqlite3.Statement := Ada_Sqlite3.Prepare (Conn, "SELECT version FROM schema_version");
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare (Conn, "SELECT version FROM schema_version");
       begin
-         Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "schema_version should have a row");
-         Assert (Ada_Sqlite3.Column_Int (Stmt, 0) >= 1, "schema_version should be >= 1 after migration");
+         Assert
+           (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
+            "schema_version should have a row");
+         Assert
+           (Ada_Sqlite3.Column_Int (Stmt, 0) >= 1,
+            "schema_version should be >= 1 after migration");
       end;
       Cleanup_DB (Path);
    exception
@@ -176,7 +224,9 @@ package body Podmander.Database_Tests is
    end Test_Migration_Fresh_DB;
 
    -- Test: Opening the same database twice is idempotent
-   procedure Test_Migration_Idempotent (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_Idempotent
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -197,10 +247,15 @@ package body Podmander.Database_Tests is
       -- Verify schema_version is still 1 via second connection
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
-         Stmt : Ada_Sqlite3.Statement := Ada_Sqlite3.Prepare (Conn, "SELECT version FROM schema_version");
+         Stmt : Ada_Sqlite3.Statement :=
+           Ada_Sqlite3.Prepare (Conn, "SELECT version FROM schema_version");
       begin
-         Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "schema_version should have a row on re-open");
-         Assert (Ada_Sqlite3.Column_Int (Stmt, 0) >= 1, "schema_version should be >= 1 on re-open");
+         Assert
+           (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
+            "schema_version should have a row on re-open");
+         Assert
+           (Ada_Sqlite3.Column_Int (Stmt, 0) >= 1,
+            "schema_version should be >= 1 on re-open");
       end;
       Cleanup_DB (Path);
    exception
@@ -210,7 +265,9 @@ package body Podmander.Database_Tests is
    end Test_Migration_Idempotent;
 
    -- Test: WAL mode is enabled after Open
-   procedure Test_Migration_WAL_Mode (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_WAL_Mode
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -221,10 +278,15 @@ package body Podmander.Database_Tests is
          -- Open a second SQLite connection to verify journal mode
          declare
             Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
-            Stmt : Ada_Sqlite3.Statement := Ada_Sqlite3.Prepare (Conn, "PRAGMA journal_mode");
+            Stmt : Ada_Sqlite3.Statement :=
+              Ada_Sqlite3.Prepare (Conn, "PRAGMA journal_mode");
          begin
-            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "PRAGMA journal_mode should return a row");
-            Assert (Ada_Sqlite3.Column_Text (Stmt, 0) = "wal", "journal_mode should be wal");
+            Assert
+              (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
+               "PRAGMA journal_mode should return a row");
+            Assert
+              (Ada_Sqlite3.Column_Text (Stmt, 0) = "wal",
+               "journal_mode should be wal");
          end;
       end;
       Cleanup_DB (Path);
@@ -239,7 +301,9 @@ package body Podmander.Database_Tests is
    -- so it cannot be observed through a second connection. We verify
    -- that Open succeeds (the PRAGMA Execute inside Open didn't raise),
    -- and verify the setting via behavioral test below.
-   procedure Test_Open_Foreign_Keys_Enabled (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Open_Foreign_Keys_Enabled
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -259,7 +323,9 @@ package body Podmander.Database_Tests is
    end Test_Open_Foreign_Keys_Enabled;
 
    -- Test: Open creates parent directories
-   procedure Test_Open_Creates_Parent_Dirs (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Open_Creates_Parent_Dirs
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := "/tmp/podmander_test_nested/sub/dir/test.db";
    begin
@@ -269,11 +335,14 @@ package body Podmander.Database_Tests is
       begin
          null;
       end;
-      Assert (Ada.Directories.Exists (Path), "Database file should exist in nested dirs after Open");
+      Assert
+        (Ada.Directories.Exists (Path),
+         "Database file should exist in nested dirs after Open");
       -- Clean up: delete file, then dirs in reverse order
       Cleanup_DB (Path);
       begin
-         Ada.Directories.Delete_Directory ("/tmp/podmander_test_nested/sub/dir");
+         Ada.Directories.Delete_Directory
+           ("/tmp/podmander_test_nested/sub/dir");
          Ada.Directories.Delete_Directory ("/tmp/podmander_test_nested/sub");
          Ada.Directories.Delete_Directory ("/tmp/podmander_test_nested");
       exception
@@ -283,7 +352,9 @@ package body Podmander.Database_Tests is
    end Test_Open_Creates_Parent_Dirs;
 
    -- Test: DB_Handle finalization closes the connection
-   procedure Test_Handle_Finalization (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Handle_Finalization
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -307,7 +378,9 @@ package body Podmander.Database_Tests is
    end Test_Handle_Finalization;
 
    -- Test: Migration 004 creates the service_versions table
-   procedure Test_Migration_Service_Versions_Table (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_Service_Versions_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -339,7 +412,9 @@ package body Podmander.Database_Tests is
    end Test_Migration_Service_Versions_Table;
 
    -- Test: Migration 008 creates the service_catalog table
-   procedure Test_Migration_Service_Catalog_Table (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_Service_Catalog_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -354,11 +429,11 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
-      Ada_Sqlite3.Prepare
-              (Conn,
-               "SELECT id, service_id, node_id, current_version, "
-                & "target_version, state, updated_at "
-               & "FROM service_catalog");
+           Ada_Sqlite3.Prepare
+             (Conn,
+              "SELECT id, service_id, node_id, current_version, "
+              & "target_version, state, updated_at "
+              & "FROM service_catalog");
       begin
          -- Preparing the query should not raise  -- " table exists with correct columns
          null;
@@ -372,7 +447,9 @@ package body Podmander.Database_Tests is
    end Test_Migration_Service_Catalog_Table;
 
    -- Test: Migration 002 creates the agents table
-   procedure Test_Migration_Agents_Table (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_Agents_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -387,7 +464,9 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
-           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
+           Ada_Sqlite3.Prepare
+             (Conn,
+              "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
       begin
          -- Preparing the query should not raise  -- table exists with correct columns
          null;
@@ -409,7 +488,8 @@ package body Podmander.Database_Tests is
    end Test_Migration_Agents_Table;
 
    -- Test: Open raises Database_Error for invalid paths
-   procedure Test_Open_Error_Path (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Open_Error_Path (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := "/proc/nonexistent/test.db";
    begin
@@ -427,15 +507,19 @@ package body Podmander.Database_Tests is
    end Test_Open_Error_Path;
 
    -- Test: Prepare/Bind/Step/Column_Text round-trip INSERT and SELECT
-   procedure Test_Prepare_And_Step (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Prepare_And_Step
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
-      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
+      DB.Execute
+        (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
 
       -- INSERT a row via Prepare/Bind_Text/Step
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (name) VALUES (?)");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "INSERT INTO test (name) VALUES (?)");
       begin
          DB.Bind_Text (Q, 1, "Alice");
          Assert (not DB.Step (Q), "INSERT should complete (DONE -> False)");
@@ -446,21 +530,26 @@ package body Podmander.Database_Tests is
          Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT name FROM test");
       begin
          Assert (DB.Step (Q), "SELECT should return a row");
-         Assert (DB.Column_Text (Q, 0) = "Alice", "Column_Text should return 'Alice'");
+         Assert
+           (DB.Column_Text (Q, 0) = "Alice",
+            "Column_Text should return 'Alice'");
          Assert (not DB.Step (Q), "SELECT should have exactly one row");
       end;
    end Test_Prepare_And_Step;
 
    -- Test: Changes returns correct counts for INSERT/UPDATE/DELETE
-   procedure Test_Changes_Count (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Changes_Count (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
-      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
+      DB.Execute
+        (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
 
       -- INSERT
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (name) VALUES (?)");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "INSERT INTO test (name) VALUES (?)");
       begin
          DB.Bind_Text (Q, 1, "Alice");
          Assert (not DB.Step (Q), "INSERT should complete (DONE)");
@@ -469,7 +558,8 @@ package body Podmander.Database_Tests is
 
       -- UPDATE
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "UPDATE test SET name = ? WHERE id = ?");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "UPDATE test SET name = ? WHERE id = ?");
       begin
          DB.Bind_Text (Q, 1, "Bob");
          DB.Bind_Text (Q, 2, "1");
@@ -479,7 +569,8 @@ package body Podmander.Database_Tests is
 
       -- DELETE
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "DELETE FROM test WHERE id = ?");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "DELETE FROM test WHERE id = ?");
       begin
          DB.Bind_Text (Q, 1, "1");
          Assert (not DB.Step (Q), "DELETE should complete (DONE)");
@@ -488,11 +579,14 @@ package body Podmander.Database_Tests is
    end Test_Changes_Count;
 
    -- Test: Execute creates a table that can be queried via Prepare
-   procedure Test_Execute_Creates_Table (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Execute_Creates_Table
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
-      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
+      DB.Execute
+        (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, name TEXT)");
       declare
          Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT * FROM test");
       begin
@@ -501,7 +595,9 @@ package body Podmander.Database_Tests is
    end Test_Execute_Creates_Table;
 
    -- Test: Prepare raises Database_Error for invalid SQL syntax
-   procedure Test_Prepare_Invalid_SQL (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Prepare_Invalid_SQL
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
@@ -519,16 +615,22 @@ package body Podmander.Database_Tests is
    end Test_Prepare_Invalid_SQL;
 
    -- Test: Set a value and get it back
-   procedure Test_Set_Setting_And_Get_Setting (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Set_Setting_And_Get_Setting
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
       DB.Set_Setting (Handle, "test_key", "test_value");
-      Assert (DB.Get_Setting (Handle, "test_key") = "test_value", "Get_Setting should return the value that was set");
+      Assert
+        (DB.Get_Setting (Handle, "test_key") = "test_value",
+         "Get_Setting should return the value that was set");
    end Test_Set_Setting_And_Get_Setting;
 
    -- Test: Get_Setting on missing key raises Not_Found
-   procedure Test_Get_Setting_Not_Found (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Get_Setting_Not_Found
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
@@ -544,14 +646,17 @@ package body Podmander.Database_Tests is
    end Test_Get_Setting_Not_Found;
 
    -- Test: Setting same key twice overwrites (upsert)
-   procedure Test_Set_Setting_Upsert (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Set_Setting_Upsert
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
       DB.Set_Setting (Handle, "upsert_key", "first");
       DB.Set_Setting (Handle, "upsert_key", "second");
       Assert
-        (DB.Get_Setting (Handle, "upsert_key") = "second", "After upsert, Get_Setting should return the latest value");
+        (DB.Get_Setting (Handle, "upsert_key") = "second",
+         "After upsert, Get_Setting should return the latest value");
    end Test_Set_Setting_Upsert;
 
    -- Test: Bind_Int inserts integer values correctly
@@ -559,11 +664,14 @@ package body Podmander.Database_Tests is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
-      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, count INTEGER, name TEXT)");
+      DB.Execute
+        (Handle,
+         "CREATE TABLE test (id INTEGER PRIMARY KEY, count INTEGER, name TEXT)");
 
       -- INSERT a row using Bind_Int for the integer column
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (count, name) VALUES (?, ?)");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "INSERT INTO test (count, name) VALUES (?, ?)");
       begin
          DB.Bind_Int (Q, 1, 42);
          DB.Bind_Text (Q, 2, "Alice");
@@ -572,7 +680,8 @@ package body Podmander.Database_Tests is
 
       -- SELECT and verify via Column_Int
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT count FROM test WHERE name = ?");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "SELECT count FROM test WHERE name = ?");
       begin
          DB.Bind_Text (Q, 1, "Alice");
          Assert (DB.Step (Q), "SELECT should return a row");
@@ -582,21 +691,25 @@ package body Podmander.Database_Tests is
    end Test_Bind_Int;
 
    -- Test: Bind_Int with WHERE clause parameter
-   procedure Test_Bind_Int_Where (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Bind_Int_Where (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
-      DB.Execute (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, val INTEGER)");
+      DB.Execute
+        (Handle, "CREATE TABLE test (id INTEGER PRIMARY KEY, val INTEGER)");
 
       -- Insert two rows
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (val) VALUES (?)");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "INSERT INTO test (val) VALUES (?)");
       begin
          DB.Bind_Int (Q, 1, 10);
          Assert (not DB.Step (Q), "INSERT row 1 should complete");
       end;
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO test (val) VALUES (?)");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "INSERT INTO test (val) VALUES (?)");
       begin
          DB.Bind_Int (Q, 1, 20);
          Assert (not DB.Step (Q), "INSERT row 2 should complete");
@@ -604,11 +717,13 @@ package body Podmander.Database_Tests is
 
       -- Query by id using Bind_Int
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "SELECT val FROM test WHERE id = ?");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "SELECT val FROM test WHERE id = ?");
       begin
          DB.Bind_Int (Q, 1, 2);
          Assert (DB.Step (Q), "SELECT should return a row");
-         Assert (DB.Column_Int (Q, 0) = 20, "Column_Int should return 20 for id=2");
+         Assert
+           (DB.Column_Int (Q, 0) = 20, "Column_Int should return 20 for id=2");
          Assert (not DB.Step (Q), "SELECT should have exactly one row");
       end;
    end Test_Bind_Int_Where;
@@ -619,7 +734,8 @@ package body Podmander.Database_Tests is
       Handle : DB.DB_Handle := DB.Open (":memory:");
    begin
       declare
-         Q : DB.Query_Handle := DB.Prepare (Handle, "INSERT INTO nonexistent (id) VALUES (1)");
+         Q : DB.Query_Handle :=
+           DB.Prepare (Handle, "INSERT INTO nonexistent (id) VALUES (1)");
       begin
          -- Prepare may succeed; the error should surface on Step
          declare
@@ -636,11 +752,15 @@ package body Podmander.Database_Tests is
       when DB.Database_Error =>
          null;  --  Expected: Prepare raised
       when others =>
-         Assert (False, "Prepare/Step raised wrong exception for nonexistent table");
+         Assert
+           (False,
+            "Prepare/Step raised wrong exception for nonexistent table");
    end Test_Step_Error;
 
    -- Test: CHECK constraint rejects version < 1 in service_versions
-   procedure Test_Check_Version_GTE_One (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Check_Version_GTE_One
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -705,7 +825,9 @@ package body Podmander.Database_Tests is
                Dummy : Boolean;
             begin
                Dummy := DB.Step (Q);
-               Assert (False, "INSERT with version=0 should have raised Database_Error");
+               Assert
+                 (False,
+                  "INSERT with version=0 should have raised Database_Error");
             exception
                when DB.Database_Error =>
                   null;  --  Expected: CHECK constraint violation
@@ -720,7 +842,9 @@ package body Podmander.Database_Tests is
    end Test_Check_Version_GTE_One;
 
    -- Test: CHECK constraint rejects invalid state in service_catalog
-   procedure Test_Check_State_Enum (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Check_State_Enum
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -795,7 +919,9 @@ package body Podmander.Database_Tests is
                Dummy : Boolean;
             begin
                Dummy := DB.Step (Q);
-               Assert (False, "INSERT with state=4 should have raised Database_Error");
+               Assert
+                 (False,
+                  "INSERT with state=4 should have raised Database_Error");
             exception
                when DB.Database_Error =>
                   null;  --  Expected: CHECK constraint violation
@@ -810,7 +936,9 @@ package body Podmander.Database_Tests is
    end Test_Check_State_Enum;
 
    -- Test: CHECK constraint rejects negative current_version in service_catalog
-   procedure Test_Check_Current_Version_Non_Negative (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Check_Current_Version_Non_Negative
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -868,7 +996,9 @@ package body Podmander.Database_Tests is
                Dummy : Boolean;
             begin
                Dummy := DB.Step (Q);
-               Assert (False, "INSERT with current_version=-1 should have raised Database_Error");
+               Assert
+                 (False,
+                  "INSERT with current_version=-1 should have raised Database_Error");
             exception
                when DB.Database_Error =>
                   null;  --  Expected: CHECK constraint violation
@@ -883,7 +1013,9 @@ package body Podmander.Database_Tests is
    end Test_Check_Current_Version_Non_Negative;
 
    -- Test: Service_catalog FK constraint rejects non-existent agent_id
-   procedure Test_Catalog_Agent_FK (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Catalog_Agent_FK
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -941,7 +1073,9 @@ package body Podmander.Database_Tests is
                Dummy : Boolean;
             begin
                Dummy := DB.Step (Q);
-               Assert (False, "INSERT with non-existent node_id should have raised Database_Error");
+               Assert
+                 (False,
+                  "INSERT with non-existent node_id should have raised Database_Error");
             exception
                when DB.Database_Error =>
                   null;  --  Expected: FK constraint violation
@@ -957,7 +1091,9 @@ package body Podmander.Database_Tests is
 
    -- Test: Migration 013 creates nodes table and agents.node_id column
    --  on a fresh database (no pre-existing data).
-   procedure Test_Migration_Nodes_Table_And_Backfill (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_Nodes_Table_And_Backfill
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -980,7 +1116,9 @@ package body Podmander.Database_Tests is
       declare
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
-           Ada_Sqlite3.Prepare (Conn, "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
+           Ada_Sqlite3.Prepare
+             (Conn,
+              "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
       begin
          null;  --  Preparing should not raise
       end;
@@ -996,7 +1134,9 @@ package body Podmander.Database_Tests is
    --  This test simulates a pre-migration database by manually creating
    --  the schema at version 12, inserting agents, then re-opening to
    --  trigger migration 013.
-   procedure Test_Migration_013_Backfill (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Migration_013_Backfill
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Path : constant String := Unique_Temp_Path;
    begin
@@ -1013,7 +1153,7 @@ package body Podmander.Database_Tests is
             "CREATE TABLE schema_version (version INTEGER PRIMARY KEY);"
             & "INSERT INTO schema_version (version) VALUES (12);");
          --  Create the agents table at schema version 12
-         --  (id, name, connection_id, state, last_seen — no node_id)
+         --  (id, name, connection_id, state, last_seen â no node_id)
          Ada_Sqlite3.Execute
            (Conn,
             "CREATE TABLE agents ("
@@ -1077,8 +1217,12 @@ package body Podmander.Database_Tests is
             Stmt : Ada_Sqlite3.Statement :=
               Ada_Sqlite3.Prepare (Conn, "SELECT COUNT(*) FROM nodes");
          begin
-            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "nodes should exist");
-            Assert (Ada_Sqlite3.Column_Int (Stmt, 0) = 2, "Should have two nodes (one per agent)");
+            Assert
+              (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
+               "nodes should exist");
+            Assert
+              (Ada_Sqlite3.Column_Int (Stmt, 0) = 2,
+               "Should have two nodes (one per agent)");
          end;
          --  Verify each agent is linked to its node by name
          declare
@@ -1089,13 +1233,27 @@ package body Podmander.Database_Tests is
                  & " JOIN nodes n ON n.id = a.node_id"
                  & " ORDER BY a.name");
          begin
-            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "First agent should have a node");
-            Assert (Ada_Sqlite3.Column_Text (Stmt, 0) = "alpha", "First agent name should be alpha");
-            Assert (Ada_Sqlite3.Column_Text (Stmt, 1) = "alpha", "First node name should match alpha");
-            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW, "Second agent should have a node");
-            Assert (Ada_Sqlite3.Column_Text (Stmt, 0) = "beta", "Second agent name should be beta");
-            Assert (Ada_Sqlite3.Column_Text (Stmt, 1) = "beta", "Second node name should match beta");
-            Assert (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.DONE, "Should have exactly two agents with nodes");
+            Assert
+              (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
+               "First agent should have a node");
+            Assert
+              (Ada_Sqlite3.Column_Text (Stmt, 0) = "alpha",
+               "First agent name should be alpha");
+            Assert
+              (Ada_Sqlite3.Column_Text (Stmt, 1) = "alpha",
+               "First node name should match alpha");
+            Assert
+              (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.ROW,
+               "Second agent should have a node");
+            Assert
+              (Ada_Sqlite3.Column_Text (Stmt, 0) = "beta",
+               "Second agent name should be beta");
+            Assert
+              (Ada_Sqlite3.Column_Text (Stmt, 1) = "beta",
+               "Second node name should match beta");
+            Assert
+              (Ada_Sqlite3.Step (Stmt) = Ada_Sqlite3.DONE,
+               "Should have exactly two agents with nodes");
          end;
       end;
       Cleanup_DB (Path);
@@ -1111,52 +1269,135 @@ package body Podmander.Database_Tests is
       use AUnit.Test_Cases.Registration;
    begin
       Register_Routine
-        (T, Test_Classify_Error_Known_Codes'Access, "Classify_Error maps known SQLite codes to Error_Kind");
+        (T,
+         Test_Classify_Error_Known_Codes'Access,
+         "Classify_Error maps known SQLite codes to Error_Kind");
       Register_Routine
-        (T, Test_Classify_Error_Code_1_Unknown'Access, "Classify_Error maps SQLITE_ERROR (code 1) to Unknown");
-      Register_Routine (T, Test_Classify_Error_Unknown_Code'Access, "Classify_Error maps unrecognized code to Unknown");
+        (T,
+         Test_Classify_Error_Code_1_Unknown'Access,
+         "Classify_Error maps SQLITE_ERROR (code 1) to Unknown");
       Register_Routine
-        (T, Test_Format_Parse_Error_Roundtrip'Access, "Format_Error and Parse_Error round-trip correctly");
-      Register_Routine (T, Test_Format_Error_Empty_Message'Access, "Format_Error handles empty message string");
+        (T,
+         Test_Classify_Error_Unknown_Code'Access,
+         "Classify_Error maps unrecognized code to Unknown");
       Register_Routine
-        (T, Test_Parse_Error_Non_Database_Error'Access, "Parse_Error on non-Database_Error returns Unknown");
+        (T,
+         Test_Format_Parse_Error_Roundtrip'Access,
+         "Format_Error and Parse_Error round-trip correctly");
+      Register_Routine
+        (T,
+         Test_Format_Error_Empty_Message'Access,
+         "Format_Error handles empty message string");
+      Register_Routine
+        (T,
+         Test_Parse_Error_Non_Database_Error'Access,
+         "Parse_Error on non-Database_Error returns Unknown");
       -- Migration and Open tests
-      Register_Routine (T, Test_Migration_Fresh_DB'Access, "Open creates schema_version table on fresh DB");
-      Register_Routine (T, Test_Migration_Idempotent'Access, "Opening same DB twice is idempotent");
-      Register_Routine (T, Test_Migration_WAL_Mode'Access, "WAL mode is enabled after Open");
-      Register_Routine (T, Test_Open_Foreign_Keys_Enabled'Access, "Foreign keys are enabled after Open");
-      Register_Routine (T, Test_Open_Creates_Parent_Dirs'Access, "Open creates parent directories");
-      Register_Routine (T, Test_Handle_Finalization'Access, "DB_Handle finalization closes connection");
-      Register_Routine (T, Test_Migration_Agents_Table'Access, "Migration 002 creates agents table");
       Register_Routine
-        (T, Test_Migration_Service_Versions_Table'Access, "Migration 004 creates service_versions table");
-      Register_Routine (T, Test_Migration_Service_Catalog_Table'Access, "Migration 008 creates service_catalog table");
+        (T,
+         Test_Migration_Fresh_DB'Access,
+         "Open creates schema_version table on fresh DB");
       Register_Routine
-        (T, Test_Migration_Nodes_Table_And_Backfill'Access, "Migration 013 creates nodes table and agents.node_id");
+        (T,
+         Test_Migration_Idempotent'Access,
+         "Opening same DB twice is idempotent");
       Register_Routine
-        (T, Test_Migration_013_Backfill'Access, "Migrations 013+014 backfill nodes and retarget catalog to node_id");
-      Register_Routine (T, Test_Open_Error_Path'Access, "Open raises Database_Error for invalid path");
+        (T, Test_Migration_WAL_Mode'Access, "WAL mode is enabled after Open");
+      Register_Routine
+        (T,
+         Test_Open_Foreign_Keys_Enabled'Access,
+         "Foreign keys are enabled after Open");
+      Register_Routine
+        (T,
+         Test_Open_Creates_Parent_Dirs'Access,
+         "Open creates parent directories");
+      Register_Routine
+        (T,
+         Test_Handle_Finalization'Access,
+         "DB_Handle finalization closes connection");
+      Register_Routine
+        (T,
+         Test_Migration_Agents_Table'Access,
+         "Migration 002 creates agents table");
+      Register_Routine
+        (T,
+         Test_Migration_Service_Versions_Table'Access,
+         "Migration 004 creates service_versions table");
+      Register_Routine
+        (T,
+         Test_Migration_Service_Catalog_Table'Access,
+         "Migration 008 creates service_catalog table");
+      Register_Routine
+        (T,
+         Test_Migration_Nodes_Table_And_Backfill'Access,
+         "Migration 013 creates nodes table and agents.node_id");
+      Register_Routine
+        (T,
+         Test_Migration_013_Backfill'Access,
+         "Migrations 013+014 backfill nodes and retarget catalog to node_id");
+      Register_Routine
+        (T,
+         Test_Open_Error_Path'Access,
+         "Open raises Database_Error for invalid path");
       -- Query API tests
-      Register_Routine (T, Test_Prepare_And_Step'Access, "Prepare/Bind/Step/Column_Text round-trip");
-      Register_Routine (T, Test_Bind_Int'Access, "Bind_Int inserts and retrieves integer values");
-      Register_Routine (T, Test_Bind_Int_Where'Access, "Bind_Int with WHERE clause parameter");
-      Register_Routine (T, Test_Changes_Count'Access, "Changes count for INSERT/UPDATE/DELETE");
-      Register_Routine (T, Test_Execute_Creates_Table'Access, "Execute creates table queried by Prepare");
-      Register_Routine (T, Test_Prepare_Invalid_SQL'Access, "Prepare raises Database_Error for invalid SQL");
-      Register_Routine (T, Test_Step_Error'Access, "Step raises Database_Error for nonexistent table");
+      Register_Routine
+        (T,
+         Test_Prepare_And_Step'Access,
+         "Prepare/Bind/Step/Column_Text round-trip");
+      Register_Routine
+        (T,
+         Test_Bind_Int'Access,
+         "Bind_Int inserts and retrieves integer values");
+      Register_Routine
+        (T,
+         Test_Bind_Int_Where'Access,
+         "Bind_Int with WHERE clause parameter");
+      Register_Routine
+        (T,
+         Test_Changes_Count'Access,
+         "Changes count for INSERT/UPDATE/DELETE");
+      Register_Routine
+        (T,
+         Test_Execute_Creates_Table'Access,
+         "Execute creates table queried by Prepare");
+      Register_Routine
+        (T,
+         Test_Prepare_Invalid_SQL'Access,
+         "Prepare raises Database_Error for invalid SQL");
+      Register_Routine
+        (T,
+         Test_Step_Error'Access,
+         "Step raises Database_Error for nonexistent table");
       -- CHECK constraint tests
       Register_Routine
-        (T, Test_Check_Version_GTE_One'Access, "CHECK constraint rejects version < 1");
+        (T,
+         Test_Check_Version_GTE_One'Access,
+         "CHECK constraint rejects version < 1");
       Register_Routine
-        (T, Test_Check_State_Enum'Access, "CHECK constraint rejects invalid state values");
+        (T,
+         Test_Check_State_Enum'Access,
+         "CHECK constraint rejects invalid state values");
       Register_Routine
-        (T, Test_Check_Current_Version_Non_Negative'Access, "CHECK constraint rejects negative current_version");
+        (T,
+         Test_Check_Current_Version_Non_Negative'Access,
+         "CHECK constraint rejects negative current_version");
       Register_Routine
-        (T, Test_Catalog_Agent_FK'Access, "FK constraint rejects non-existent node_id");
+        (T,
+         Test_Catalog_Agent_FK'Access,
+         "FK constraint rejects non-existent node_id");
       -- Settings API tests
-      Register_Routine (T, Test_Set_Setting_And_Get_Setting'Access, "Set_Setting then Get_Setting round-trip");
-      Register_Routine (T, Test_Get_Setting_Not_Found'Access, "Get_Setting raises Not_Found for missing key");
-      Register_Routine (T, Test_Set_Setting_Upsert'Access, "Set_Setting upsert overwrites existing value");
+      Register_Routine
+        (T,
+         Test_Set_Setting_And_Get_Setting'Access,
+         "Set_Setting then Get_Setting round-trip");
+      Register_Routine
+        (T,
+         Test_Get_Setting_Not_Found'Access,
+         "Get_Setting raises Not_Found for missing key");
+      Register_Routine
+        (T,
+         Test_Set_Setting_Upsert'Access,
+         "Set_Setting upsert overwrites existing value");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

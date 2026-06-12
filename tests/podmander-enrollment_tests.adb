@@ -22,17 +22,21 @@ package body Podmander.Enrollment_Tests is
 
    -- A 40-character placeholder that mimics a Z85-encoded CURVE public key.
    -- Generate_Join_Token does not validate Z85, so any 40-char string works.
-   Sample_Public_Key : constant String := "0123456789012345678901234567890123456789";
+   Sample_Public_Key : constant String :=
+     "0123456789012345678901234567890123456789";
 
    -- Test: a freshly generated token round-trips through Parse_Join_Token,
    -- reproducing both the public key embedded by the controller and the
    -- secret stored in Enrollment_Config.
-   procedure Test_Roundtrip_Recovers_Public_Key_And_Secret (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Roundtrip_Recovers_Public_Key_And_Secret
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Config : Podmander.Enrollment.Enrollment_Config;
       Token  : Unbounded_String;
    begin
-      Podmander.Enrollment.Generate_Join_Token (Public_Key => Sample_Public_Key, Config => Config, Token => Token);
+      Podmander.Enrollment.Generate_Join_Token
+        (Public_Key => Sample_Public_Key, Config => Config, Token => Token);
 
       declare
          Parsed : constant Podmander.Enrollment.Parsed_Token :=
@@ -42,18 +46,23 @@ package body Podmander.Enrollment_Tests is
            (To_String (Parsed.Public_Key) = Sample_Public_Key,
             "Parsed public key does not match the one embedded by Generate");
          Assert
-           (To_String (Parsed.Secret) = Podmander.Enrollment.Get_Secret (Config),
+           (To_String (Parsed.Secret)
+            = Podmander.Enrollment.Get_Secret (Config),
             "Parsed secret does not match the secret stored in Config");
       end;
    end Test_Roundtrip_Recovers_Public_Key_And_Secret;
 
    -- Test: a token without the PTKN- prefix is rejected.
-   procedure Test_Wrong_Prefix_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Wrong_Prefix_Raises
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
-      Bogus : constant String := "XXXX-" & Sample_Public_Key & "-" & "00000000000000000000000000000000";
+      Bogus : constant String :=
+        "XXXX-" & Sample_Public_Key & "-" & "00000000000000000000000000000000";
    begin
       declare
-         Ignored : constant Podmander.Enrollment.Parsed_Token := Podmander.Enrollment.Parse_Join_Token (Bogus);
+         Ignored : constant Podmander.Enrollment.Parsed_Token :=
+           Podmander.Enrollment.Parse_Join_Token (Bogus);
       begin
          Assert (False, "Expected Parse_Error for wrong prefix");
          pragma Unreferenced (Ignored);
@@ -65,11 +74,14 @@ package body Podmander.Enrollment_Tests is
 
    -- Test: a token that does not span the full prefix+key+sep+secret length
    -- is rejected before any indexing occurs.
-   procedure Test_Too_Short_Raises (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Too_Short_Raises
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
    begin
       declare
-         Ignored : constant Podmander.Enrollment.Parsed_Token := Podmander.Enrollment.Parse_Join_Token ("PTKN-short");
+         Ignored : constant Podmander.Enrollment.Parsed_Token :=
+           Podmander.Enrollment.Parse_Join_Token ("PTKN-short");
       begin
          Assert (False, "Expected Parse_Error for short token");
          pragma Unreferenced (Ignored);
@@ -84,7 +96,8 @@ package body Podmander.Enrollment_Tests is
       pragma Unreferenced (T);
    begin
       declare
-         Ignored : constant Podmander.Enrollment.Parsed_Token := Podmander.Enrollment.Parse_Join_Token ("");
+         Ignored : constant Podmander.Enrollment.Parsed_Token :=
+           Podmander.Enrollment.Parse_Join_Token ("");
       begin
          Assert (False, "Expected Parse_Error for empty token");
          pragma Unreferenced (Ignored);
@@ -96,17 +109,22 @@ package body Podmander.Enrollment_Tests is
 
    -- Test: calling Generate_Join_Token twice reuses the same secret
    -- when one is already set in the config.
-   procedure Test_Generate_Join_Token_Reuses_Secret (T : in out AUnit.Test_Cases.Test_Case'Class) is
+   procedure Test_Generate_Join_Token_Reuses_Secret
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
       pragma Unreferenced (T);
       Config : Podmander.Enrollment.Enrollment_Config;
       Token1 : Unbounded_String;
       Token2 : Unbounded_String;
    begin
-      Podmander.Enrollment.Generate_Join_Token (Public_Key => Sample_Public_Key, Config => Config, Token => Token1);
-      Podmander.Enrollment.Generate_Join_Token (Public_Key => Sample_Public_Key, Config => Config, Token => Token2);
+      Podmander.Enrollment.Generate_Join_Token
+        (Public_Key => Sample_Public_Key, Config => Config, Token => Token1);
+      Podmander.Enrollment.Generate_Join_Token
+        (Public_Key => Sample_Public_Key, Config => Config, Token => Token2);
       Assert
         (To_String (Token1) = To_String (Token2),
-         "Second Generate_Join_Token should produce the same token " & "when secret is already set");
+         "Second Generate_Join_Token should produce the same token "
+         & "when secret is already set");
    end Test_Generate_Join_Token_Reuses_Secret;
 
    overriding
@@ -117,10 +135,20 @@ package body Podmander.Enrollment_Tests is
         (T,
          Test_Roundtrip_Recovers_Public_Key_And_Secret'Access,
          "Generate then Parse recovers both halves of the token");
-      Register_Routine (T, Test_Wrong_Prefix_Raises'Access, "Parse_Join_Token rejects wrong prefix");
-      Register_Routine (T, Test_Too_Short_Raises'Access, "Parse_Join_Token rejects token shorter than expected");
-      Register_Routine (T, Test_Empty_Raises'Access, "Parse_Join_Token rejects empty token");
-      Register_Routine (T, Test_Generate_Join_Token_Reuses_Secret'Access, "Generate_Join_Token reuses existing secret");
+      Register_Routine
+        (T,
+         Test_Wrong_Prefix_Raises'Access,
+         "Parse_Join_Token rejects wrong prefix");
+      Register_Routine
+        (T,
+         Test_Too_Short_Raises'Access,
+         "Parse_Join_Token rejects token shorter than expected");
+      Register_Routine
+        (T, Test_Empty_Raises'Access, "Parse_Join_Token rejects empty token");
+      Register_Routine
+        (T,
+         Test_Generate_Join_Token_Reuses_Secret'Access,
+         "Generate_Join_Token reuses existing secret");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;
