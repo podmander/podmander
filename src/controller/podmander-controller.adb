@@ -3,13 +3,12 @@
 
 with Ada.Directories;
 with Ada.Environment_Variables;
-with CZMQ.Messages;
 with CZMQ.Pollers;
 with Podmander.Controller.Agent.Liveness;
+with Podmander.Controller.Control_Channel;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Controller.Supervisor;
 with Podmander.Logging;
-with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
 with CZMQ.Signals;
@@ -19,7 +18,6 @@ package body Podmander.Controller is
    package Liveness renames Podmander.Controller.Agent.Liveness;
 
    use Ada.Strings.Unbounded;
-   use type CZMQ.Messages.Receive_Status;
    use type Podmander.Database.Error_Kind;
 
    Poll_Interval_Ms : constant := 1000;
@@ -129,44 +127,44 @@ package body Podmander.Controller is
       end return;
    end Make_Listening_Controller;
 
-   procedure Handle_Message (Self : in out Controller_Instance) is
-      Msg    : CZMQ.Messages.Message;
-      Status : CZMQ.Messages.Receive_Status;
-
+   procedure Handle_Message
+     (Self : in out Controller_Instance; Chan : Control_Channel.Channel)
+   is
       -- Safe: Handler is stack-local to Handle_Message and cannot outlive
       -- Self. Unchecked_Access avoids aliasing-aspect declarations here.
       Handler : Message_Handlers.Controller_Handler :=
         (Ctrl => Self'Unchecked_Access, Identity => Null_Unbounded_String);
+      Message : Control_Channel.Message_Holders.Holder;
+      Outcome : Control_Channel.Receive_Outcome;
    begin
-      CZMQ.Messages.Receive (Self.Socket, Msg, Status);
-      if Status = CZMQ.Messages.Timeout then
-         return;
-      end if;
+      Chan.Receive (Handler.Identity, Message, Outcome);
+      case Outcome is
+         when Control_Channel.No_Message       =>
+            null;
 
-      Handler.Identity := To_Unbounded_String (Msg.Pop_String);
-      declare
-         Decoded : constant Podmander.Messages.Protocol_Message'Class :=
-           Podmander.Messages.Decode (Msg);
-      begin
-         Decoded.Dispatch_To (Handler);
-      exception
-         when Podmander.Messages.Decode_Error =>
+         when Control_Channel.Malformed        =>
             Podmander.Logging.Warning
               ("controller",
                "Malformed message from " & To_String (Handler.Identity));
-      end;
+
+         when Control_Channel.Message_Received =>
+            Control_Channel.Message_Holders.Element (Message).Dispatch_To
+              (Handler);
+      end case;
    end Handle_Message;
 
    procedure Run (Self : in out Controller_Instance) is
       Poller : CZMQ.Pollers.Poller;
+      Chan   : constant Control_Channel.Channel :=
+        Control_Channel.Wrap (Self.Socket'Unchecked_Access);
    begin
       CZMQ.Pollers.Open (Poller, Self.Socket);
       while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
          if Poller.Wait (Poll_Interval_Ms) then
-            Handle_Message (Self);
+            Handle_Message (Self, Chan);
          end if;
          Liveness.Check_Timeouts (Self.DB, Self.Config.Agent_Timeout);
-         Supervisor.Tick (Self.DB, Self.Socket);
+         Supervisor.Tick (Self.DB, Chan);
       end loop;
       CZMQ.Pollers.Close (Poller);
    end Run;

@@ -2,7 +2,6 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Strings.Unbounded;
-with CZMQ.Messages;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Scheduler;
 with Podmander.Controller.Service.Repository;
@@ -40,7 +39,7 @@ package body Podmander.Controller.Supervisor is
    --  that node.
    procedure Try_Deploy_Entry
      (DB        : in out Podmander.Database.DB_Handle;
-      Socket    : in out CZMQ.Sockets.Socket;
+      Chan      : Control_Channel.Channel;
       Cat_Entry : Service_Catalog_Entry)
    is
       use Podmander.Controller.Service_Catalog.Repository;
@@ -98,11 +97,8 @@ package body Podmander.Controller.Supervisor is
            (Catalog_Id   => Cat_Entry.Id,
             Service_Name => Svc.Name,
             Quadlet      => To_Unbounded_String (Quadlet));
-         Msg          : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
       begin
-         Msg.Add_String (To_String (Agent_Connection_Id));
-         Cmd.Encode (Msg);
-         Msg.Send (Socket);
+         Chan.Send (To_String (Agent_Connection_Id), Cmd);
          declare
             Set_State_Ok : constant Boolean :=
               Set_State (DB, Cat_Entry.Id, In_Progress);
@@ -158,24 +154,23 @@ package body Podmander.Controller.Supervisor is
    --  Attempt to deploy all Pending catalog entries that have an assigned node
    --  and a Registered agent.
    procedure Deploy_Pending
-     (DB     : in out Podmander.Database.DB_Handle;
-      Socket : in out CZMQ.Sockets.Socket)
+     (DB : in out Podmander.Database.DB_Handle; Chan : Control_Channel.Channel)
    is
       use Podmander.Controller.Service_Catalog.Repository;
       Pending_Entries : constant Catalog_Entry_Vectors.Vector :=
         Get_Pending (DB);
    begin
       for Cursor in Pending_Entries.Iterate loop
-         Try_Deploy_Entry (DB, Socket, Catalog_Entry_Vectors.Element (Cursor));
+         Try_Deploy_Entry (DB, Chan, Catalog_Entry_Vectors.Element (Cursor));
       end loop;
    end Deploy_Pending;
 
    procedure Tick
-     (DB     : in out Podmander.Database.DB_Handle;
-      Socket : in out CZMQ.Sockets.Socket) is
+     (DB : in out Podmander.Database.DB_Handle; Chan : Control_Channel.Channel)
+   is
    begin
       Schedule_Unscheduled (DB);
-      Deploy_Pending (DB, Socket);
+      Deploy_Pending (DB, Chan);
    end Tick;
 
    procedure Recover (DB : in out Podmander.Database.DB_Handle) is

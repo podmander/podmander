@@ -2,8 +2,8 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Calendar;
-with CZMQ.Messages;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Control_Channel;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Types;
@@ -26,16 +26,26 @@ package body Podmander.Controller.Message_Handlers is
    use Podmander.Types;
    use type Podmander.Database.Error_Kind;
 
+   --  Send a reply to a connection identity through a transiently wrapped
+   --  Control Channel, which borrows the controller's socket. No-op when that
+   --  socket is not open -- the seam that lets handler logic run in tests
+   --  without a live socket, in place of an Is_Valid guard at each call site.
+   procedure Send_Reply
+     (H        : Controller_Handler;
+      Identity : String;
+      Message  : Podmander.Messages.Protocol_Message'Class) is
+   begin
+      Control_Channel.Wrap (H.Ctrl.Socket'Unchecked_Access).Send
+        (Identity, Message);
+   end Send_Reply;
+
    procedure Send_Status_Query
      (H : in out Controller_Handler; Connection_Id : String)
    is
       use Podmander.Messages.Status_Queries;
       Query : constant Status_Query := (null record);
-      Msg   : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      Msg.Add_String (Connection_Id);
-      Query.Encode (Msg);
-      Msg.Send (H.Ctrl.Socket);
+      Send_Reply (H, Connection_Id, Query);
       Podmander.Logging.Info
         ("controller", "Sent status query to " & Connection_Id);
    end Send_Status_Query;
@@ -93,19 +103,14 @@ package body Podmander.Controller.Message_Handlers is
             "Registered agent """ & Name & """ as " & Connection_Id);
       end;
 
-      if H.Ctrl.Socket.Is_Valid then
-         declare
-            Reply     : constant Registration_Response :=
-              (Connection_Id => To_Unbounded_String (Connection_Id));
-            Reply_Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-         begin
-            Reply_Msg.Add_String (Connection_Id);
-            Reply.Encode (Reply_Msg);
-            Reply_Msg.Send (H.Ctrl.Socket);
-         end;
+      declare
+         Reply : constant Registration_Response :=
+           (Connection_Id => To_Unbounded_String (Connection_Id));
+      begin
+         Send_Reply (H, Connection_Id, Reply);
+      end;
 
-         Send_Status_Query (H, Connection_Id);
-      end if;
+      Send_Status_Query (H, Connection_Id);
    end Handle_Registration_Request;
 
    overriding
@@ -279,13 +284,11 @@ package body Podmander.Controller.Message_Handlers is
       then
          Podmander.Logging.Error
            ("controller", "Invalid enrollment secret in Stack_Submission");
-         if H.Ctrl.Socket.Is_Valid then
-            Send_Stack_Submission_Result
-              (H,
-               Success  => False,
-               Message  => "Invalid enrollment secret",
-               Identity => To_String (H.Identity));
-         end if;
+         Send_Stack_Submission_Result
+           (H,
+            Success  => False,
+            Message  => "Invalid enrollment secret",
+            Identity => To_String (H.Identity));
          return;
       end if;
 
@@ -295,13 +298,11 @@ package body Podmander.Controller.Message_Handlers is
              Podmander.Controller.Stack_Submission.Submit
                (H.Ctrl.DB, To_String (Cmd.TOML));
       begin
-         if H.Ctrl.Socket.Is_Valid then
-            Send_Stack_Submission_Result
-              (H,
-               Success  => Submission_Res.Ok,
-               Message  => To_String (Submission_Res.Message),
-               Identity => To_String (H.Identity));
-         end if;
+         Send_Stack_Submission_Result
+           (H,
+            Success  => Submission_Res.Ok,
+            Message  => To_String (Submission_Res.Message),
+            Identity => To_String (H.Identity));
       end;
    end Handle_Stack_Submission;
 
@@ -326,11 +327,8 @@ package body Podmander.Controller.Message_Handlers is
       use Podmander.Messages.Stack_Submission_Results;
       Result_Msg : constant Stack_Submission_Result :=
         (Success => Success, Message => To_Unbounded_String (Message));
-      Msg        : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
    begin
-      Msg.Add_String (Identity);
-      Result_Msg.Encode (Msg);
-      Msg.Send (H.Ctrl.Socket);
+      Send_Reply (H, Identity, Result_Msg);
       Podmander.Logging.Info
         ("controller",
          "Sent Stack_Submission_Result to "

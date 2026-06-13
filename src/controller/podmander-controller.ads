@@ -125,12 +125,13 @@ package Podmander.Controller is
    -- fields are invalid until Make_Listening_Controller calls Generate and
    -- Open_Router. Handler tests rely on that to drive logic without a
    -- live socket; production code obtains a fully-built instance from
-   -- Make_Listening_Controller.
+   -- Make_Listening_Controller. Socket is aliased so the Control Channel can
+   -- borrow it by reference while the controller retains ownership.
    type Controller_Instance is tagged limited record
       Config      : Controller_Config;
       DB          : Database.DB_Handle;
       Certificate : CZMQ.Certificates.Certificate;
-      Socket      : CZMQ.Sockets.Socket;
+      Socket      : aliased CZMQ.Sockets.Socket;
       Running     : Boolean := False;
    end record;
 

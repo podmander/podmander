@@ -2,9 +2,10 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 --  Behavioral tests for Podmander.Controller.Supervisor.
---  Uses in-process :memory: DB and a real ROUTER socket. With no connected
---  peer the ROUTER silently drops outbound messages (mandatory routing is off),
---  so Tick's encode+send+Set_State path can be exercised without a live agent.
+--  Uses in-process :memory: DB and a real ROUTER socket wrapped in a Control
+--  Channel. With no connected peer the ROUTER silently drops outbound messages
+--  (mandatory routing is off), so Tick's encode+send+Set_State path can be
+--  exercised without a live agent.
 
 with AUnit.Assertions;
 with AUnit.Test_Cases;
@@ -12,6 +13,7 @@ with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with CZMQ.Sockets;
 with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Control_Channel;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
@@ -157,7 +159,7 @@ package body Podmander.Controller.Supervisor_Tests is
            Service_Id     => Svc,
            Node_Id        => (Present => False),
            Target_Version => 1);
-      Sock : CZMQ.Sockets.Socket;
+      Sock : aliased CZMQ.Sockets.Socket;
    begin
       --  First_Available selects a node only when a Registered agent exists.
       --  Seed one so the scheduling step can assign a node.
@@ -165,7 +167,7 @@ package body Podmander.Controller.Supervisor_Tests is
 
       CZMQ.Sockets.Open_Router (Sock);
 
-      Supervisor.Tick (D, Sock);
+      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
 
       Cat := Cat_Repo.Get_By_Id (D, Cat.Id);
       Assert
@@ -196,14 +198,14 @@ package body Podmander.Controller.Supervisor_Tests is
            Service_Id     => Svc,
            Node_Id        => (Present => True, Node_Id => Node),
            Target_Version => 1);
-      Sock : CZMQ.Sockets.Socket;
+      Sock : aliased CZMQ.Sockets.Socket;
    begin
       --  Register a Registered agent on this node.
       Seed_Agent (D, "agent-1", Node, "conn-abc");
 
       CZMQ.Sockets.Open_Router (Sock);
 
-      Supervisor.Tick (D, Sock);
+      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
 
       Cat := Cat_Repo.Get_By_Id (D, Cat.Id);
       Assert
@@ -231,12 +233,12 @@ package body Podmander.Controller.Supervisor_Tests is
            Service_Id     => Svc,
            Node_Id        => (Present => True, Node_Id => Node),
            Target_Version => 1);
-      Sock : CZMQ.Sockets.Socket;
+      Sock : aliased CZMQ.Sockets.Socket;
    begin
       --  No agent seeded: node exists but has no Registered agent.
       CZMQ.Sockets.Open_Router (Sock);
 
-      Supervisor.Tick (D, Sock);
+      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
 
       Cat := Cat_Repo.Get_By_Id (D, Cat.Id);
       Assert
@@ -255,10 +257,10 @@ package body Podmander.Controller.Supervisor_Tests is
    is
       pragma Unreferenced (T);
       D    : DB.DB_Handle := DB.Open (":memory:");
-      Sock : CZMQ.Sockets.Socket;
+      Sock : aliased CZMQ.Sockets.Socket;
    begin
       CZMQ.Sockets.Open_Router (Sock);
-      Supervisor.Tick (D, Sock);
+      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
       --  No assert needed; reaching this point without an exception is the test.
       CZMQ.Sockets.Close (Sock);
    end Test_Tick_Empty_Catalog_Is_Noop;

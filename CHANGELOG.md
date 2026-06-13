@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Extracted `Podmander.Controller.Control_Channel` from the controller body; it wraps the ROUTER socket behind CZMQ-free `Send`/`Receive` operations, so the Supervisor and message handlers route transport through it instead of touching the socket directly, and its no-op-on-unopened-socket replaces the per-handler `Is_Valid` guards (#163)
 - Extracted `Podmander.Controller.Agent.Liveness` from the controller body; `Check_Timeouts` owns the heartbeat state machine (Registered -> Unresponsive -> Lost) and `Recover` resets agents to Unresponsive on startup; controller delegates both calls (#162)
 - Extracted `Podmander.Controller.Supervisor` from the controller body; `Tick` owns the schedule-then-deploy reconciliation pass and `Recover` resets stale In_Progress catalog entries on startup; controller delegates both calls (#161)
 
