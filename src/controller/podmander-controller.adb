@@ -5,21 +5,13 @@ with Ada.Directories;
 with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
-with Podmander.Config.Parser;
-with Podmander.Types;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Message_Handlers;
-with Podmander.Controller.Registrar;
-with Podmander.Controller.Scheduler;
-with Podmander.Controller.Strategies.First_Available;
-with Podmander.Controller.Service.Repository;
-with Podmander.Controller.Service_Catalog.Repository;
-with Podmander.Generators.Quadlet;
+with Podmander.Controller.Supervisor;
 with Podmander.Logging;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
-with Podmander.Messages.Deployment_Commands;
 with CZMQ.Signals;
 
 package body Podmander.Controller is
@@ -28,8 +20,6 @@ package body Podmander.Controller is
    use Podmander.Types;
    use type CZMQ.Messages.Receive_Status;
    use type Podmander.Database.Error_Kind;
-
-   procedure Reconcile_State (Self : in out Controller_Instance);
 
    Poll_Interval_Ms : constant := 1000;
 
@@ -93,13 +83,7 @@ package body Podmander.Controller is
             end loop;
          end;
 
-         --  Reset any catalog entries that were In_Progress when the
-         --  controller last ran. They need to be redeployed.
-         declare
-            use Podmander.Controller.Service_Catalog.Repository;
-         begin
-            Reset_In_Progress (C.DB);
-         end;
+         Supervisor.Recover (C.DB);
 
          -- Load or generate CURVE certificate
          declare
@@ -237,155 +221,10 @@ package body Podmander.Controller is
             Handle_Message (Self);
          end if;
          Check_Timeouts (Self);
-         Reconcile_State (Self);
+         Supervisor.Tick (Self.DB, Self.Socket);
       end loop;
       CZMQ.Pollers.Close (Poller);
    end Run;
-
-   function To_Service_Definition
-     (SV : Service_Version; Name : String) return Service_Definition is
-   begin
-      return
-        (Service_Name  => To_Unbounded_String (Name),
-         Image         => SV.Image,
-         Env           => SV.Env,
-         Env_Count     => SV.Env_Count,
-         Ports         => SV.Ports,
-         Ports_Count   => SV.Ports_Count,
-         Volumes       => SV.Volumes,
-         Volumes_Count => SV.Volumes_Count,
-         Description   => SV.Description,
-         WantedBy      => SV.Wanted_By);
-   end To_Service_Definition;
-
-   procedure Try_Deploy_Entry
-     (Self : in out Controller_Instance; Cat_Entry : Service_Catalog_Entry)
-   is
-      use Podmander.Controller.Service_Catalog.Repository;
-      use Podmander.Messages.Deployment_Commands;
-      All_Agents          : constant Podmander.Types.Agent_Maps.Map :=
-        Agent.Repository.Load_All (Self.DB);
-      Agent_Found         : Boolean := False;
-      Agent_Connection_Id : Ada.Strings.Unbounded.Unbounded_String;
-   begin
-      if not Cat_Entry.Assigned_Node.Present then
-         return;
-      end if;
-
-      for Cur in All_Agents.Iterate loop
-         declare
-            Info : constant Podmander.Types.Agent_Info :=
-              Podmander.Types.Agent_Maps.Element (Cur);
-         begin
-            if Info.Node_Id = Cat_Entry.Assigned_Node.Node_Id
-              and then Info.State = Podmander.Types.Registered
-            then
-               Agent_Found := True;
-               Agent_Connection_Id := Info.Connection_Id;
-               exit;
-            end if;
-         end;
-      end loop;
-
-      if not Agent_Found then
-         return;
-      end if;
-
-      declare
-         SV           : constant Service_Version :=
-           Service.Repository.Get_Version
-             (Self.DB, Cat_Entry.Service_Id, Cat_Entry.Target_Version);
-         SD           : constant Service_Definition :=
-           To_Service_Definition (SV, "");
-         Svc          : constant Podmander.Controller.Service.Service :=
-           Service.Repository.Get_By_Id (Self.DB, Cat_Entry.Service_Id);
-         SD_With_Name : constant Service_Definition :=
-           (Service_Name  => Svc.Name,
-            Image         => SD.Image,
-            Env           => SD.Env,
-            Env_Count     => SD.Env_Count,
-            Ports         => SD.Ports,
-            Ports_Count   => SD.Ports_Count,
-            Volumes       => SD.Volumes,
-            Volumes_Count => SD.Volumes_Count,
-            Description   => SD.Description,
-            WantedBy      => SD.WantedBy);
-         Quadlet      : constant String :=
-           Podmander.Generators.Quadlet.Render (SD_With_Name);
-         Cmd          : constant Deployment_Command :=
-           (Catalog_Id   => Cat_Entry.Id,
-            Service_Name => Svc.Name,
-            Quadlet      => To_Unbounded_String (Quadlet));
-         Msg          : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
-      begin
-         Msg.Add_String (To_String (Agent_Connection_Id));
-         Cmd.Encode (Msg);
-         Msg.Send (Self.Socket);
-         declare
-            Set_State_Ok : constant Boolean :=
-              Set_State (Self.DB, Cat_Entry.Id, In_Progress);
-            pragma Unreferenced (Set_State_Ok);
-         begin
-            null;
-         end;
-         Podmander.Logging.Info
-           ("controller",
-            "Deploying "
-            & To_String (Svc.Name)
-            & " v"
-            & Cat_Entry.Target_Version'Image
-            & " to "
-            & To_String (Agent_Connection_Id)
-            & " (catalog "
-            & Cat_Entry.Id'Image
-            & ")");
-      end;
-   end Try_Deploy_Entry;
-
-   procedure Schedule_Unscheduled (Self : in out Controller_Instance) is
-      use Podmander.Controller.Service_Catalog.Repository;
-      Unscheduled : constant Catalog_Entry_Vectors.Vector :=
-        Get_Unscheduled (Self.DB);
-   begin
-      for Cursor in Unscheduled.Iterate loop
-         declare
-            Cat_Entry : constant Service_Catalog_Entry :=
-              Catalog_Entry_Vectors.Element (Cursor);
-            Result    : constant Scheduler.Schedule_Result :=
-              Scheduler.Schedule
-                (Self.DB,
-                 Cat_Entry.Service_Id,
-                 Cat_Entry.Target_Version,
-                 Podmander.Controller.Strategies.First_Available.Instance);
-         begin
-            if Result.Ok and then Result.Catalog_Entry.Assigned_Node.Present
-            then
-               Podmander.Logging.Info
-                 ("controller",
-                  "Scheduled catalog entry "
-                  & Cat_Entry.Id'Image
-                  & " to node "
-                  & Result.Catalog_Entry.Assigned_Node.Node_Id'Image);
-            end if;
-         end;
-      end loop;
-   end Schedule_Unscheduled;
-
-   procedure Deploy_Pending (Self : in out Controller_Instance) is
-      use Podmander.Controller.Service_Catalog.Repository;
-      Pending_Entries : constant Catalog_Entry_Vectors.Vector :=
-        Get_Pending (Self.DB);
-   begin
-      for Cursor in Pending_Entries.Iterate loop
-         Try_Deploy_Entry (Self, Catalog_Entry_Vectors.Element (Cursor));
-      end loop;
-   end Deploy_Pending;
-
-   procedure Reconcile_State (Self : in out Controller_Instance) is
-   begin
-      Schedule_Unscheduled (Self);
-      Deploy_Pending (Self);
-   end Reconcile_State;
 
    procedure Stop (Self : in out Controller_Instance) is
    begin

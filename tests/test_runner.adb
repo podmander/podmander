@@ -16,6 +16,7 @@ with Podmander.Controller.Service.Repository_Tests;
 with Podmander.Controller.Strategies.First_Available_Tests;
 with Podmander.Controller.Service_Catalog.Repository_Tests;
 with Podmander.Controller.Stack_Submission_Tests;
+with Podmander.Controller.Supervisor_Tests;
 with Podmander.Controller_Tests;
 with Podmander.Enrollment_Tests;
 with Podmander.Config_Tests;
@@ -57,6 +58,8 @@ procedure Test_Runner is
         (Result, Podmander.Controller.Service_Catalog.Repository_Tests.Suite);
       AUnit.Test_Suites.Add_Test
         (Result, Podmander.Controller.Stack_Submission_Tests.Suite);
+      AUnit.Test_Suites.Add_Test
+        (Result, Podmander.Controller.Supervisor_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Controller_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Enrollment_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Logging_Tests.Suite);

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Extracted `Podmander.Controller.Supervisor` from the controller body; `Tick` owns the schedule-then-deploy reconciliation pass and `Recover` resets stale In_Progress catalog entries on startup; controller delegates both calls (#161)
+
 ### Added
 
 - `Podmander.Agent.Atomic_File.Write` performs atomic file placement via write-then-rename, so an interrupted deploy never leaves a partial quadlet file (#69)
