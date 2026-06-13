@@ -4,7 +4,7 @@
 with Ada.Directories;
 with Ada.Environment_Variables;
 with Ada.Exceptions;
-with Ada.Text_IO;
+with Podmander.Agent.Atomic_File;
 with Podmander.Agent.Host_Command;
 with Podmander.Agent.Host_Command.Result_Mapping;
 with Podmander.Logging;
@@ -60,15 +60,7 @@ package body Podmander.Agent.Podman is
       Podmander.Logging.Info ("agent", "Deploying " & Service_Name);
 
       Ada.Directories.Create_Path (Base_Dir);
-
-      Write_Quadlet :
-      declare
-         File : Ada.Text_IO.File_Type;
-      begin
-         Ada.Text_IO.Create (File, Ada.Text_IO.Out_File, File_Path);
-         Ada.Text_IO.Put (File, Quadlet);
-         Ada.Text_IO.Close (File);
-      end Write_Quadlet;
+      Podmander.Agent.Atomic_File.Write (File_Path, Quadlet);
 
       if not Run_Systemctl_Step
                ([HC."+" ("--user"), HC."+" ("daemon-reload")],
