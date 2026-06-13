@@ -5,7 +5,7 @@ with Ada.Directories;
 with Ada.Environment_Variables;
 with CZMQ.Messages;
 with CZMQ.Pollers;
-with Podmander.Controller.Agent.Repository;
+with Podmander.Controller.Agent.Liveness;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Controller.Supervisor;
 with Podmander.Logging;
@@ -16,8 +16,9 @@ with CZMQ.Signals;
 
 package body Podmander.Controller is
 
+   package Liveness renames Podmander.Controller.Agent.Liveness;
+
    use Ada.Strings.Unbounded;
-   use Podmander.Types;
    use type CZMQ.Messages.Receive_Status;
    use type Podmander.Database.Error_Kind;
 
@@ -63,26 +64,7 @@ package body Podmander.Controller is
             Socket      => <>,
             Running     => True)
       do
-         -- Per ADR-0037: agents that were Registered or Unresponsive
-         -- start as Unresponsive  -- they must send a heartbeat to prove
-         -- they're still alive after the controller restart.
-         declare
-            All_Agents : constant Podmander.Types.Agent_Maps.Map :=
-              Agent.Repository.Load_All (C.DB);
-         begin
-            for Cursor in All_Agents.Iterate loop
-               declare
-                  Info : Podmander.Types.Agent_Info :=
-                    Podmander.Types.Agent_Maps.Element (Cursor);
-               begin
-                  if Info.State /= Podmander.Types.Lost then
-                     Info.State := Podmander.Types.Unresponsive;
-                     Agent.Repository.Set_State (C.DB, Info);
-                  end if;
-               end;
-            end loop;
-         end;
-
+         Liveness.Recover (C.DB);
          Supervisor.Recover (C.DB);
 
          -- Load or generate CURVE certificate
@@ -175,43 +157,6 @@ package body Podmander.Controller is
       end;
    end Handle_Message;
 
-   procedure Check_Timeouts (Self : in out Controller_Instance) is
-      use type Ada.Calendar.Time;
-      Now                    : constant Ada.Calendar.Time :=
-        Ada.Calendar.Clock;
-      Unresponsive_Threshold : constant Duration :=
-        Self.Config.Agent_Timeout * 2.0;
-      Lost_Threshold         : constant Duration :=
-        Self.Config.Agent_Timeout * 3.0;
-      All_Agents             : constant Podmander.Types.Agent_Maps.Map :=
-        Agent.Repository.Load_All (Self.DB);
-   begin
-      for Cursor in All_Agents.Iterate loop
-         declare
-            Info    : Podmander.Types.Agent_Info :=
-              Podmander.Types.Agent_Maps.Element (Cursor);
-            Name    : constant String := To_String (Info.Name);
-            Elapsed : constant Duration := Now - Info.Last_Seen;
-         begin
-            if Elapsed >= Lost_Threshold
-              and then Info.State /= Podmander.Types.Lost
-            then
-               Info.State := Podmander.Types.Lost;
-               Agent.Repository.Set_State (Self.DB, Info);
-               Podmander.Logging.Warning
-                 ("controller", "Agent " & Name & " disconnected");
-            elsif Elapsed >= Unresponsive_Threshold
-              and then Info.State = Podmander.Types.Registered
-            then
-               Info.State := Podmander.Types.Unresponsive;
-               Agent.Repository.Set_State (Self.DB, Info);
-               Podmander.Logging.Warning
-                 ("controller", "Agent " & Name & " unresponsive");
-            end if;
-         end;
-      end loop;
-   end Check_Timeouts;
-
    procedure Run (Self : in out Controller_Instance) is
       Poller : CZMQ.Pollers.Poller;
    begin
@@ -220,7 +165,7 @@ package body Podmander.Controller is
          if Poller.Wait (Poll_Interval_Ms) then
             Handle_Message (Self);
          end if;
-         Check_Timeouts (Self);
+         Liveness.Check_Timeouts (Self.DB, Self.Config.Agent_Timeout);
          Supervisor.Tick (Self.DB, Self.Socket);
       end loop;
       CZMQ.Pollers.Close (Poller);

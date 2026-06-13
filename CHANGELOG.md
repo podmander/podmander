@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Extracted `Podmander.Controller.Agent.Liveness` from the controller body; `Check_Timeouts` owns the heartbeat state machine (Registered -> Unresponsive -> Lost) and `Recover` resets agents to Unresponsive on startup; controller delegates both calls (#162)
 - Extracted `Podmander.Controller.Supervisor` from the controller body; `Tick` owns the schedule-then-deploy reconciliation pass and `Recover` resets stale In_Progress catalog entries on startup; controller delegates both calls (#161)
 
 ### Added
