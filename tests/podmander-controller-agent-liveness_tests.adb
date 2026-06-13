@@ -4,9 +4,11 @@
 --  Behavioral tests for Podmander.Controller.Agent.Liveness.
 --  Uses an in-process :memory: DB. Agents are seeded with explicit State and
 --  Last_Seen values so that Check_Timeouts and Recover can be exercised
---  without a running poll loop. Agent_Timeout => 1.0 means the unresponsive
---  threshold is 2.0 s and the lost threshold is 3.0 s; seed offsets (0.0,
---  2.5, 3.5) stay well clear of the boundaries to avoid clock-jitter flakes.
+--  without a running poll loop. Agent_Timeout => 30.0 means the unresponsive
+--  threshold is 60 s and the lost threshold is 90 s; seed offsets are
+--  multiples of the timeout (2.5x => 75 s, 3.5x => 105 s), leaving a 15 s
+--  clearance to each boundary that dwarfs any seeding I/O latency, so the
+--  wall-clock comparison in Check_Timeouts cannot jitter across a threshold.
 
 with AUnit.Assertions;
 with AUnit.Test_Cases;
@@ -76,7 +78,14 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       return All_Agents.Element (Name).State;
    end Get_State;
 
-   Agent_Timeout : constant Duration := 1.0;
+   Agent_Timeout : constant Duration := 30.0;
+
+   --  Idle offsets for seeding, expressed as multiples of the timeout so the
+   --  clearance to each state boundary scales with it. At Agent_Timeout = 30.0
+   --  these are 75 s and 105 s, each 15 s clear of the 60 s/90 s thresholds --
+   --  far larger than any seeding latency, so the comparison never jitters.
+   Idle_Unresponsive : constant Duration := 2.5 * Agent_Timeout;
+   Idle_Lost         : constant Duration := 3.5 * Agent_Timeout;
 
    -----------------------------------------------
    --  Check_Timeouts tests
@@ -89,7 +98,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       pragma Unreferenced (T);
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
-      Seed_Agent (D, "a1", Registered, Clock - 2.5);
+      Seed_Agent (D, "a1", Registered, Clock - Idle_Unresponsive);
       Liveness.Check_Timeouts (D, Agent_Timeout);
       Assert
         (Get_State (D, "a1") = Unresponsive,
@@ -103,7 +112,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       pragma Unreferenced (T);
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
-      Seed_Agent (D, "a2", Registered, Clock - 3.5);
+      Seed_Agent (D, "a2", Registered, Clock - Idle_Lost);
       Liveness.Check_Timeouts (D, Agent_Timeout);
       Assert
         (Get_State (D, "a2") = Lost,
@@ -117,7 +126,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       pragma Unreferenced (T);
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
-      Seed_Agent (D, "a3", Unresponsive, Clock - 3.5);
+      Seed_Agent (D, "a3", Unresponsive, Clock - Idle_Lost);
       Liveness.Check_Timeouts (D, Agent_Timeout);
       Assert
         (Get_State (D, "a3") = Lost,
@@ -131,7 +140,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       pragma Unreferenced (T);
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
-      Seed_Agent (D, "a4", Unresponsive, Clock - 2.5);
+      Seed_Agent (D, "a4", Unresponsive, Clock - Idle_Unresponsive);
       Liveness.Check_Timeouts (D, Agent_Timeout);
       Assert
         (Get_State (D, "a4") = Unresponsive,
@@ -159,7 +168,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       pragma Unreferenced (T);
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
-      Seed_Agent (D, "a6", Lost, Clock - 3.5);
+      Seed_Agent (D, "a6", Lost, Clock - Idle_Lost);
       Liveness.Check_Timeouts (D, Agent_Timeout);
       Assert
         (Get_State (D, "a6") = Lost,
