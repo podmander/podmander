@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `Podmander.Agent.Atomic_File.Write` performs atomic file placement via write-then-rename, so an interrupted deploy never leaves a partial quadlet file (#69)
+
 - `Version_Option` variant record in `Podmander.Controller`; `Service_Catalog_Entry.Current_Version` now uses `Version_Option` instead of a `Natural` sentinel 0 (#92)
 - `Column_Is_Null` helper in `Podmander.Database` for nullable column reads
 
