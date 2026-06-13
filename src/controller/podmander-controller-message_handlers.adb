@@ -46,7 +46,7 @@ package body Podmander.Controller.Message_Handlers is
       Query : constant Status_Query := (null record);
    begin
       Send_Reply (H, Connection_Id, Query);
-      Podmander.Logging.Info
+      Podmander.Logging.Debug
         ("controller", "Sent status query to " & Connection_Id);
    end Send_Status_Query;
 
@@ -329,7 +329,7 @@ package body Podmander.Controller.Message_Handlers is
         (Success => Success, Message => To_Unbounded_String (Message));
    begin
       Send_Reply (H, Identity, Result_Msg);
-      Podmander.Logging.Info
+      Podmander.Logging.Debug
         ("controller",
          "Sent Stack_Submission_Result to "
          & Identity
