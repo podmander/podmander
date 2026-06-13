@@ -48,3 +48,4 @@ ADRs capture architecturally significant decisions — the *why* behind the syst
 | [0038](0038-state-tracking-design.md) | State tracking design for MVP | Accepted | 2026-05-23 |
 | [0039](0039-operator-cli-shares-agent-channel.md) | Operator CLI shares the agent control-plane channel | Accepted | 2026-06-06 |
 | [0040](0040-node-as-first-class-domain-object.md) | Node as a first-class domain object, distinct from Agent | Proposed | 2026-06-07 |
+| [0041](0041-controller-composition-root.md) | Controller as a composition root, with extracted runtime collaborators | Proposed | 2026-06-13 |
