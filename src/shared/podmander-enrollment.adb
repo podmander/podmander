@@ -1,31 +1,60 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
-with Ada.Numerics.Discrete_Random;
+with Interfaces.C;
+with System;
 
 package body Podmander.Enrollment is
 
    Hex_Chars : constant String := "0123456789abcdef";
 
-   subtype Hex_Range is Natural range 0 .. 15;
-   package Hex_Rand is new Ada.Numerics.Discrete_Random (Hex_Range);
-
    -- Total length of a well-formed join token.
    Token_Length : constant Positive :=
      Token_Prefix'Length + Public_Key_Length + 1 + Secret_Length;
 
-   function Random_Hex (Length : Positive) return String is
-      Gen : Hex_Rand.Generator;
+   function getrandom
+     (buf    : System.Address;
+      buflen : Interfaces.C.size_t;
+      flags  : Interfaces.C.unsigned) return Interfaces.C.long
+   with Import => True, Convention => C, External_Name => "getrandom";
+
+   function Get_Random_Bytes (Length : Positive) return Byte_Array is
+      use type Interfaces.C.long;
+      Buf   : Byte_Array (1 .. Length);
+      Total : Natural := 0;
    begin
-      Hex_Rand.Reset (Gen);
-      declare
-         Result : String (1 .. Length);
-      begin
-         for I in Result'Range loop
-            Result (I) := Hex_Chars (Hex_Rand.Random (Gen) + 1);
-         end loop;
-         return Result;
-      end;
+      while Total < Length loop
+         declare
+            Remaining : constant Interfaces.C.size_t :=
+              Interfaces.C.size_t (Length - Total);
+            Got       : constant Interfaces.C.long :=
+              getrandom
+                (buf    => Buf (Total + 1)'Address,
+                 buflen => Remaining,
+                 flags  => 0);
+         begin
+            if Got = -1 then
+               raise CSPRNG_Error with "getrandom(2) failed";
+            end if;
+            Total := Total + Natural (Got);
+         end;
+      end loop;
+      return Buf;
+   end Get_Random_Bytes;
+
+   function Bytes_To_Hex (Bytes : Byte_Array) return String is
+      Result : String (1 .. Bytes'Length);
+   begin
+      for I in Bytes'Range loop
+         Result (I - Bytes'First + 1) :=
+           Hex_Chars (Natural (Bytes (I)) mod 16 + 1);
+      end loop;
+      return Result;
+   end Bytes_To_Hex;
+
+   function Random_Hex (Length : Positive) return String is
+   begin
+      return Bytes_To_Hex (Get_Random_Bytes (Length));
    end Random_Hex;
 
    procedure Set_Secret (Config : in out Enrollment_Config; Value : String) is

@@ -130,6 +130,24 @@ package body Podmander.Enrollment_Tests is
       end;
    end Test_Ensure_Secret;
 
+   -- Test: Bytes_To_Hex is deterministic: fixed input bytes produce the
+   -- expected hex string. This pins the encoding and proves the nibble
+   -- mapping is correct and unbiased. Length and alphabet are covered as
+   -- a side effect.
+   procedure Test_Bytes_To_Hex_Deterministic
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      use type Podmander.Enrollment.Byte;
+      Input  : constant Podmander.Enrollment.Byte_Array := (0, 1, 15, 16, 255);
+      Expect : constant String := "01f0f";
+      Result : constant String := Podmander.Enrollment.Bytes_To_Hex (Input);
+   begin
+      Assert
+        (Result = Expect,
+         "Bytes_To_Hex: expected " & Expect & " but got " & Result);
+   end Test_Bytes_To_Hex_Deterministic;
+
    -- Test: Generate_Join_Token is deterministic: two calls with the same key
    -- and a pre-seeded secret always produce identical tokens.
    procedure Test_Generate_Join_Token_Reuses_Secret
@@ -173,6 +191,10 @@ package body Podmander.Enrollment_Tests is
         (T,
          Test_Ensure_Secret'Access,
          "Ensure_Secret mints a secret once and is idempotent");
+      Register_Routine
+        (T,
+         Test_Bytes_To_Hex_Deterministic'Access,
+         "Bytes_To_Hex is deterministic (fixed bytes -> expected hex)");
       Register_Routine
         (T,
          Test_Generate_Join_Token_Reuses_Secret'Access,

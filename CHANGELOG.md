@@ -41,6 +41,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Enrollment secret now generated from the kernel CSPRNG via `getrandom(2)` instead of the time-seeded `Ada.Numerics.Discrete_Random`, which had at most 32 bits of effective entropy (#174)
 - Config parser now returns an error instead of silently dropping entries when `MAX_ENV_ENTRIES`, `MAX_PORTS_ENTRIES`, or `MAX_VOLUMES_ENTRIES` is exceeded, and when a port or volume string lacks a colon separator (#62)
 
 ### Changed

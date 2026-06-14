@@ -9,6 +9,7 @@
 --  with Parse_Join_Token at startup.
 
 with Ada.Strings.Unbounded;
+with Interfaces;
 
 package Podmander.Enrollment is
 
@@ -22,6 +23,18 @@ package Podmander.Enrollment is
    -- Raised by Parse_Join_Token when the input does not match the expected
    -- shape. The agent treats this as a fatal configuration error.
    Parse_Error : exception;
+
+   -- Raised when the CSPRNG (getrandom(2)) fails. The caller must not fall
+   -- back to a non-cryptographic source.
+   CSPRNG_Error : exception;
+
+   subtype Byte is Interfaces.Unsigned_8;
+   type Byte_Array is array (Positive range <>) of Byte;
+
+   function Bytes_To_Hex (Bytes : Byte_Array) return String;
+   --  Deterministic byte-to-hex transform. Each input byte produces one hex
+   --  character via the low nibble (Byte mod 16). The output length equals
+   --  the input length. The alphabet is "0123456789abcdef".
 
    type Parsed_Token is record
       Public_Key : Unbounded_String;
