@@ -107,6 +107,28 @@ package body Podmander.Enrollment_Tests is
          null;
    end Test_Empty_Raises;
 
+   -- Test: Ensure_Secret mints a fresh secret when Config has none; a second
+   -- call leaves the secret unchanged (restart never rotates a live secret).
+   procedure Test_Ensure_Secret (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config : Podmander.Enrollment.Enrollment_Config;
+   begin
+      Podmander.Enrollment.Ensure_Secret (Config);
+      declare
+         First_Secret : constant String :=
+           Podmander.Enrollment.Get_Secret (Config);
+      begin
+         Assert
+           (First_Secret /= "",
+            "Ensure_Secret must mint a non-empty secret on empty Config");
+         Podmander.Enrollment.Ensure_Secret (Config);
+         Assert
+           (Podmander.Enrollment.Get_Secret (Config) = First_Secret,
+            "Ensure_Secret must not rotate an existing secret");
+      end;
+   end Test_Ensure_Secret;
+
    -- Test: calling Generate_Join_Token twice reuses the same secret
    -- when one is already set in the config.
    procedure Test_Generate_Join_Token_Reuses_Secret
@@ -145,6 +167,10 @@ package body Podmander.Enrollment_Tests is
          "Parse_Join_Token rejects token shorter than expected");
       Register_Routine
         (T, Test_Empty_Raises'Access, "Parse_Join_Token rejects empty token");
+      Register_Routine
+        (T,
+         Test_Ensure_Secret'Access,
+         "Ensure_Secret mints a secret once and is idempotent");
       Register_Routine
         (T,
          Test_Generate_Join_Token_Reuses_Secret'Access,

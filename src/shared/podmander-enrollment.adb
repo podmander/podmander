@@ -38,6 +38,18 @@ package body Podmander.Enrollment is
       return To_String (Config.Secret);
    end Get_Secret;
 
+   function Has_Secret (Config : Enrollment_Config) return Boolean is
+   begin
+      return Config.Secret /= Null_Unbounded_String;
+   end Has_Secret;
+
+   procedure Ensure_Secret (Config : in out Enrollment_Config) is
+   begin
+      if not Has_Secret (Config) then
+         Config.Secret := To_Unbounded_String (Random_Hex (Secret_Length));
+      end if;
+   end Ensure_Secret;
+
    function Secret_Matches
      (Config : Enrollment_Config; Value : String) return Boolean is
    begin

@@ -36,6 +36,12 @@ package Podmander.Enrollment is
 
    function Get_Secret (Config : Enrollment_Config) return String;
 
+   function Has_Secret (Config : Enrollment_Config) return Boolean;
+
+   procedure Ensure_Secret (Config : in out Enrollment_Config);
+   --  Mints a random secret into Config when none is present; no-op otherwise.
+   --  A restart never rotates a live secret.
+
    function Secret_Matches
      (Config : Enrollment_Config; Value : String) return Boolean;
 
