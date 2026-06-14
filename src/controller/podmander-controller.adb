@@ -148,8 +148,7 @@ package body Podmander.Controller is
                "Malformed message from " & To_String (Handler.Identity));
 
          when Control_Channel.Message_Received =>
-            Control_Channel.Message_Holders.Element (Message).Dispatch_To
-              (Handler);
+            Message.Element.Dispatch_To (Handler);
       end case;
    end Handle_Message;
 
