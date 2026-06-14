@@ -6,6 +6,7 @@ with Ada.Environment_Variables;
 with CZMQ.Pollers;
 with Podmander.Controller.Agent.Liveness;
 with Podmander.Controller.Control_Channel;
+with Podmander.Controller.Enrollment_Authority;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Controller.Supervisor;
 with Podmander.Logging;
@@ -15,10 +16,10 @@ with CZMQ.Signals;
 
 package body Podmander.Controller is
 
+   package EA renames Podmander.Controller.Enrollment_Authority;
    package Liveness renames Podmander.Controller.Agent.Liveness;
 
    use Ada.Strings.Unbounded;
-   use type Podmander.Database.Error_Kind;
 
    Poll_Interval_Ms : constant := 1000;
 
@@ -65,58 +66,16 @@ package body Podmander.Controller is
          Liveness.Recover (C.DB);
          Supervisor.Recover (C.DB);
 
-         -- Load or generate CURVE certificate
          declare
             Cert_Path : constant String :=
               Ada.Directories.Containing_Directory (DB_Path)
               & "/controller.crt";
          begin
-            if Ada.Directories.Exists (Cert_Path) then
-               C.Certificate.Load (Cert_Path);
-               Podmander.Logging.Info
-                 ("controller", "Loaded CURVE certificate from " & Cert_Path);
-            else
-               C.Certificate.Generate;
-               C.Certificate.Save (Cert_Path);
-               Podmander.Logging.Info
-                 ("controller",
-                  "Generated and saved CURVE certificate to " & Cert_Path);
-            end if;
+            EA.Bootstrap_Certificate (C.Certificate, Cert_Path);
          end;
 
-         -- Load or generate registration secret
-         declare
-            use Podmander.Database;
-         begin
-            C.Config.Enrollment.Secret :=
-              Ada.Strings.Unbounded.To_Unbounded_String
-                (Get_Setting (C.DB, "registration_secret"));
-            Podmander.Logging.Info
-              ("controller", "Loaded registration secret from DB");
-         exception
-            when E : Database_Error =>
-               if Parse_Error (E).Kind = Not_Found then
-                  -- First start: generate and persist a new secret
-                  declare
-                     Token : Ada.Strings.Unbounded.Unbounded_String;
-                  begin
-                     Podmander.Enrollment.Generate_Join_Token
-                       (Public_Key => C.Get_Public_Key,
-                        Config     => C.Config.Enrollment,
-                        Token      => Token);
-                     Set_Setting
-                       (C.DB,
-                        "registration_secret",
-                        Ada.Strings.Unbounded.To_String
-                          (C.Config.Enrollment.Secret));
-                     Podmander.Logging.Info
-                       ("controller",
-                        "Generated and persisted registration secret");
-                  end;
-               else
-                  raise;
-               end if;
-         end;
+         EA.Bootstrap_Secret
+           (C.DB, EA.Get_Public_Key (C.Certificate), C.Config.Enrollment);
 
          CZMQ.Sockets.Open_Router (C.Socket);
          C.Certificate.Apply (C.Socket);
@@ -175,21 +134,14 @@ package body Podmander.Controller is
 
    function Get_Public_Key (Self : Controller_Instance) return String is
    begin
-      if Self.Certificate.Is_Valid then
-         return Self.Certificate.Public_Key;
-      else
-         return "";
-      end if;
+      return EA.Get_Public_Key (Self.Certificate);
    end Get_Public_Key;
 
    procedure Generate_Join_Token
      (Self  : in out Controller_Instance;
       Token : out Ada.Strings.Unbounded.Unbounded_String) is
    begin
-      Podmander.Enrollment.Generate_Join_Token
-        (Public_Key => Self.Get_Public_Key,
-         Config     => Self.Config.Enrollment,
-         Token      => Token);
+      EA.Generate_Join_Token (Self.Certificate, Self.Config.Enrollment, Token);
    end Generate_Join_Token;
 
 end Podmander.Controller;

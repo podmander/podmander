@@ -4,11 +4,11 @@
 with Ada.Calendar;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Control_Channel;
+with Podmander.Controller.Enrollment_Authority;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
 with Podmander.Types;
 with Podmander.Database;
-with Podmander.Enrollment;
 with Podmander.Logging;
 with Podmander.Messages.Deployment_Results;
 with Podmander.Messages.Registration_Requests;
@@ -62,7 +62,7 @@ package body Podmander.Controller.Message_Handlers is
       Name          : constant String := To_String (Req.Agent_Name);
       Connection_Id : constant String := To_String (H.Identity);
    begin
-      if not Podmander.Enrollment.Secret_Matches
+      if not Enrollment_Authority.Authorize
                (H.Ctrl.Config.Enrollment, To_String (Req.Enrollment_Secret))
       then
          Podmander.Logging.Error
@@ -279,7 +279,7 @@ package body Podmander.Controller.Message_Handlers is
       Cmd : constant Podmander.Messages.Stack_Submissions.Stack_Submission :=
         Podmander.Messages.Stack_Submissions.Stack_Submission (M);
    begin
-      if not Podmander.Enrollment.Secret_Matches
+      if not Enrollment_Authority.Authorize
                (H.Ctrl.Config.Enrollment, To_String (Cmd.Enrollment_Secret))
       then
          Podmander.Logging.Error
