@@ -138,8 +138,10 @@ package body Podmander.Controller.Registrar_Tests is
         (Result1.Version.Service_Id = Result2.Version.Service_Id,
          "Register twice should return same service id");
 
-      -- Only one services row exists
-      Assert (Result1.Version.Service_Id > 0, "Service id should be positive");
+      -- The registered service is retrievable by name with that same id
+      Assert
+        (Repo.Get_By_Name (D, Service_Name).Id = Result1.Version.Service_Id,
+         "Idempotent registration should yield one service, found by name");
    end Test_Register_Idempotent_Service_Creation;
 
    ------------------------------------

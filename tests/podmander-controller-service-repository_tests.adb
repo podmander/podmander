@@ -277,7 +277,9 @@ package body Podmander.Controller.Service.Repository_Tests is
       Created : Podmander.Controller.Service.Service;
    begin
       Created := Repo.Create (D, My_Service_Name);
-      Assert (Created.Id > 0, "Service id should be positive");
+      Assert
+        (To_String (Repo.Get_By_Id (D, Created.Id).Name) = My_Service_Name,
+         "Created service should be retrievable by its id");
       Assert
         (To_String (Created.Name) = My_Service_Name,
          "Service name should match");
