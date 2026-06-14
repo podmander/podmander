@@ -66,9 +66,12 @@ package body Podmander.Controller.Control_Channel_Tests is
       pragma Unreferenced (T);
       Sock : aliased CZMQ.Sockets.Socket;
       Chan : constant CC.Channel := CC.Wrap (Sock'Access);
-      Resp : constant Podmander.Messages.Registration_Responses
-                        .Registration_Response :=
-        (Connection_Id => To_Unbounded_String ("nobody"));
+      Resp :
+        constant Podmander
+                   .Messages
+                   .Registration_Responses
+                   .Registration_Response :=
+          (Connection_Id => To_Unbounded_String ("nobody"));
    begin
       Chan.Send ("nobody", Resp);
       Assert (True, "Send on an unopened socket must not raise");
@@ -82,9 +85,12 @@ package body Podmander.Controller.Control_Channel_Tests is
       pragma Unreferenced (T);
       Router : aliased CZMQ.Sockets.Socket;
       Chan   : constant CC.Channel := CC.Wrap (Router'Access);
-      Resp   : constant Podmander.Messages.Registration_Responses
-                          .Registration_Response :=
-        (Connection_Id => To_Unbounded_String ("ghost"));
+      Resp   :
+        constant Podmander
+                   .Messages
+                   .Registration_Responses
+                   .Registration_Response :=
+          (Connection_Id => To_Unbounded_String ("ghost"));
    begin
       CZMQ.Sockets.Open_Router (Router);
       Router.Bind ("inproc://cc-test-send-no-peer");
@@ -95,8 +101,7 @@ package body Podmander.Controller.Control_Channel_Tests is
    --  Test 3: Send addressed to a known identity reaches that DEALER, which
    --  decodes the original message. The DEALER first primes the ROUTER's
    --  routing table by sending one message inbound.
-   procedure Test_Send_Round_Trip
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   procedure Test_Send_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       Endpoint : constant String := "inproc://cc-test-send-round-trip";
@@ -106,9 +111,12 @@ package body Podmander.Controller.Control_Channel_Tests is
       Id       : Unbounded_String;
       Holder   : CC.Message_Holders.Holder;
       Outcome  : CC.Receive_Outcome;
-      Resp     : constant Podmander.Messages.Registration_Responses
-                            .Registration_Response :=
-        (Connection_Id => To_Unbounded_String ("web-1"));
+      Resp     :
+        constant Podmander
+                   .Messages
+                   .Registration_Responses
+                   .Registration_Response :=
+          (Connection_Id => To_Unbounded_String ("web-1"));
    begin
       CZMQ.Sockets.Open_Router (Router);
       Router.Set_Receive_Timeout (1000);
@@ -137,8 +145,7 @@ package body Podmander.Controller.Control_Channel_Tests is
               Podmander.Messages.Decode (Reply);
          begin
             Assert
-              (Decoded
-               in Podmander.Messages.Registration_Response_Type'Class,
+              (Decoded in Podmander.Messages.Registration_Response_Type'Class,
                "DEALER must decode a Registration_Response");
          end;
       end;
@@ -227,7 +234,8 @@ package body Podmander.Controller.Control_Channel_Tests is
       end;
 
       Chan.Receive (Id, Holder, Outcome);
-      Assert (Outcome = CC.Malformed, "Undecodable frame must report Malformed");
+      Assert
+        (Outcome = CC.Malformed, "Undecodable frame must report Malformed");
       Assert
         (To_String (Id) = "garbler",
          "Malformed receive must still surface the sender identity");

@@ -53,7 +53,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
    is
       Node_Id : constant Podmander.Types.Node_Id_Type :=
         Node_Repo.Create_Or_Get (Handle, "node-" & Name);
-      Info : Agent_Info :=
+      Info    : Agent_Info :=
         (Id            => 0,
          Name          => To_Unbounded_String (Name),
          Connection_Id => To_Unbounded_String ("conn-" & Name),
@@ -162,17 +162,14 @@ package body Podmander.Controller.Agent.Liveness_Tests is
    end Test_Registered_Fresh_Stays_Registered;
 
    --  Test 6: Already Lost agent stays Lost regardless of elapsed time
-   procedure Test_Lost_Stays_Lost
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   procedure Test_Lost_Stays_Lost (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
       Seed_Agent (D, "a6", Lost, Clock - Idle_Lost);
       Liveness.Check_Timeouts (D, Agent_Timeout);
-      Assert
-        (Get_State (D, "a6") = Lost,
-         "Already Lost agent must stay Lost");
+      Assert (Get_State (D, "a6") = Lost, "Already Lost agent must stay Lost");
    end Test_Lost_Stays_Lost;
 
    --  Test 7: Empty agent set is a no-op
@@ -183,7 +180,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
       Liveness.Check_Timeouts (D, Agent_Timeout);
-      --  Reaching here without exception is the test.
+   --  Reaching here without exception is the test.
    end Test_Check_Timeouts_Empty_Is_Noop;
 
    -----------------------------------------------
@@ -228,8 +225,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       Seed_Agent (D, "b3", Lost, Clock);
       Liveness.Recover (D);
       Assert
-        (Get_State (D, "b3") = Lost,
-         "Recover must not change Lost agents");
+        (Get_State (D, "b3") = Lost, "Recover must not change Lost agents");
    end Test_Recover_Lost_Stays_Lost;
 
    --  Test 11: Empty agent set is a no-op
@@ -240,7 +236,7 @@ package body Podmander.Controller.Agent.Liveness_Tests is
       D : DB.DB_Handle := DB.Open (":memory:");
    begin
       Liveness.Recover (D);
-      --  Reaching here without exception is the test.
+   --  Reaching here without exception is the test.
    end Test_Recover_Empty_Is_Noop;
 
    overriding

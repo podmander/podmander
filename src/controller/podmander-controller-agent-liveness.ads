@@ -11,8 +11,7 @@ with Podmander.Database;
 package Podmander.Controller.Agent.Liveness is
 
    procedure Check_Timeouts
-     (DB            : in out Podmander.Database.DB_Handle;
-      Agent_Timeout : Duration);
+     (DB : in out Podmander.Database.DB_Handle; Agent_Timeout : Duration);
    --  One pass over all agents: Registered agents idle >= 2x Agent_Timeout
    --  become Unresponsive; any non-Lost agent idle >= 3x Agent_Timeout
    --  becomes Lost. Called each poll tick.

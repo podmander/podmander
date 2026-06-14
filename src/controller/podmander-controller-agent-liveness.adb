@@ -13,8 +13,7 @@ package body Podmander.Controller.Agent.Liveness is
    use Podmander.Types;
 
    procedure Check_Timeouts
-     (DB            : in out Podmander.Database.DB_Handle;
-      Agent_Timeout : Duration)
+     (DB : in out Podmander.Database.DB_Handle; Agent_Timeout : Duration)
    is
       use type Ada.Calendar.Time;
       Now                    : constant Ada.Calendar.Time :=
