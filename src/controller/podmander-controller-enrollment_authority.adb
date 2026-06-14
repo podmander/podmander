@@ -26,7 +26,6 @@ package body Podmander.Controller.Enrollment_Authority is
      (DB     : in out Podmander.Database.DB_Handle;
       Config : in out Podmander.Enrollment.Enrollment_Config)
    is
-      use Ada.Strings.Unbounded;
       use Podmander.Database;
    begin
       Config.Secret :=

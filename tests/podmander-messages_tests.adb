@@ -480,7 +480,8 @@ package body Podmander.Messages_Tests is
    begin
       -- Manually craft a message with an invalid "success" value
       Msg.Add_String
-        ("""{""""kind"""": """"stack_submission_ack"""", """"success"""": """"maybe"""", """"message"""": """"test""""}""");
+        ("""{""""kind"""": """"stack_submission_ack"""", """"success"""": """"maybe"""","""
+         & """ """"message"""": """"test""""}""");
       declare
          use Podmander.Messages;
          Decoded : constant Protocol_Message'Class := Decode (Msg);
