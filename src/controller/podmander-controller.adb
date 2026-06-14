@@ -74,8 +74,7 @@ package body Podmander.Controller is
             EA.Bootstrap_Certificate (C.Certificate, Cert_Path);
          end;
 
-         EA.Bootstrap_Secret
-           (C.DB, EA.Get_Public_Key (C.Certificate), C.Config.Enrollment);
+         EA.Bootstrap_Secret (C.DB, C.Config.Enrollment);
 
          CZMQ.Sockets.Open_Router (C.Socket);
          C.Certificate.Apply (C.Socket);

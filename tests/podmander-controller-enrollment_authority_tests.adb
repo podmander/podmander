@@ -55,8 +55,7 @@ package body Podmander.Controller.Enrollment_Authority_Tests is
          Original_Key : constant String := Original.Public_Key;
       begin
          EA.Bootstrap_Certificate (Loaded, Tmp_Cert_Path);
-         Assert
-           (Loaded.Is_Valid, "Loaded certificate must be valid");
+         Assert (Loaded.Is_Valid, "Loaded certificate must be valid");
          Assert
            (Loaded.Public_Key = Original_Key,
             "Loaded public key must match the originally generated one");
@@ -68,12 +67,10 @@ package body Podmander.Controller.Enrollment_Authority_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      A_Public_Key : constant String :=
-        "0123456789012345678901234567890123456789";
       Handle : DB.DB_Handle := DB.Open (":memory:");
       Config : Podmander.Enrollment.Enrollment_Config;
    begin
-      EA.Bootstrap_Secret (Handle, A_Public_Key, Config);
+      EA.Bootstrap_Secret (Handle, Config);
       Assert
         (Podmander.Enrollment.Get_Secret (Config) /= "",
          "Bootstrap must produce a non-empty secret");
@@ -82,7 +79,7 @@ package body Podmander.Controller.Enrollment_Authority_Tests is
       declare
          Config2 : Podmander.Enrollment.Enrollment_Config;
       begin
-         EA.Bootstrap_Secret (Handle, A_Public_Key, Config2);
+         EA.Bootstrap_Secret (Handle, Config2);
          Assert
            (Podmander.Enrollment.Get_Secret (Config2)
             = Podmander.Enrollment.Get_Secret (Config),
@@ -95,13 +92,11 @@ package body Podmander.Controller.Enrollment_Authority_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      A_Public_Key : constant String :=
-        "0123456789012345678901234567890123456789";
       Handle : DB.DB_Handle := DB.Open (":memory:");
       Config : Podmander.Enrollment.Enrollment_Config;
    begin
       DB.Set_Setting (Handle, "registration_secret", "mySecret");
-      EA.Bootstrap_Secret (Handle, A_Public_Key, Config);
+      EA.Bootstrap_Secret (Handle, Config);
       Assert
         (Podmander.Enrollment.Get_Secret (Config) = "mySecret",
          "Bootstrap must load the pre-seeded secret from the DB");
@@ -143,6 +138,7 @@ package body Podmander.Controller.Enrollment_Authority_Tests is
       Token  : Unbounded_String;
    begin
       Cert.Generate;
+      Podmander.Enrollment.Ensure_Secret (Config);
       EA.Generate_Join_Token (Cert, Config, Token);
       declare
          Parsed : constant Podmander.Enrollment.Parsed_Token :=

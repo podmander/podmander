@@ -47,8 +47,9 @@ package Podmander.Enrollment is
 
    procedure Generate_Join_Token
      (Public_Key : String;
-      Config     : in out Enrollment_Config;
-      Token      : out Unbounded_String);
+      Config     : Enrollment_Config;
+      Token      : out Unbounded_String)
+   with Pre => Has_Secret (Config);
 
    function Parse_Join_Token (Token : String) return Parsed_Token;
 

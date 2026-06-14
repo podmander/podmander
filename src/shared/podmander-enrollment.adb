@@ -58,13 +58,9 @@ package body Podmander.Enrollment is
 
    procedure Generate_Join_Token
      (Public_Key : String;
-      Config     : in out Enrollment_Config;
+      Config     : Enrollment_Config;
       Token      : out Unbounded_String) is
    begin
-      -- Generate a new secret only if one isn't already set
-      if Config.Secret = Null_Unbounded_String then
-         Config.Secret := To_Unbounded_String (Random_Hex (Secret_Length));
-      end if;
       Token :=
         To_Unbounded_String
           (Token_Prefix & Public_Key & Separator & To_String (Config.Secret));

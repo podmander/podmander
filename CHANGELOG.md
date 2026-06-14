@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Separated secret minting from token serialization in `Podmander.Enrollment`: `Ensure_Secret` is now the single home for minting a random secret; `Generate_Join_Token` is a pure serializer (`Config : in`, guarded by `Pre => Has_Secret`); `Bootstrap_Secret` no longer takes a `Public_Key` parameter (#173)
 - Extracted `Podmander.Controller.Enrollment_Authority` from the controller body; `Bootstrap_Certificate` and `Bootstrap_Secret` own CURVE certificate and registration-secret load/generate; `Authorize` provides the single secret-check shared by agent enrollment and Stack Submission; controller and handlers delegate all credential logic to it (#164)
 - Extracted `Podmander.Controller.Control_Channel` from the controller body; it wraps the ROUTER socket behind CZMQ-free `Send`/`Receive` operations, so the Supervisor and message handlers route transport through it instead of touching the socket directly, and its no-op-on-unopened-socket replaces the per-handler `Is_Valid` guards (#163)
 - Extracted `Podmander.Controller.Agent.Liveness` from the controller body; `Check_Timeouts` owns the heartbeat state machine (Registered -> Unresponsive -> Lost) and `Recover` resets agents to Unresponsive on startup; controller delegates both calls (#162)

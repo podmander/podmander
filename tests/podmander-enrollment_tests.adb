@@ -35,6 +35,7 @@ package body Podmander.Enrollment_Tests is
       Config : Podmander.Enrollment.Enrollment_Config;
       Token  : Unbounded_String;
    begin
+      Podmander.Enrollment.Ensure_Secret (Config);
       Podmander.Enrollment.Generate_Join_Token
         (Public_Key => Sample_Public_Key, Config => Config, Token => Token);
 
@@ -129,8 +130,8 @@ package body Podmander.Enrollment_Tests is
       end;
    end Test_Ensure_Secret;
 
-   -- Test: calling Generate_Join_Token twice reuses the same secret
-   -- when one is already set in the config.
+   -- Test: Generate_Join_Token is deterministic: two calls with the same key
+   -- and a pre-seeded secret always produce identical tokens.
    procedure Test_Generate_Join_Token_Reuses_Secret
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -139,14 +140,15 @@ package body Podmander.Enrollment_Tests is
       Token1 : Unbounded_String;
       Token2 : Unbounded_String;
    begin
+      Podmander.Enrollment.Ensure_Secret (Config);
       Podmander.Enrollment.Generate_Join_Token
         (Public_Key => Sample_Public_Key, Config => Config, Token => Token1);
       Podmander.Enrollment.Generate_Join_Token
         (Public_Key => Sample_Public_Key, Config => Config, Token => Token2);
       Assert
         (To_String (Token1) = To_String (Token2),
-         "Second Generate_Join_Token should produce the same token "
-         & "when secret is already set");
+         "Generate_Join_Token must produce identical tokens for the same key "
+         & "and secret");
    end Test_Generate_Join_Token_Reuses_Secret;
 
    overriding
