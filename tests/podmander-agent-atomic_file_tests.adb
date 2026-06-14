@@ -139,12 +139,13 @@ package body Podmander.Agent.Atomic_File_Tests is
          "Write raises and leaves no file when directory absent");
    end Register_Tests;
 
+   Result : aliased AUnit.Test_Suites.Test_Suite;
+   TC     : aliased Atomic_File_Test;
+
    function Suite return AUnit.Test_Suites.Access_Test_Suite is
-      Result : constant AUnit.Test_Suites.Access_Test_Suite :=
-        new AUnit.Test_Suites.Test_Suite;
    begin
-      AUnit.Test_Suites.Add_Test (Result, new Atomic_File_Test);
-      return Result;
+      AUnit.Test_Suites.Add_Test (Result'Access, TC'Access);
+      return Result'Access;
    end Suite;
 
 end Podmander.Agent.Atomic_File_Tests;

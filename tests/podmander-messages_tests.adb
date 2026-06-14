@@ -569,7 +569,7 @@ package body Podmander.Messages_Tests is
    -- Test: Get_Kind returns the same value that was set
    procedure Test_Get_Kind (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Kind (Obj, "deploy");
       Assert
@@ -582,7 +582,7 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       declare
          Ignored : constant String :=
@@ -601,7 +601,7 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Kind (Obj, "deploy");
       Assert
@@ -614,7 +614,7 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Field (Obj, "name", "web-1");
       Assert
@@ -627,7 +627,7 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       declare
          Ignored : constant String :=
@@ -646,7 +646,7 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Field (Obj, "catalog_id", 42);
       Assert
@@ -659,7 +659,8 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj     : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj     : constant GNATCOLL.JSON.JSON_Value :=
+        GNATCOLL.JSON.Create_Object;
       Ignored : Integer;
       pragma Unreferenced (Ignored);
    begin
@@ -675,7 +676,7 @@ package body Podmander.Messages_Tests is
    is
       pragma Unreferenced (T);
       Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Field (Obj, "ts", Now);
       declare
@@ -692,7 +693,8 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj     : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj     : constant GNATCOLL.JSON.JSON_Value :=
+        GNATCOLL.JSON.Create_Object;
       Ignored : Ada.Calendar.Time;
       pragma Unreferenced (Ignored);
    begin
@@ -708,7 +710,7 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Field (Obj, "name", "test");
       declare
@@ -725,7 +727,7 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Field (Obj, "count", 7);
       declare
@@ -742,7 +744,7 @@ package body Podmander.Messages_Tests is
       pragma Unreferenced (T);
       use type GNATCOLL.JSON.JSON_Value_Type;
       Now : constant Ada.Calendar.Time := Ada.Calendar.Clock;
-      Obj : GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
+      Obj : constant GNATCOLL.JSON.JSON_Value := GNATCOLL.JSON.Create_Object;
    begin
       Podmander.Messages.JSON_Utils.Set_Field (Obj, "ts", Now);
       Assert
@@ -757,7 +759,6 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      use Podmander.Messages.Result_Codes;
    begin
       for Code in Result_Code loop
          Assert
@@ -773,7 +774,6 @@ package body Podmander.Messages_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      use Podmander.Messages.Result_Codes;
    begin
       declare
          Ignored : Result_Code;

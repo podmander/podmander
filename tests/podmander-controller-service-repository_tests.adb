@@ -6,14 +6,11 @@ with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Calendar.Formatting;
 with Ada.Strings.Unbounded;
-with Podmander.Config;
-with Podmander.Controller;
 with Podmander.Controller.Service.Repository;
 with Podmander.Database;
 
 package body Podmander.Controller.Service.Repository_Tests is
 
-   use Ada.Calendar;
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
 
@@ -80,7 +77,7 @@ package body Podmander.Controller.Service.Repository_Tests is
       D      : DB.DB_Handle := DB.Open (":memory:");
       Svc    : constant Podmander.Controller.Service.Service :=
         Repo.Create (D, My_Service);
-      SV     : Podmander.Controller.Service_Version :=
+      SV     : constant Podmander.Controller.Service_Version :=
         Make_Version (1, Svc.Id);
       Loaded : Podmander.Controller.Service_Version;
    begin
@@ -124,7 +121,7 @@ package body Podmander.Controller.Service.Repository_Tests is
       D         : DB.DB_Handle := DB.Open (":memory:");
       Svc       : constant Podmander.Controller.Service.Service :=
         Repo.Create (D, My_Service);
-      SV        : Podmander.Controller.Service_Version :=
+      SV        : constant Podmander.Controller.Service_Version :=
         Make_Version (1, Svc.Id);
       Got_Error : Boolean := False;
    begin
@@ -187,7 +184,7 @@ package body Podmander.Controller.Service.Repository_Tests is
       D      : DB.DB_Handle := DB.Open (":memory:");
       Svc    : constant Podmander.Controller.Service.Service :=
         Repo.Create (D, My_Service);
-      SV1    : Podmander.Controller.Service_Version :=
+      SV1    : constant Podmander.Controller.Service_Version :=
         Make_Version (1, Svc.Id);
       SV2    : Podmander.Controller.Service_Version :=
         Make_Version (2, Svc.Id);

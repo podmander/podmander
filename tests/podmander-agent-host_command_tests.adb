@@ -184,12 +184,13 @@ package body Podmander.Agent.Host_Command_Tests is
          "Run_Command handles many arguments without truncation");
    end Register_Tests;
 
+   Result : aliased AUnit.Test_Suites.Test_Suite;
+   TC     : aliased Command_Test;
+
    function Suite return AUnit.Test_Suites.Access_Test_Suite is
-      Result : constant AUnit.Test_Suites.Access_Test_Suite :=
-        new AUnit.Test_Suites.Test_Suite;
    begin
-      AUnit.Test_Suites.Add_Test (Result, new Command_Test);
-      return Result;
+      AUnit.Test_Suites.Add_Test (Result'Access, TC'Access);
+      return Result'Access;
    end Suite;
 
 end Podmander.Agent.Host_Command_Tests;

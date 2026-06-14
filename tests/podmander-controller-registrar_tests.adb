@@ -5,7 +5,6 @@ with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Strings.Unbounded;
 with Podmander.Config;
-with Podmander.Controller;
 with Podmander.Controller.Registrar;
 with Podmander.Controller.Service.Repository;
 with Podmander.Database;

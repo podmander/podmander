@@ -4,7 +4,6 @@
 with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Directories;
-with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada_Sqlite3;
@@ -400,6 +399,7 @@ package body Podmander.Database_Tests is
               "SELECT id, service_id, version, image, env, ports, "
               & "volumes, description, wanted_by, created_at "
               & "FROM service_versions");
+         pragma Unreferenced (Stmt);
       begin
          -- Preparing the query should not raise  -- table exists with correct columns
          null;
@@ -467,6 +467,7 @@ package body Podmander.Database_Tests is
            Ada_Sqlite3.Prepare
              (Conn,
               "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
+         pragma Unreferenced (Stmt);
       begin
          -- Preparing the query should not raise  -- table exists with correct columns
          null;
@@ -476,6 +477,7 @@ package body Podmander.Database_Tests is
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
            Ada_Sqlite3.Prepare (Conn, "SELECT id, machine_name FROM nodes");
+         pragma Unreferenced (Stmt);
       begin
          -- Preparing the query should not raise  -- table exists with correct columns
          null;
@@ -1109,6 +1111,7 @@ package body Podmander.Database_Tests is
          Conn : Ada_Sqlite3.Database := Ada_Sqlite3.Open (Path);
          Stmt : Ada_Sqlite3.Statement :=
            Ada_Sqlite3.Prepare (Conn, "SELECT id, machine_name FROM nodes");
+         pragma Unreferenced (Stmt);
       begin
          null;  --  Preparing should not raise
       end;
@@ -1119,6 +1122,7 @@ package body Podmander.Database_Tests is
            Ada_Sqlite3.Prepare
              (Conn,
               "SELECT id, name, connection_id, state, last_seen, node_id FROM agents");
+         pragma Unreferenced (Stmt);
       begin
          null;  --  Preparing should not raise
       end;

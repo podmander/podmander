@@ -2,12 +2,10 @@
 --  SPDX-License-Identifier: Apache-2.0
 
 with Ada.Strings.Unbounded;
-with Podmander.Types;
 
 package body Podmander.Controller.Node.Repository is
 
    use Ada.Strings.Unbounded;
-   use Podmander.Types;
 
    -------------------
    -- Create_Or_Get --

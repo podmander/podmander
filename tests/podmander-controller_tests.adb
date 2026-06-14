@@ -297,6 +297,7 @@ package body Podmander.Controller_Tests is
       declare
          Ctrl : constant Podmander.Controller.Controller_Instance :=
            Podmander.Controller.Make_Listening_Controller (Config);
+         pragma Unreferenced (Ctrl);
       begin
          Assert (True, "Make_Listening_Controller with :memory: DB not raise");
       end;
@@ -309,7 +310,6 @@ package body Podmander.Controller_Tests is
    procedure Test_Startup_Loading (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      use type Podmander.Types.Agent_State;
       DB_Path : constant String := "/tmp/podmander_test_startup.db";
       Now     : constant Ada.Calendar.Time := Ada.Calendar.Clock;
       Loaded  : Podmander.Types.Agent_Maps.Map;
@@ -538,7 +538,6 @@ package body Podmander.Controller_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      use type Podmander.Types.Agent_State;
       use type Ada.Calendar.Time;
       Ctrl    : aliased Podmander.Controller.Controller_Instance := Make_Ctrl;
       H       : Podmander.Controller.Message_Handlers.Controller_Handler :=

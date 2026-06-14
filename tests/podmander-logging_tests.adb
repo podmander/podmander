@@ -3,14 +3,11 @@
 
 with AUnit.Assertions;
 with AUnit.Test_Cases;
-with Ada.Strings.Unbounded;
 with Podmander.Logging;
 
 package body Podmander.Logging_Tests is
 
    use AUnit.Assertions;
-
-   package UBS renames Ada.Strings.Unbounded;
 
    type Logging_Test is new AUnit.Test_Cases.Test_Case with null record;
 
@@ -107,12 +104,13 @@ package body Podmander.Logging_Tests is
          "Error suppressed at Critical");
    end Register_Tests;
 
+   Result : aliased AUnit.Test_Suites.Test_Suite;
+   TC     : aliased Logging_Test;
+
    function Suite return AUnit.Test_Suites.Access_Test_Suite is
-      Result : constant AUnit.Test_Suites.Access_Test_Suite :=
-        new AUnit.Test_Suites.Test_Suite;
    begin
-      AUnit.Test_Suites.Add_Test (Result, new Logging_Test);
-      return Result;
+      AUnit.Test_Suites.Add_Test (Result'Access, TC'Access);
+      return Result'Access;
    end Suite;
 
 end Podmander.Logging_Tests;
