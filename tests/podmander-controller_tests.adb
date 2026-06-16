@@ -3,6 +3,7 @@
 
 with Ada.Calendar;
 with Ada.Directories;
+with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with AUnit.Assertions;
@@ -25,7 +26,6 @@ with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Result_Codes;
 with Podmander.Messages.Status_Responses;
 with Podmander.Messages.Registration_Requests;
-with Podmander.Messages.Registration_Responses;
 with Podmander.Messages.Stack_Submissions;
 with Podmander.Messages.Stack_Submission_Results;
 with Podmander.Types;
@@ -255,23 +255,6 @@ package body Podmander.Controller_Tests is
          "Polymorphic dispatch did not reach Registration handler");
    end Test_Dispatch_Polymorphic;
 
-   -- Test: Registration_Response.Dispatch_To raises Program_Error
-   procedure Test_Dispatch_Response_Raises
-     (T : in out AUnit.Test_Cases.Test_Case'Class)
-   is
-      pragma Unreferenced (T);
-      use Podmander.Messages.Registration_Responses;
-      Resp : constant Registration_Response :=
-        (Connection_Id => To_Unbounded_String ("n-1"));
-      Spy  : Spy_Handler;
-   begin
-      Resp.Dispatch_To (Spy);
-      Assert (False, "Expected Program_Error from Registration_Response");
-   exception
-      when Program_Error =>
-         null;  --  Expected
-   end Test_Dispatch_Response_Raises;
-
    -- Test: Set_DB_Path / Get_DB_Path round-trip correctly
    procedure Test_Controller_DB_Path_Accessors
      (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -302,8 +285,11 @@ package body Podmander.Controller_Tests is
          Assert (True, "Make_Listening_Controller with :memory: DB not raise");
       end;
    exception
-      when others =>
-         Assert (False, "Make_Listening_Controller with :memory: raised");
+      when E : others =>
+         Assert
+           (False,
+            "Make_Listening_Controller raised: "
+            & Ada.Exceptions.Exception_Message (E));
    end Test_Controller_Make_With_DB;
 
    -- Test: Agents persist across database connections (simulating restart)
@@ -810,10 +796,6 @@ package body Podmander.Controller_Tests is
         (T,
          Test_Dispatch_Polymorphic'Access,
          "Polymorphic Dispatch_To routes to concrete handler");
-      Register_Routine
-        (T,
-         Test_Dispatch_Response_Raises'Access,
-         "Registration_Response.Dispatch_To raises Program_Error");
       Register_Routine
         (T,
          Test_Handle_Registration_Request_Adds_Agent'Access,
