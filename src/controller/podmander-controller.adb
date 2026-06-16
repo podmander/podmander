@@ -3,7 +3,6 @@
 
 with Ada.Directories;
 with Ada.Environment_Variables;
-with CZMQ.Signals;
 with Podmander.Controller.Agent.Liveness;
 with Podmander.Controller.Enrollment_Authority;
 with Podmander.Controller.Message_Handlers;
@@ -104,9 +103,10 @@ package body Podmander.Controller is
 
    procedure Run (Self : in out Controller_Instance) is
    begin
-      while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
+      while Self.Running and then not Podmander.Control_Channel.Is_Interrupted
+      loop
          Handle_Message (Self, Self.Channel);
-         exit when CZMQ.Signals.Is_Interrupted;
+         exit when Podmander.Control_Channel.Is_Interrupted;
          Liveness.Check_Timeouts (Self.DB, Self.Config.Agent_Timeout);
          Supervisor.Tick (Self.DB, Self.Channel);
       end loop;

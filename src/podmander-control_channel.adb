@@ -12,6 +12,9 @@ package body Podmander.Control_Channel is
 
    Receive_Timeout_Ms : constant := 1000;
 
+   function Is_Interrupted return Boolean
+   is (CZMQ.Signals.Is_Interrupted);
+
    procedure Listen
      (Self        : in out Channel;
       Address     : String;

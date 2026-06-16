@@ -27,6 +27,9 @@ package Podmander.Control_Channel is
 
    Invalid_Certificate : exception;
 
+   function Is_Interrupted return Boolean;
+   --  Report whether CZMQ's signal handler has observed SIGINT/SIGTERM.
+
    procedure Listen
      (Self        : in out Channel;
       Address     : String;
