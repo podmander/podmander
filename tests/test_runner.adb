@@ -9,7 +9,7 @@ with Podmander.Agent.Host_Command_Tests;
 with Podmander.Agent.Host_Command.Result_Mapping_Tests;
 with Podmander.Controller.Agent.Liveness_Tests;
 with Podmander.Controller.Agent.Repository_Tests;
-with Podmander.Controller.Control_Channel_Tests;
+with Podmander.Control_Channel_Tests;
 with Podmander.Controller.Enrollment_Authority_Tests;
 with Podmander.Controller.Node.Repository_Tests;
 with Podmander.Controller.Registrar_Tests;
@@ -48,7 +48,7 @@ procedure Test_Runner is
       AUnit.Test_Suites.Add_Test
         (Result, Podmander.Controller.Agent.Repository_Tests.Suite);
       AUnit.Test_Suites.Add_Test
-        (Result, Podmander.Controller.Control_Channel_Tests.Suite);
+        (Result, Podmander.Control_Channel_Tests.Suite);
       AUnit.Test_Suites.Add_Test
         (Result, Podmander.Controller.Enrollment_Authority_Tests.Suite);
       AUnit.Test_Suites.Add_Test

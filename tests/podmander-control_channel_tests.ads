@@ -3,8 +3,8 @@
 
 with AUnit.Test_Suites;
 
-package Podmander.Controller.Control_Channel_Tests is
+package Podmander.Control_Channel_Tests is
 
    function Suite return AUnit.Test_Suites.Access_Test_Suite;
 
-end Podmander.Controller.Control_Channel_Tests;
+end Podmander.Control_Channel_Tests;

@@ -5,7 +5,7 @@ with Ada.Calendar;
 with Ada.Containers.Vectors;
 with Ada.Strings.Unbounded;
 with CZMQ.Certificates;
-with CZMQ.Sockets;
+with Podmander.Control_Channel;
 with Podmander.Config;
 with Podmander.Database;
 with Podmander.Enrollment;
@@ -120,25 +120,22 @@ package Podmander.Controller is
 
    function Get_DB_Path (Config : Controller_Config) return String;
 
-   -- The CURVE certificate and ZeroMQ socket live for the controller's
-   -- full lifetime, managed via the CZMQ Open/Close API. Default-initialized
-   -- fields are invalid until Make_Listening_Controller calls Generate and
-   -- Open_Router. Handler tests rely on that to drive logic without a
-   -- live socket; production code obtains a fully-built instance from
-   -- Make_Listening_Controller. Socket is aliased so the Control Channel can
-   -- borrow it by reference while the controller retains ownership.
+   -- The CURVE certificate and Control Channel live for the controller's
+   -- full lifetime. The Channel owns the ROUTER socket and is unopened until
+   -- Make_Listening_Controller calls Listen. Handler tests rely on that to
+   -- drive logic without a live socket; production code obtains a fully-built
+   -- instance from Make_Listening_Controller.
    type Controller_Instance is tagged limited record
       Config      : Controller_Config;
       DB          : Database.DB_Handle;
       Certificate : CZMQ.Certificates.Certificate;
-      Socket      : aliased CZMQ.Sockets.Socket;
+      Channel     : Podmander.Control_Channel.Channel;
       Running     : Boolean := False;
    end record;
 
    -- Build a fully-initialised, listening controller: generate the
-   -- CURVE certificate, open the ROUTER socket, enable CURVE server
-   -- mode, and bind to Config's Bind_Address. The returned instance
-   -- is in the Running state.
+   -- CURVE certificate, ask the Control Channel to open and bind its ROUTER
+   -- socket, and enter the Running state.
    function Make_Listening_Controller
      (Config : Controller_Config) return Controller_Instance;
 

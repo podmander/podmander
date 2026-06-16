@@ -3,16 +3,14 @@
 
 with Ada.Directories;
 with Ada.Environment_Variables;
-with CZMQ.Pollers;
+with CZMQ.Signals;
 with Podmander.Controller.Agent.Liveness;
-with Podmander.Controller.Control_Channel;
 with Podmander.Controller.Enrollment_Authority;
 with Podmander.Controller.Message_Handlers;
 with Podmander.Controller.Supervisor;
 with Podmander.Logging;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
-with CZMQ.Signals;
 
 package body Podmander.Controller is
 
@@ -20,8 +18,6 @@ package body Podmander.Controller is
    package Liveness renames Podmander.Controller.Agent.Liveness;
 
    use Ada.Strings.Unbounded;
-
-   Poll_Interval_Ms : constant := 1000;
 
    procedure Set_Bind_Address
      (Config : in out Controller_Config; Address : String) is
@@ -60,7 +56,7 @@ package body Podmander.Controller is
            (Config      => Config,
             DB          => Database.Open (DB_Path),
             Certificate => <>,
-            Socket      => <>,
+            Channel     => <>,
             Running     => True)
       do
          Liveness.Recover (C.DB);
@@ -75,55 +71,44 @@ package body Podmander.Controller is
          end;
 
          EA.Bootstrap_Secret (C.DB, C.Config.Enrollment);
-
-         CZMQ.Sockets.Open_Router (C.Socket);
-         C.Certificate.Apply (C.Socket);
-         C.Socket.Set_Curve_Server (True);
-         C.Socket.Bind (Get_Bind_Address (Config));
+         Podmander.Control_Channel.Listen
+           (C.Channel, Get_Bind_Address (Config), C.Certificate);
          Podmander.Logging.Info
            ("controller", "Listening on " & Get_Bind_Address (Config));
       end return;
    end Make_Listening_Controller;
 
    procedure Handle_Message
-     (Self : in out Controller_Instance; Chan : Control_Channel.Channel)
+     (Self : in out Controller_Instance;
+      Chan : in out Podmander.Control_Channel.Channel)
    is
-      -- Safe: Handler is stack-local to Handle_Message and cannot outlive
-      -- Self. Unchecked_Access avoids aliasing-aspect declarations here.
       Handler : Message_Handlers.Controller_Handler :=
         (Ctrl => Self'Unchecked_Access, Identity => Null_Unbounded_String);
-      Message : Control_Channel.Message_Holders.Holder;
-      Outcome : Control_Channel.Receive_Outcome;
+      Message : Podmander.Control_Channel.Message_Holders.Holder;
+      Outcome : Podmander.Control_Channel.Receive_Outcome;
    begin
       Chan.Receive (Handler.Identity, Message, Outcome);
       case Outcome is
-         when Control_Channel.No_Message       =>
+         when Podmander.Control_Channel.No_Message       =>
             null;
 
-         when Control_Channel.Malformed        =>
+         when Podmander.Control_Channel.Malformed        =>
             Podmander.Logging.Warning
               ("controller",
                "Malformed message from " & To_String (Handler.Identity));
 
-         when Control_Channel.Message_Received =>
+         when Podmander.Control_Channel.Message_Received =>
             Message.Element.Dispatch_To (Handler);
       end case;
    end Handle_Message;
 
    procedure Run (Self : in out Controller_Instance) is
-      Poller : CZMQ.Pollers.Poller;
-      Chan   : constant Control_Channel.Channel :=
-        Control_Channel.Wrap (Self.Socket'Unchecked_Access);
    begin
-      CZMQ.Pollers.Open (Poller, Self.Socket);
       while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
-         if Poller.Wait (Poll_Interval_Ms) then
-            Handle_Message (Self, Chan);
-         end if;
+         Handle_Message (Self, Self.Channel);
          Liveness.Check_Timeouts (Self.DB, Self.Config.Agent_Timeout);
-         Supervisor.Tick (Self.DB, Chan);
+         Supervisor.Tick (Self.DB, Self.Channel);
       end loop;
-      CZMQ.Pollers.Close (Poller);
    end Run;
 
    procedure Stop (Self : in out Controller_Instance) is

@@ -39,7 +39,7 @@ package body Podmander.Controller.Supervisor is
    --  that node.
    procedure Try_Deploy_Entry
      (DB        : in out Podmander.Database.DB_Handle;
-      Chan      : Control_Channel.Channel;
+      Chan      : in out Control_Channel.Channel;
       Cat_Entry : Service_Catalog_Entry)
    is
       use Podmander.Controller.Service_Catalog.Repository;
@@ -154,7 +154,8 @@ package body Podmander.Controller.Supervisor is
    --  Attempt to deploy all Pending catalog entries that have an assigned node
    --  and a Registered agent.
    procedure Deploy_Pending
-     (DB : in out Podmander.Database.DB_Handle; Chan : Control_Channel.Channel)
+     (DB   : in out Podmander.Database.DB_Handle;
+      Chan : in out Control_Channel.Channel)
    is
       use Podmander.Controller.Service_Catalog.Repository;
       Pending_Entries : constant Catalog_Entry_Vectors.Vector :=
@@ -166,8 +167,8 @@ package body Podmander.Controller.Supervisor is
    end Deploy_Pending;
 
    procedure Tick
-     (DB : in out Podmander.Database.DB_Handle; Chan : Control_Channel.Channel)
-   is
+     (DB   : in out Podmander.Database.DB_Handle;
+      Chan : in out Control_Channel.Channel) is
    begin
       Schedule_Unscheduled (DB);
       Deploy_Pending (DB, Chan);

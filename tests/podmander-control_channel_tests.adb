@@ -1,7 +1,7 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
---  Behavioral tests for Podmander.Controller.Control_Channel.
+--  Behavioral tests for Podmander.Control_Channel.
 --  Real ROUTER/DEALER sockets over inproc exercise the send and receive paths
 --  end to end; no mocks. A DEALER with a fixed identity lets the ROUTER learn
 --  the route, so the addressed-send path can be driven deterministically.
@@ -10,37 +10,46 @@ with Ada.Calendar;
 with Ada.Strings.Unbounded;
 with AUnit.Assertions;
 with AUnit.Test_Cases;
+with CZMQ.Certificates;
 with CZMQ.Messages;
 with CZMQ.Sockets;
-with Podmander.Controller.Control_Channel;
+with Podmander.Control_Channel;
 with Podmander.Messages;
 with Podmander.Messages.All_Kinds;
 pragma Unreferenced (Podmander.Messages.All_Kinds);
 with Podmander.Messages.Heartbeats;
 with Podmander.Messages.Registration_Responses;
 
-package body Podmander.Controller.Control_Channel_Tests is
+package body Podmander.Control_Channel_Tests is
 
    use Ada.Strings.Unbounded;
    use AUnit.Assertions;
 
-   package CC renames Podmander.Controller.Control_Channel;
+   package CC renames Podmander.Control_Channel;
    use type CC.Receive_Outcome;
 
    type CC_Test is new AUnit.Test_Cases.Test_Case with null record;
 
    overriding
    function Name (T : CC_Test) return AUnit.Message_String
-   is (AUnit.Format ("Podmander.Controller.Control_Channel"));
+   is (AUnit.Format ("Podmander.Control_Channel"));
 
    overriding
    procedure Register_Tests (T : in out CC_Test);
 
    --  Connect a DEALER with a fixed identity to a bound ROUTER endpoint.
    procedure Open_Dealer
-     (Dealer : in out CZMQ.Sockets.Socket; Endpoint, Identity : String) is
+     (Dealer            : in out CZMQ.Sockets.Socket;
+      Endpoint          : String;
+      Identity          : String;
+      Server_Public_Key : String)
+   is
+      Client_Cert : CZMQ.Certificates.Certificate;
    begin
+      Client_Cert.Generate;
       CZMQ.Sockets.Open_Dealer (Dealer);
+      Client_Cert.Apply (Dealer);
+      Dealer.Set_Curve_Serverkey (Server_Public_Key);
       Dealer.Set_Identity (Identity);
       Dealer.Set_Receive_Timeout (1000);
       Dealer.Connect (Endpoint);
@@ -64,8 +73,7 @@ package body Podmander.Controller.Control_Channel_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Sock : aliased CZMQ.Sockets.Socket;
-      Chan : constant CC.Channel := CC.Wrap (Sock'Access);
+      Chan : CC.Channel;
       Resp :
         constant Podmander
                    .Messages
@@ -77,24 +85,39 @@ package body Podmander.Controller.Control_Channel_Tests is
       Assert (True, "Send on an unopened socket must not raise");
    end Test_Send_Unopened_Is_Noop;
 
+   procedure Test_Listen_Rejects_Invalid_Certificate
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Cert : CZMQ.Certificates.Certificate;
+      Chan : CC.Channel;
+   begin
+      Chan.Listen ("inproc://cc-test-invalid-cert", Cert);
+      Assert (False, "Listen must reject an invalid controller certificate");
+   exception
+      when CC.Invalid_Certificate =>
+         Assert (True, "Listen rejects an invalid controller certificate");
+   end Test_Listen_Rejects_Invalid_Certificate;
+
    --  Test 2: Send on a bound ROUTER with no connected peer drops the message
    --  silently (mandatory routing is off) and must not raise.
    procedure Test_Send_No_Peer_Is_Noop
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Router : aliased CZMQ.Sockets.Socket;
-      Chan   : constant CC.Channel := CC.Wrap (Router'Access);
-      Resp   :
+      Cert : CZMQ.Certificates.Certificate;
+      Chan : CC.Channel;
+      Resp :
         constant Podmander
                    .Messages
                    .Registration_Responses
                    .Registration_Response :=
           (Connection_Id => To_Unbounded_String ("ghost"));
    begin
-      CZMQ.Sockets.Open_Router (Router);
-      Router.Bind ("inproc://cc-test-send-no-peer");
+      Cert.Generate;
+      Chan.Listen ("inproc://cc-test-send-no-peer", Cert);
       Chan.Send ("ghost", Resp);
+      Chan.Close;
       Assert (True, "Send to an unknown identity must not raise");
    end Test_Send_No_Peer_Is_Noop;
 
@@ -105,9 +128,9 @@ package body Podmander.Controller.Control_Channel_Tests is
    is
       pragma Unreferenced (T);
       Endpoint : constant String := "inproc://cc-test-send-round-trip";
-      Router   : aliased CZMQ.Sockets.Socket;
+      Cert     : CZMQ.Certificates.Certificate;
       Dealer   : CZMQ.Sockets.Socket;
-      Chan     : constant CC.Channel := CC.Wrap (Router'Access);
+      Chan     : CC.Channel;
       Id       : Unbounded_String;
       Holder   : CC.Message_Holders.Holder;
       Outcome  : CC.Receive_Outcome;
@@ -118,10 +141,9 @@ package body Podmander.Controller.Control_Channel_Tests is
                    .Registration_Response :=
           (Connection_Id => To_Unbounded_String ("web-1"));
    begin
-      CZMQ.Sockets.Open_Router (Router);
-      Router.Set_Receive_Timeout (1000);
-      Router.Bind (Endpoint);
-      Open_Dealer (Dealer, Endpoint, "web-1");
+      Cert.Generate;
+      Chan.Listen (Endpoint, Cert);
+      Open_Dealer (Dealer, Endpoint, "web-1", Cert.Public_Key);
 
       --  Prime: DEALER -> ROUTER so the ROUTER learns the "web-1" route.
       Dealer_Send (Dealer, Resp);
@@ -149,6 +171,7 @@ package body Podmander.Controller.Control_Channel_Tests is
                "DEALER must decode a Registration_Response");
          end;
       end;
+      Chan.Close;
    end Test_Send_Round_Trip;
 
    --  Test 4: Receive pops the routing identity and decodes the payload into
@@ -158,9 +181,9 @@ package body Podmander.Controller.Control_Channel_Tests is
    is
       pragma Unreferenced (T);
       Endpoint : constant String := "inproc://cc-test-receive-decode";
-      Router   : aliased CZMQ.Sockets.Socket;
+      Cert     : CZMQ.Certificates.Certificate;
       Dealer   : CZMQ.Sockets.Socket;
-      Chan     : constant CC.Channel := CC.Wrap (Router'Access);
+      Chan     : CC.Channel;
       Id       : Unbounded_String;
       Holder   : CC.Message_Holders.Holder;
       Outcome  : CC.Receive_Outcome;
@@ -168,10 +191,9 @@ package body Podmander.Controller.Control_Channel_Tests is
         (Connection_Id => To_Unbounded_String ("agent-9"),
          Timestamp     => Ada.Calendar.Clock);
    begin
-      CZMQ.Sockets.Open_Router (Router);
-      Router.Set_Receive_Timeout (1000);
-      Router.Bind (Endpoint);
-      Open_Dealer (Dealer, Endpoint, "agent-9");
+      Cert.Generate;
+      Chan.Listen (Endpoint, Cert);
+      Open_Dealer (Dealer, Endpoint, "agent-9", Cert.Public_Key);
 
       Dealer_Send (Dealer, HB);
       Chan.Receive (Id, Holder, Outcome);
@@ -186,6 +208,7 @@ package body Podmander.Controller.Control_Channel_Tests is
            (Decoded in Podmander.Messages.Heartbeat_Message_Type'Class,
             "Decoded message must be a Heartbeat");
       end;
+      Chan.Close;
    end Test_Receive_Decodes_And_Identifies;
 
    --  Test 5: Receive on an idle socket reports No_Message rather than blocking.
@@ -193,17 +216,17 @@ package body Podmander.Controller.Control_Channel_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Router  : aliased CZMQ.Sockets.Socket;
-      Chan    : constant CC.Channel := CC.Wrap (Router'Access);
+      Cert    : CZMQ.Certificates.Certificate;
+      Chan    : CC.Channel;
       Id      : Unbounded_String;
       Holder  : CC.Message_Holders.Holder;
       Outcome : CC.Receive_Outcome;
    begin
-      CZMQ.Sockets.Open_Router (Router);
-      Router.Set_Receive_Timeout (100);
-      Router.Bind ("inproc://cc-test-receive-timeout");
+      Cert.Generate;
+      Chan.Listen ("inproc://cc-test-receive-timeout", Cert);
 
       Chan.Receive (Id, Holder, Outcome);
+      Chan.Close;
       Assert (Outcome = CC.No_Message, "Idle receive must report No_Message");
    end Test_Receive_Timeout_Is_No_Message;
 
@@ -214,17 +237,16 @@ package body Podmander.Controller.Control_Channel_Tests is
    is
       pragma Unreferenced (T);
       Endpoint : constant String := "inproc://cc-test-receive-malformed";
-      Router   : aliased CZMQ.Sockets.Socket;
+      Cert     : CZMQ.Certificates.Certificate;
       Dealer   : CZMQ.Sockets.Socket;
-      Chan     : constant CC.Channel := CC.Wrap (Router'Access);
+      Chan     : CC.Channel;
       Id       : Unbounded_String;
       Holder   : CC.Message_Holders.Holder;
       Outcome  : CC.Receive_Outcome;
    begin
-      CZMQ.Sockets.Open_Router (Router);
-      Router.Set_Receive_Timeout (1000);
-      Router.Bind (Endpoint);
-      Open_Dealer (Dealer, Endpoint, "garbler");
+      Cert.Generate;
+      Chan.Listen (Endpoint, Cert);
+      Open_Dealer (Dealer, Endpoint, "garbler", Cert.Public_Key);
 
       declare
          Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
@@ -239,6 +261,7 @@ package body Podmander.Controller.Control_Channel_Tests is
       Assert
         (To_String (Id) = "garbler",
          "Malformed receive must still surface the sender identity");
+      Chan.Close;
    end Test_Receive_Malformed_Reports_Malformed;
 
    overriding
@@ -249,6 +272,10 @@ package body Podmander.Controller.Control_Channel_Tests is
         (T,
          Test_Send_Unopened_Is_Noop'Access,
          "Send on an unopened socket is a no-op");
+      Register_Routine
+        (T,
+         Test_Listen_Rejects_Invalid_Certificate'Access,
+         "Listen rejects an invalid controller certificate");
       Register_Routine
         (T,
          Test_Send_No_Peer_Is_Noop'Access,
@@ -278,4 +305,4 @@ package body Podmander.Controller.Control_Channel_Tests is
       return Result'Access;
    end Suite;
 
-end Podmander.Controller.Control_Channel_Tests;
+end Podmander.Control_Channel_Tests;

@@ -414,7 +414,7 @@ package body Podmander.Controller_Tests is
            (Config      => <>,
             DB          => Podmander.Database.Open (":memory:"),
             Certificate => <>,
-            Socket      => <>,
+            Channel     => <>,
             Running     => False)
       do
          Podmander.Enrollment.Set_Secret (C.Config.Enrollment, "secret");
@@ -430,7 +430,7 @@ package body Podmander.Controller_Tests is
    end Make_Handler;
 
    -- Test: Handle_Registration_Request adds the agent to the controller's map
-   -- when Socket is not yet open (reply Send is guarded by Is_Valid).
+   -- when the Control Channel is not yet listening.
    procedure Test_Handle_Registration_Request_Adds_Agent
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is

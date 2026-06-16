@@ -3,7 +3,7 @@
 
 with Ada.Calendar;
 with Podmander.Controller.Agent.Repository;
-with Podmander.Controller.Control_Channel;
+with Podmander.Control_Channel;
 with Podmander.Controller.Enrollment_Authority;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
@@ -26,17 +26,12 @@ package body Podmander.Controller.Message_Handlers is
    use Podmander.Types;
    use type Podmander.Database.Error_Kind;
 
-   --  Send a reply to a connection identity through a transiently wrapped
-   --  Control Channel, which borrows the controller's socket. No-op when that
-   --  socket is not open -- the seam that lets handler logic run in tests
-   --  without a live socket, in place of an Is_Valid guard at each call site.
    procedure Send_Reply
-     (H        : Controller_Handler;
+     (H        : in out Controller_Handler;
       Identity : String;
       Message  : Podmander.Messages.Protocol_Message'Class) is
    begin
-      Control_Channel.Wrap (H.Ctrl.Socket'Unchecked_Access).Send
-        (Identity, Message);
+      H.Ctrl.Channel.Send (Identity, Message);
    end Send_Reply;
 
    procedure Send_Status_Query

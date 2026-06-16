@@ -11,9 +11,8 @@ with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
 with Ada.Strings.Unbounded;
-with CZMQ.Sockets;
 with Podmander.Controller.Agent.Repository;
-with Podmander.Controller.Control_Channel;
+with Podmander.Control_Channel;
 with Podmander.Controller.Node.Repository;
 with Podmander.Controller.Service.Repository;
 with Podmander.Controller.Service_Catalog.Repository;
@@ -159,15 +158,13 @@ package body Podmander.Controller.Supervisor_Tests is
            Service_Id     => Svc,
            Node_Id        => (Present => False),
            Target_Version => 1);
-      Sock : aliased CZMQ.Sockets.Socket;
+      Chan : Podmander.Control_Channel.Channel;
    begin
       --  First_Available selects a node only when a Registered agent exists.
       --  Seed one so the scheduling step can assign a node.
       Seed_Agent (D, "agent-1", Node, "conn-abc");
 
-      CZMQ.Sockets.Open_Router (Sock);
-
-      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
+      Supervisor.Tick (D, Chan);
 
       Cat := Cat_Repo.Get_By_Id (D, Cat.Id);
       Assert
@@ -177,7 +174,6 @@ package body Podmander.Controller.Supervisor_Tests is
         (Cat.State = Podmander.Controller.In_Progress,
          "Tick must deploy the entry once a node is assigned and an agent is Registered");
 
-      CZMQ.Sockets.Close (Sock);
    end Test_Tick_Schedules_Unscheduled_Entry;
 
    -----------------------------------------------
@@ -198,21 +194,18 @@ package body Podmander.Controller.Supervisor_Tests is
            Service_Id     => Svc,
            Node_Id        => (Present => True, Node_Id => Node),
            Target_Version => 1);
-      Sock : aliased CZMQ.Sockets.Socket;
+      Chan : Podmander.Control_Channel.Channel;
    begin
       --  Register a Registered agent on this node.
       Seed_Agent (D, "agent-1", Node, "conn-abc");
 
-      CZMQ.Sockets.Open_Router (Sock);
-
-      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
+      Supervisor.Tick (D, Chan);
 
       Cat := Cat_Repo.Get_By_Id (D, Cat.Id);
       Assert
         (Cat.State = Podmander.Controller.In_Progress,
          "Tick must transition a Pending entry with a Registered agent to In_Progress");
 
-      CZMQ.Sockets.Close (Sock);
    end Test_Tick_Deploys_Pending_Entry;
 
    -----------------------------------------------
@@ -233,19 +226,16 @@ package body Podmander.Controller.Supervisor_Tests is
            Service_Id     => Svc,
            Node_Id        => (Present => True, Node_Id => Node),
            Target_Version => 1);
-      Sock : aliased CZMQ.Sockets.Socket;
+      Chan : Podmander.Control_Channel.Channel;
    begin
       --  No agent seeded: node exists but has no Registered agent.
-      CZMQ.Sockets.Open_Router (Sock);
-
-      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
+      Supervisor.Tick (D, Chan);
 
       Cat := Cat_Repo.Get_By_Id (D, Cat.Id);
       Assert
         (Cat.State = Podmander.Controller.Pending,
          "Tick must leave entry Pending when no registered agent serves its node");
 
-      CZMQ.Sockets.Close (Sock);
    end Test_Tick_No_Agent_Leaves_Pending;
 
    -----------------------------------------------
@@ -257,12 +247,10 @@ package body Podmander.Controller.Supervisor_Tests is
    is
       pragma Unreferenced (T);
       D    : DB.DB_Handle := DB.Open (":memory:");
-      Sock : aliased CZMQ.Sockets.Socket;
+      Chan : Podmander.Control_Channel.Channel;
    begin
-      CZMQ.Sockets.Open_Router (Sock);
-      Supervisor.Tick (D, Control_Channel.Wrap (Sock'Access));
-      --  No assert needed; reaching this point without an exception is the test.
-      CZMQ.Sockets.Close (Sock);
+      Supervisor.Tick (D, Chan);
+   --  No assert needed; reaching this point without an exception is the test.
    end Test_Tick_Empty_Catalog_Is_Noop;
 
    overriding

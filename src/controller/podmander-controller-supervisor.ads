@@ -6,14 +6,14 @@
 --  First_Available strategy, and Pending entries with a Registered agent are
 --  deployed by sending a Deployment_Command through the Control Channel.
 
-with Podmander.Controller.Control_Channel;
+with Podmander.Control_Channel;
 with Podmander.Database;
 
 package Podmander.Controller.Supervisor is
 
    procedure Tick
      (DB   : in out Podmander.Database.DB_Handle;
-      Chan : Podmander.Controller.Control_Channel.Channel);
+      Chan : in out Podmander.Control_Channel.Channel);
    --  One reconciliation pass over the Service Catalog: schedule unscheduled
    --  entries (First_Available strategy), then deploy pending ones, sending a
    --  Deployment_Command through Chan to the assigned node's registered agent.
