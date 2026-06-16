@@ -138,8 +138,7 @@ package body Podmander.Enrollment_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      use type Podmander.Enrollment.Byte;
-      Input  : constant Podmander.Enrollment.Byte_Array := (0, 1, 15, 16, 255);
+      Input  : constant Podmander.Enrollment.Byte_Array := [0, 1, 15, 16, 255];
       Expect : constant String := "01f0f";
       Result : constant String := Podmander.Enrollment.Bytes_To_Hex (Input);
    begin
