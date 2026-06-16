@@ -68,9 +68,16 @@ The main worktree is reserved for `wt switch` operations only.
 5. Push the branch and submit a pull request.
 6. After merge, update the main worktree and remove the feature worktree.
 
-## SQLite Gotchas
+## Dependencies
 
-These recur whenever we touch the database layer.
+### CZMQ
+
+The `czmq_ada` library provides Ada bindings to `libczmq`. Jochen maintains it, and there's a local
+checkout of the code in `~/Projects/src/geewiz/czmq_ada/`.
+
+### Sqlite
+
+These gotchas recur whenever we touch the database layer:
 
 - `PRAGMA journal_mode=WAL` cannot run inside a SQLite transaction. Execute
   it before `BEGIN`.
@@ -82,7 +89,8 @@ These recur whenever we touch the database layer.
 
 ## Agent skills
 
-The documents referenced in this section contain important information for working on this project. Read them all now.
+The documents referenced in this section contain important information for working on this project.
+Read them all now.
 
 ### Issue tracker
 
