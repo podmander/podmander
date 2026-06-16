@@ -11,6 +11,7 @@ with Ada.Strings.Unbounded;
 with AUnit.Assertions;
 with AUnit.Test_Cases;
 with CZMQ.Certificates;
+with CZMQ.Low_Level;
 with CZMQ.Messages;
 with CZMQ.Sockets;
 with Podmander.Control_Channel;
@@ -230,6 +231,34 @@ package body Podmander.Control_Channel_Tests is
       Assert (Outcome = CC.No_Message, "Idle receive must report No_Message");
    end Test_Receive_Timeout_Is_No_Message;
 
+   procedure Test_Interrupted_Receive_Is_No_Message
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Cert    : CZMQ.Certificates.Certificate;
+      Chan    : CC.Channel;
+      Id      : Unbounded_String;
+      Holder  : CC.Message_Holders.Holder;
+      Outcome : CC.Receive_Outcome;
+   begin
+      Cert.Generate;
+      Chan.Listen ("inproc://cc-test-interrupted-receive", Cert);
+
+      CZMQ.Low_Level.Zsys_Interrupted := 1;
+      Chan.Receive (Id, Holder, Outcome);
+      CZMQ.Low_Level.Zsys_Interrupted := 0;
+
+      Chan.Close;
+      Assert
+        (Outcome = CC.No_Message,
+         "Interrupted receive must let the controller shut down cleanly");
+   exception
+      when others =>
+         CZMQ.Low_Level.Zsys_Interrupted := 0;
+         Chan.Close;
+         raise;
+   end Test_Interrupted_Receive_Is_No_Message;
+
    --  Test 6: A frame that fails to decode reports Malformed, with the sender's
    --  identity preserved so the caller can report it.
    procedure Test_Receive_Malformed_Reports_Malformed
@@ -290,6 +319,10 @@ package body Podmander.Control_Channel_Tests is
         (T,
          Test_Receive_Timeout_Is_No_Message'Access,
          "Receive on an idle socket reports No_Message");
+      Register_Routine
+        (T,
+         Test_Interrupted_Receive_Is_No_Message'Access,
+         "Interrupted receive reports No_Message");
       Register_Routine
         (T,
          Test_Receive_Malformed_Reports_Malformed'Access,

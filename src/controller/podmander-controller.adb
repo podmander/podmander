@@ -106,6 +106,7 @@ package body Podmander.Controller is
    begin
       while Self.Running and then not CZMQ.Signals.Is_Interrupted loop
          Handle_Message (Self, Self.Channel);
+         exit when CZMQ.Signals.Is_Interrupted;
          Liveness.Check_Timeouts (Self.DB, Self.Config.Agent_Timeout);
          Supervisor.Tick (Self.DB, Self.Channel);
       end loop;

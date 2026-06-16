@@ -1,7 +1,9 @@
 --  Copyright (C) 2026 Jochen Lillich
 --  SPDX-License-Identifier: Apache-2.0
 
+with CZMQ;
 with CZMQ.Messages;
+with CZMQ.Signals;
 
 package body Podmander.Control_Channel is
 
@@ -68,7 +70,17 @@ package body Podmander.Control_Channel is
          return;
       end if;
 
-      CZMQ.Messages.Receive (Self.Socket, Msg, Status);
+      begin
+         CZMQ.Messages.Receive (Self.Socket, Msg, Status);
+      exception
+         when CZMQ.CZMQ_Error =>
+            if CZMQ.Signals.Is_Interrupted then
+               Outcome := No_Message;
+               return;
+            end if;
+            raise;
+      end;
+
       if Status = CZMQ.Messages.Timeout then
          Outcome := No_Message;
          return;
