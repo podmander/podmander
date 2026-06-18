@@ -8,9 +8,7 @@ functionality.
 
 ## Dev Environment
 
-Builds, tests, and analysis commands need to run inside the `ada_dev` distrobox container. The `mise` build tool offers
-preconfigured tasks for common development actions. They have the distrobox wrapping built in; run them from the host
-system.
+The `mise` build tool offers preconfigured tasks for common development actions.
 
 ```bash
 mise run build        # compile all binaries
@@ -23,12 +21,6 @@ mise run format:check # check formatting without modifying files
 **Formatting rule:** When the build produces GNAT style warnings (indentation,
 spacing, line length), do NOT try to fix them manually. Run `mise run format`
 immediately and rebuild. Only address remaining warnings after formatting.
-
-To enter an interactive shell directly:
-
-```bash
-distrobox enter ada_dev
-```
 
 ## Project Management
 
