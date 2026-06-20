@@ -49,3 +49,6 @@ ADRs capture architecturally significant decisions — the *why* behind the syst
 | [0039](0039-operator-cli-shares-agent-channel.md) | Operator CLI shares the agent control-plane channel | Accepted | 2026-06-06 |
 | [0040](0040-node-as-first-class-domain-object.md) | Node as a first-class domain object, distinct from Agent | Proposed | 2026-06-07 |
 | [0041](0041-controller-composition-root.md) | Controller as a composition root, with extracted runtime collaborators | Proposed | 2026-06-13 |
+| [0042](0042-control-channel-owns-its-socket.md) | The Control Channel owns its socket | Proposed | 2026-06-14 |
+| [0043](0043-enrollment-secret-from-getrandom.md) | Enrollment secret from getrandom(2) | Proposed | 2026-06-14 |
+| [0044](0044-native-rpm-packaging-for-podmander-deliverables.md) | Native RPM packaging for Podmander deliverables | Proposed | 2026-06-20 |

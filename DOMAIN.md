@@ -52,6 +52,11 @@ erDiagram
 
 ## Glossary
 
+### Podmander Deliverables
+
+The shipped artifacts that operators install or run to operate a fleet: `podmander-controller`, `podmander-agent`, and `podctl`.
+_Avoid_: Podmander components, packaging components
+
 ### CLI (`podctl`)
 
 The command-line interface through which operators interact with the fleet. All

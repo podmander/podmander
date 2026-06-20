@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Documented native RPM packaging as the first distribution strategy for Podmander deliverables (#180)
 - `Podmander.Agent.Atomic_File.Write` performs atomic file placement via write-then-rename, so an interrupted deploy never leaves a partial quadlet file (#69)
 
 - `Version_Option` variant record in `Podmander.Controller`; `Service_Catalog_Entry.Current_Version` now uses `Version_Option` instead of a `Natural` sentinel 0 (#92)
