@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Replaced service version env/port/volume JSON scanning with `GNATCOLL.JSON` serialization and parsing, including clear failures for malformed service JSON (#185)
 - Improved controller test failure output and removed a dispatch test that covered handler absence rather than behavior (#63)
 - Separated secret minting from token serialization in `Podmander.Enrollment`: `Ensure_Secret` is now the single home for minting a random secret; `Generate_Join_Token` is a pure serializer (`Config : in`, guarded by `Pre => Has_Secret`); `Bootstrap_Secret` no longer takes a `Public_Key` parameter (#173)
 - Moved `Podmander.Control_Channel` out of the controller hierarchy and made it own the ROUTER socket, including listen/close setup and receive-timeout pacing; the controller no longer names CZMQ socket or poller types (#170)

@@ -10,8 +10,7 @@
 
 package Podmander.Controller.Service.Json_Utils is
 
-   function Escape_JSON (S : String) return String;
-   -- Escape special characters in S for embedding in a JSON string value.
+   Parse_Error : exception;
 
    function Env_Array_To_JSON (Arr : Env_Array; Count : Natural) return String;
    -- Serialize the first Count elements of Arr as a JSON array of objects.
@@ -26,11 +25,11 @@ package Podmander.Controller.Service.Json_Utils is
 
    function Find_String_Value (S : String; Key : String) return String;
    -- Parse the first occurrence of "key":"value" from JSON object string S.
-   -- Returns "" if the key is not found.
+   -- Raises Parse_Error if parsing fails or the field is missing.
 
    function Find_Int_Value (S : String; Key : String) return Integer;
    -- Parse the first occurrence of "key":<integer> from JSON object string S.
-   -- Returns 0 if the key is not found.
+   -- Raises Parse_Error if parsing fails or the field is missing.
 
    procedure Parse_Env_Array
      (JSON_Str : String; Arr : in out Env_Array; Count : out Natural);
