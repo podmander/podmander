@@ -86,12 +86,9 @@ Read them all now.
 
 ### Issue tracker
 
-Issues live as Forgejo issues (owner: `podmander`, repo: `podmander`). Use the Forgejo MCP server or the `fj` CLI for Forgejo operations. See `notes/agents/issue-tracker.md`.
-
-The `fj` Forgejo CLI is also available for Forgejo operations. Always pass
-`-H code.monospacementor.com` (for example,
-`fj -H code.monospacementor.com org label list podmander`) because `fj` otherwise
-appears to use the SSH port 222 for API calls by default.
+Issues live as Forgejo issues (owner: `podmander`, repo: `podmander`). Use the
+Forgejo MCP server or the `fj` CLI for Forgejo operations. See
+`notes/agents/issue-tracker.md` and the `/forgejo` skill.
 
 ### Triage labels
 
