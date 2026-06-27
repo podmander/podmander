@@ -3,6 +3,7 @@
 
 [[pre-start]]
 mise = "mise trust"
+codegraph = "codegraph init -i"
 
 [[pre-merge]]
 test = "distrobox enter ada_dev -- alr test"
