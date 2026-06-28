@@ -3,6 +3,7 @@
 
 with Ada.Directories;
 
+with Podmander.Runtime_Config_Helpers;
 with TOML;
 with TOML.File_IO;
 
@@ -10,25 +11,21 @@ package body Podmander.Agent.Runtime_Config is
 
    use type TOML.Float_Kind;
 
-   function To_Log_Level (Value : String) return Podmander.Logging.Log_Level is
-   begin
-      if Value = "debug" then
-         return Podmander.Logging.Debug;
-      elsif Value = "info" then
-         return Podmander.Logging.Info;
-      elsif Value = "warning" then
-         return Podmander.Logging.Warning;
-      elsif Value = "error" then
-         return Podmander.Logging.Error;
-      elsif Value = "critical" then
-         return Podmander.Logging.Critical;
-      end if;
+   function Failure (Message : String) return Load_Result
+   is (Success => False, Message => To_Unbounded_String (Message));
 
-      raise Constraint_Error;
-   end To_Log_Level;
+   function Success_Result
+     (Config : Podmander.Agent.Agent_Config;
+      Level  : Podmander.Logging.Log_Level) return Load_Result
+   is (Success => True, Value => (Config => Config, Log_Level => Level));
 
-   function Path_Exists (Path : String) return Boolean
-   is (Ada.Directories.Exists (Path));
+   function Default_Config return Podmander.Agent.Agent_Config
+   is (Controller_Address   => To_Unbounded_String ("tcp://localhost:5555"),
+       Agent_Name           => To_Unbounded_String ("agent-1"),
+       Join_Token           => Null_Unbounded_String,
+       Heartbeat_Interval   => 30.0,
+       Registration_Timeout => 5.0,
+       Max_Backoff          => 60.0);
 
    function Read_Interval (Value : TOML.TOML_Value) return Duration is
    begin
@@ -52,151 +49,145 @@ package body Podmander.Agent.Runtime_Config is
       end case;
    end Read_Interval;
 
+   function Apply_Config_File
+     (Config_Path : String;
+      Config      : in out Podmander.Agent.Agent_Config;
+      Level       : in out Podmander.Logging.Log_Level) return Load_Result
+   is
+      Result : TOML.Read_Result;
+   begin
+      case Ada.Directories.Kind (Config_Path) is
+         when Ada.Directories.Ordinary_File =>
+            null;
+
+         when others                        =>
+            return Failure ("unable to load config file: " & Config_Path);
+      end case;
+
+      begin
+         Result := TOML.File_IO.Load_File (Config_Path);
+      exception
+         when others =>
+            return Failure ("unable to load config file: " & Config_Path);
+      end;
+
+      if not Result.Success then
+         return Failure (TOML.Format_Error (Result));
+      end if;
+
+      for Table_Entry of Result.Value.Iterate_On_Table loop
+         declare
+            Key : constant String := To_String (Table_Entry.Key);
+         begin
+            if Key = "connect" then
+               Config.Controller_Address :=
+                 To_Unbounded_String (Table_Entry.Value.As_String);
+            elsif Key = "token" then
+               Config.Join_Token :=
+                 To_Unbounded_String (Table_Entry.Value.As_String);
+            elsif Key = "name" then
+               Config.Agent_Name :=
+                 To_Unbounded_String (Table_Entry.Value.As_String);
+            elsif Key = "interval" then
+               Config.Heartbeat_Interval := Read_Interval (Table_Entry.Value);
+               if Config.Heartbeat_Interval <= 0.0 then
+                  return Failure ("invalid interval");
+               end if;
+            elsif Key = "log_level" then
+               Level :=
+                 Podmander.Runtime_Config_Helpers.To_Log_Level
+                   (Table_Entry.Value.As_String);
+            else
+               return Failure ("unknown key: " & Key);
+            end if;
+         exception
+            when others =>
+               return Failure ("invalid value for key: " & Key);
+         end;
+      end loop;
+
+      return Success_Result (Config, Level);
+   exception
+      when others =>
+         return Failure ("unable to load config file: " & Config_Path);
+   end Apply_Config_File;
+
+   function Apply_Overrides
+     (Overrides : Config_Overrides;
+      Config    : in out Podmander.Agent.Agent_Config;
+      Level     : in out Podmander.Logging.Log_Level) return Load_Result is
+   begin
+      if Overrides.Connect /= Null_Unbounded_String then
+         Config.Controller_Address := Overrides.Connect;
+      end if;
+      if Overrides.Token /= Null_Unbounded_String then
+         Config.Join_Token := Overrides.Token;
+      end if;
+      if Overrides.Name /= Null_Unbounded_String then
+         Config.Agent_Name := Overrides.Name;
+      end if;
+      if Overrides.Interval /= Null_Unbounded_String then
+         begin
+            Config.Heartbeat_Interval :=
+              Duration'Value (To_String (Overrides.Interval));
+            if Config.Heartbeat_Interval <= 0.0 then
+               return Failure ("invalid interval");
+            end if;
+         exception
+            when others =>
+               return Failure ("invalid interval");
+         end;
+      end if;
+      if Overrides.Log_Level /= Null_Unbounded_String then
+         begin
+            Level :=
+              Podmander.Runtime_Config_Helpers.To_Log_Level
+                (To_String (Overrides.Log_Level));
+         exception
+            when others =>
+               return Failure ("invalid log level");
+         end;
+      end if;
+
+      return Success_Result (Config, Level);
+   end Apply_Overrides;
+
    function Load
      (Config_Path          : String := Default_Config_Path;
       Config_Path_Explicit : Boolean := False;
-      Connect_Override     : String := "";
-      Token_Override       : String := "";
-      Name_Override        : String := "";
-      Interval_Override    : String := "";
-      Log_Level_Override   : String := "") return Load_Result
+      Overrides            : Config_Overrides := Default_Overrides)
+      return Load_Result
    is
-      Config : Podmander.Agent.Agent_Config :=
-        (Controller_Address   => To_Unbounded_String ("tcp://localhost:5555"),
-         Agent_Name           => To_Unbounded_String ("agent-1"),
-         Join_Token           => Null_Unbounded_String,
-         Heartbeat_Interval   => 30.0,
-         Registration_Timeout => 5.0,
-         Max_Backoff          => 60.0);
+      Config : Podmander.Agent.Agent_Config := Default_Config;
       Level  : Podmander.Logging.Log_Level := Podmander.Logging.Info;
    begin
-      if Config_Path /= "" and then Path_Exists (Config_Path) then
+      if Config_Path /= "" and then Ada.Directories.Exists (Config_Path) then
          declare
-            Result : TOML.Read_Result;
+            Result : constant Load_Result :=
+              Apply_Config_File (Config_Path, Config, Level);
          begin
-            case Ada.Directories.Kind (Config_Path) is
-               when Ada.Directories.Ordinary_File =>
-                  null;
-
-               when others                        =>
-                  return
-                    (Success => False,
-                     Message =>
-                       To_Unbounded_String
-                         ("unable to load config file: " & Config_Path));
-            end case;
-
-            begin
-               Result := TOML.File_IO.Load_File (Config_Path);
-            exception
-               when others =>
-                  return
-                    (Success => False,
-                     Message =>
-                       To_Unbounded_String
-                         ("unable to load config file: " & Config_Path));
-            end;
-
             if not Result.Success then
-               return
-                 (Success => False,
-                  Message => To_Unbounded_String (TOML.Format_Error (Result)));
-            else
-               for Table_Entry of Result.Value.Iterate_On_Table loop
-                  declare
-                     Key : constant String := To_String (Table_Entry.Key);
-                  begin
-                     if Key = "connect" then
-                        Config.Controller_Address :=
-                          To_Unbounded_String (Table_Entry.Value.As_String);
-                     elsif Key = "token" then
-                        Config.Join_Token :=
-                          To_Unbounded_String (Table_Entry.Value.As_String);
-                     elsif Key = "name" then
-                        Config.Agent_Name :=
-                          To_Unbounded_String (Table_Entry.Value.As_String);
-                     elsif Key = "interval" then
-                        Config.Heartbeat_Interval :=
-                          Read_Interval (Table_Entry.Value);
-                        if Config.Heartbeat_Interval <= 0.0 then
-                           return
-                             (Success => False,
-                              Message =>
-                                To_Unbounded_String ("invalid interval"));
-                        end if;
-                     elsif Key = "log_level" then
-                        Level := To_Log_Level (Table_Entry.Value.As_String);
-                     else
-                        return
-                          (Success => False,
-                           Message =>
-                             To_Unbounded_String ("unknown key: " & Key));
-                     end if;
-                  exception
-                     when Constraint_Error | Program_Error =>
-                        return
-                          (Success => False,
-                           Message =>
-                             To_Unbounded_String
-                               ("invalid value for key: " & Key));
-                  end;
-               end loop;
+               return Result;
             end if;
          end;
       elsif Config_Path_Explicit then
-         return
-           (Success => False,
-            Message =>
-              To_Unbounded_String ("config file not found: " & Config_Path));
+         return Failure ("config file not found: " & Config_Path);
       end if;
 
-      if Connect_Override /= "" then
-         Config.Controller_Address := To_Unbounded_String (Connect_Override);
-      end if;
-
-      if Token_Override /= "" then
-         Config.Join_Token := To_Unbounded_String (Token_Override);
-      end if;
-
-      if Name_Override /= "" then
-         Config.Agent_Name := To_Unbounded_String (Name_Override);
-      end if;
-
-      if Interval_Override /= "" then
-         begin
-            Config.Heartbeat_Interval := Duration'Value (Interval_Override);
-            if Config.Heartbeat_Interval <= 0.0 then
-               return
-                 (Success => False,
-                  Message => To_Unbounded_String ("invalid interval"));
-            end if;
-         exception
-            when others =>
-               return
-                 (Success => False,
-                  Message => To_Unbounded_String ("invalid interval"));
-         end;
-      end if;
-
-      if Log_Level_Override /= "" then
-         begin
-            Level := To_Log_Level (Log_Level_Override);
-         exception
-            when others =>
-               return
-                 (Success => False,
-                  Message => To_Unbounded_String ("invalid log level"));
-         end;
-      end if;
+      declare
+         Result : constant Load_Result :=
+           Apply_Overrides (Overrides, Config, Level);
+      begin
+         if not Result.Success then
+            return Result;
+         end if;
+      end;
 
       if Config.Join_Token = Null_Unbounded_String then
-         return
-           (Success => False,
-            Message => To_Unbounded_String ("token is required"));
+         return Failure ("token is required");
       end if;
 
-      return
-        (Success => True, Value => (Config => Config, Log_Level => Level));
+      return Success_Result (Config, Level);
    end Load;
 
 end Podmander.Agent.Runtime_Config;

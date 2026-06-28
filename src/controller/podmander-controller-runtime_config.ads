@@ -8,6 +8,14 @@ package Podmander.Controller.Runtime_Config is
 
    use Ada.Strings.Unbounded;
 
+   type Config_Overrides is record
+      Bind      : Unbounded_String := Null_Unbounded_String;
+      Log_Level : Unbounded_String := Null_Unbounded_String;
+   end record;
+
+   Default_Overrides : constant Config_Overrides :=
+     (others => Null_Unbounded_String);
+
    Default_Config_Path : constant String := "/etc/podmander/controller.toml";
 
    type Runtime_Config is record
@@ -28,7 +36,7 @@ package Podmander.Controller.Runtime_Config is
    function Load
      (Config_Path          : String := Default_Config_Path;
       Config_Path_Explicit : Boolean := False;
-      Bind_Override        : String := "";
-      Log_Level_Override   : String := "") return Load_Result;
+      Overrides            : Config_Overrides := Default_Overrides)
+      return Load_Result;
 
 end Podmander.Controller.Runtime_Config;

@@ -7,62 +7,16 @@ with Podmander.Agent;
 with Podmander.Agent.Runtime_Config;
 with Podmander.Args;
 with Podmander.Logging;
+with Podmander.Runtime_Config_Helpers;
 
 procedure Podmander_Agent is
    use Ada.Strings.Unbounded;
-
-   function Config_Argument return String is
-   begin
-      for I in 1 .. Ada.Command_Line.Argument_Count loop
-         declare
-            Arg : constant String := Ada.Command_Line.Argument (I);
-         begin
-            if Arg = "--config" then
-               if I = Ada.Command_Line.Argument_Count then
-                  return "";
-               end if;
-
-               declare
-                  Next : constant String := Ada.Command_Line.Argument (I + 1);
-               begin
-                  if Next'Length > 0 and then Next (1) /= '-' then
-                     return Next;
-                  end if;
-
-                  return "";
-               end;
-            elsif Arg'Length >= 9 and then Arg (1 .. 9) = "--config=" then
-               if Arg'Length = 9 then
-                  return "";
-               end if;
-
-               return Arg (10 .. Arg'Last);
-            end if;
-         end;
-      end loop;
-      return Podmander.Agent.Runtime_Config.Default_Config_Path;
-   end Config_Argument;
-
-   function Config_Explicit return Boolean is
-   begin
-      for I in 1 .. Ada.Command_Line.Argument_Count loop
-         declare
-            Arg : constant String := Ada.Command_Line.Argument (I);
-         begin
-            if Arg = "--config"
-              or else (Arg'Length >= 9 and then Arg (1 .. 9) = "--config=")
-            then
-               return True;
-            end if;
-         end;
-      end loop;
-      return False;
-   end Config_Explicit;
-
 begin
    declare
-      Path     : constant String := Config_Argument;
-      Explicit : constant Boolean := Config_Explicit;
+      Explicit : Boolean;
+      Path     : constant String :=
+        Podmander.Runtime_Config_Helpers.Config_Path_From_Arguments
+          (Podmander.Agent.Runtime_Config.Default_Config_Path, Explicit);
    begin
       if Explicit and then Path = "" then
          Podmander.Logging.Critical ("agent", "--config requires a path");
@@ -71,15 +25,23 @@ begin
       end if;
 
       declare
+         Overrides   :
+           constant Podmander.Agent.Runtime_Config.Config_Overrides :=
+             (Connect   =>
+                To_Unbounded_String (Podmander.Args.Get ("connect", "")),
+              Token     =>
+                To_Unbounded_String (Podmander.Args.Get ("token", "")),
+              Name      =>
+                To_Unbounded_String (Podmander.Args.Get ("name", "")),
+              Interval  =>
+                To_Unbounded_String (Podmander.Args.Get ("interval", "")),
+              Log_Level =>
+                To_Unbounded_String (Podmander.Args.Get ("log-level", "")));
          Load_Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
            Podmander.Agent.Runtime_Config.Load
              (Config_Path          => Path,
               Config_Path_Explicit => Explicit,
-              Connect_Override     => Podmander.Args.Get ("connect", ""),
-              Token_Override       => Podmander.Args.Get ("token", ""),
-              Name_Override        => Podmander.Args.Get ("name", ""),
-              Interval_Override    => Podmander.Args.Get ("interval", ""),
-              Log_Level_Override   => Podmander.Args.Get ("log-level", ""));
+              Overrides            => Overrides);
       begin
          if not Load_Result.Success then
             Podmander.Logging.Critical

@@ -1,5 +1,6 @@
 with Ada.Directories;
 with Ada.Characters.Latin_1;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with AUnit.Assertions;
@@ -25,6 +26,18 @@ package body Podmander.Agent.Runtime_Config_Tests is
    Tmp     : constant String := "/tmp/podmander-agent-runtime-config-tests";
    Fixture : constant String := Tmp & "/fixture.toml";
 
+   Fixture_Content : constant String :=
+     "connect = ""tcp://file:5555"""
+     & LF
+     & "token = ""file-token"""
+     & LF
+     & "name = ""file-agent"""
+     & LF
+     & "interval = 45.0"
+     & LF
+     & "log_level = ""warning"""
+     & LF;
+
    function Runtime_String (Value : String) return String;
    pragma No_Inline (Runtime_String);
 
@@ -43,11 +56,22 @@ package body Podmander.Agent.Runtime_Config_Tests is
    end Write_File;
 
    procedure Assert_Failure
-     (Result : Podmander.Agent.Runtime_Config.Load_Result) is
+     (Result : Podmander.Agent.Runtime_Config.Load_Result;
+      Needle : String := "") is
    begin
       Assert (not Result.Success, "expected failure");
       Assert (To_String (Result.Message)'Length > 0, "message required");
+      if Needle /= "" then
+         Assert
+           (Ada.Strings.Fixed.Index (To_String (Result.Message), Needle) > 0,
+            "expected message to contain: " & Needle);
+      end if;
    end Assert_Failure;
+
+   procedure Reset_Fixture is
+   begin
+      Write_File (Fixture, Fixture_Content);
+   end Reset_Fixture;
 
    procedure Test_Default_Path_Constant
      (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -66,7 +90,7 @@ package body Podmander.Agent.Runtime_Config_Tests is
       Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
         Podmander.Agent.Runtime_Config.Load;
    begin
-      Assert_Failure (Result);
+      Assert_Failure (Result, "token is required");
    end Test_Missing_Default_No_Token_Fails;
 
    procedure Test_Missing_Default_With_Token_Succeeds
@@ -74,7 +98,13 @@ package body Podmander.Agent.Runtime_Config_Tests is
    is
       pragma Unreferenced (T);
       Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
-        Podmander.Agent.Runtime_Config.Load (Token_Override => "tok");
+        Podmander.Agent.Runtime_Config.Load
+          (Overrides =>
+             (Connect   => To_Unbounded_String (""),
+              Token     => To_Unbounded_String ("tok"),
+              Name      => To_Unbounded_String (""),
+              Interval  => To_Unbounded_String (""),
+              Log_Level => To_Unbounded_String ("")));
    begin
       Assert (Result.Success, "token override should succeed");
       Assert
@@ -101,68 +131,84 @@ package body Podmander.Agent.Runtime_Config_Tests is
           (Config_Path          => "/nonexistent/agent.toml",
            Config_Path_Explicit => True);
    begin
-      Assert_Failure (Result);
+      Assert_Failure (Result, "config file not found");
    end Test_Explicit_Missing_File_Fails;
 
    procedure Test_File_Happy_Path (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
-        Podmander.Agent.Runtime_Config.Load (Config_Path => Fixture);
    begin
-      Assert (Result.Success, "file load");
-      Assert
-        (To_String (Result.Value.Config.Controller_Address)
-         = "tcp://file:5555",
-         "connect");
-      Assert
-        (To_String (Result.Value.Config.Join_Token) = "file-token", "token");
-      Assert
-        (To_String (Result.Value.Config.Agent_Name) = "file-agent", "name");
-      Assert (Result.Value.Config.Heartbeat_Interval = 45.0, "interval");
-      Assert (Result.Value.Log_Level = Podmander.Logging.Warning, "log level");
+      Reset_Fixture;
+      declare
+         Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
+           Podmander.Agent.Runtime_Config.Load (Config_Path => Fixture);
+      begin
+         Assert (Result.Success, "file load");
+         Assert
+           (To_String (Result.Value.Config.Controller_Address)
+            = "tcp://file:5555",
+            "connect");
+         Assert
+           (To_String (Result.Value.Config.Join_Token) = "file-token",
+            "token");
+         Assert
+           (To_String (Result.Value.Config.Agent_Name) = "file-agent", "name");
+         Assert (Result.Value.Config.Heartbeat_Interval = 45.0, "interval");
+         Assert
+           (Result.Value.Log_Level = Podmander.Logging.Warning, "log level");
+      end;
    end Test_File_Happy_Path;
 
    procedure Test_CLI_Overrides_Beat_File
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
-        Podmander.Agent.Runtime_Config.Load
-          (Config_Path        => Fixture,
-           Connect_Override   => "tcp://override:5555",
-           Token_Override     => "override-token",
-           Name_Override      => "override-agent",
-           Interval_Override  => "12.5",
-           Log_Level_Override => "error");
    begin
-      Assert (Result.Success, "overrides");
-      Assert
-        (To_String (Result.Value.Config.Controller_Address)
-         = "tcp://override:5555",
-         "connect override");
-      Assert
-        (To_String (Result.Value.Config.Join_Token) = "override-token",
-         "token override");
-      Assert
-        (To_String (Result.Value.Config.Agent_Name) = "override-agent",
-         "name override");
-      Assert
-        (Result.Value.Config.Heartbeat_Interval = 12.5, "interval override");
-      Assert
-        (Result.Value.Log_Level = Podmander.Logging.Error, "log override");
+      Reset_Fixture;
+      declare
+         Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
+           Podmander.Agent.Runtime_Config.Load
+             (Config_Path => Fixture,
+              Overrides   =>
+                (Connect   => To_Unbounded_String ("tcp://override:5555"),
+                 Token     => To_Unbounded_String ("override-token"),
+                 Name      => To_Unbounded_String ("override-agent"),
+                 Interval  => To_Unbounded_String ("12.5"),
+                 Log_Level => To_Unbounded_String ("error")));
+      begin
+         Assert (Result.Success, "overrides");
+         Assert
+           (To_String (Result.Value.Config.Controller_Address)
+            = "tcp://override:5555",
+            "connect override");
+         Assert
+           (To_String (Result.Value.Config.Join_Token) = "override-token",
+            "token override");
+         Assert
+           (To_String (Result.Value.Config.Agent_Name) = "override-agent",
+            "name override");
+         Assert
+           (Result.Value.Config.Heartbeat_Interval = 12.5,
+            "interval override");
+         Assert
+           (Result.Value.Log_Level = Podmander.Logging.Error, "log override");
+      end;
    end Test_CLI_Overrides_Beat_File;
 
    procedure Test_Token_From_File_Succeeds
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
-        Podmander.Agent.Runtime_Config.Load (Config_Path => Fixture);
    begin
-      Assert
-        (To_String (Result.Value.Config.Join_Token) = "file-token",
-         "file token used");
+      Reset_Fixture;
+      declare
+         Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
+           Podmander.Agent.Runtime_Config.Load (Config_Path => Fixture);
+      begin
+         Assert
+           (To_String (Result.Value.Config.Join_Token) = "file-token",
+            "file token used");
+      end;
    end Test_Token_From_File_Succeeds;
 
    procedure Test_Invalid_TOML_Fails
@@ -195,7 +241,7 @@ package body Podmander.Agent.Runtime_Config_Tests is
            Podmander.Agent.Runtime_Config.Load
              (Config_Path => Dir, Config_Path_Explicit => True);
       begin
-         Assert_Failure (Result);
+         Assert_Failure (Result, "unable to load config file");
       end;
    end Test_Unreadable_Path_Fails;
 
@@ -210,7 +256,7 @@ package body Podmander.Agent.Runtime_Config_Tests is
            Podmander.Agent.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert_Failure (Result);
+         Assert_Failure (Result, "invalid value for key: interval");
       end;
    end Test_Wrong_Type_Fails;
 
@@ -225,7 +271,7 @@ package body Podmander.Agent.Runtime_Config_Tests is
            Podmander.Agent.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert_Failure (Result);
+         Assert_Failure (Result, "unknown key: bogus");
       end;
    end Test_Unknown_Key_Fails;
 
@@ -240,7 +286,7 @@ package body Podmander.Agent.Runtime_Config_Tests is
            Podmander.Agent.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert_Failure (Result);
+         Assert_Failure (Result, "invalid value for key: log_level");
       end;
    end Test_Invalid_Log_Level_Fails;
 
@@ -255,7 +301,7 @@ package body Podmander.Agent.Runtime_Config_Tests is
            Podmander.Agent.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert_Failure (Result);
+         Assert_Failure (Result, "invalid value for key: interval");
       end;
    end Test_Invalid_Interval_Fails;
 
@@ -270,7 +316,7 @@ package body Podmander.Agent.Runtime_Config_Tests is
            Podmander.Agent.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert_Failure (Result);
+         Assert_Failure (Result, "invalid interval");
       end;
    end Test_Non_Positive_Interval_Fails;
 
@@ -280,9 +326,14 @@ package body Podmander.Agent.Runtime_Config_Tests is
       pragma Unreferenced (T);
       Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
         Podmander.Agent.Runtime_Config.Load
-          (Token_Override => "tok", Interval_Override => "bad");
+          (Overrides =>
+             (Connect   => To_Unbounded_String (""),
+              Token     => To_Unbounded_String ("tok"),
+              Name      => To_Unbounded_String (""),
+              Interval  => To_Unbounded_String ("bad"),
+              Log_Level => To_Unbounded_String ("")));
    begin
-      Assert_Failure (Result);
+      Assert_Failure (Result, "invalid interval");
    end Test_Invalid_Interval_Override_Fails;
 
    procedure Test_Non_Positive_Interval_Override_Fails
@@ -291,20 +342,38 @@ package body Podmander.Agent.Runtime_Config_Tests is
       pragma Unreferenced (T);
       Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
         Podmander.Agent.Runtime_Config.Load
-          (Token_Override => "tok", Interval_Override => "0.0");
+          (Overrides =>
+             (Connect   => To_Unbounded_String (""),
+              Token     => To_Unbounded_String ("tok"),
+              Name      => To_Unbounded_String (""),
+              Interval  => To_Unbounded_String ("0.0"),
+              Log_Level => To_Unbounded_String ("")));
    begin
-      Assert_Failure (Result);
+      Assert_Failure (Result, "invalid interval");
    end Test_Non_Positive_Interval_Override_Fails;
 
    procedure Test_Missing_Final_Token_Fails
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
-        Podmander.Agent.Runtime_Config.Load
-          (Config_Path => Fixture, Config_Path_Explicit => True);
    begin
-      Assert_Failure (Result);
+      Write_File
+        (Fixture,
+         "connect = ""tcp://file:5555"""
+         & LF
+         & "name = ""file-agent"""
+         & LF
+         & "interval = 45.0"
+         & LF
+         & "log_level = ""warning"""
+         & LF);
+      declare
+         Result : constant Podmander.Agent.Runtime_Config.Load_Result :=
+           Podmander.Agent.Runtime_Config.Load
+             (Config_Path => Fixture, Config_Path_Explicit => True);
+      begin
+         Assert_Failure (Result, "token is required");
+      end;
    end Test_Missing_Final_Token_Fails;
 
    overriding
@@ -365,17 +434,4 @@ package body Podmander.Agent.Runtime_Config_Tests is
       return Result'Access;
    end Suite;
 
-begin
-   Write_File
-     (Fixture,
-      "connect = ""tcp://file:5555"""
-      & LF
-      & "token = ""file-token"""
-      & LF
-      & "name = ""file-agent"""
-      & LF
-      & "interval = 45.0"
-      & LF
-      & "log_level = ""warning"""
-      & LF);
 end Podmander.Agent.Runtime_Config_Tests;

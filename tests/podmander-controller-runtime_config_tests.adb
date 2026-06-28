@@ -1,5 +1,6 @@
 with Ada.Directories;
 with Ada.Characters.Latin_1;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 with AUnit.Assertions;
@@ -25,6 +26,14 @@ package body Podmander.Controller.Runtime_Config_Tests is
    Tmp     : constant String :=
      "/tmp/podmander-controller-runtime-config-tests";
    Fixture : constant String := Tmp & "/fixture.toml";
+
+   Fixture_Content : constant String :=
+     "bind = ""tcp://127.0.0.1:5556"""
+     & LF
+     & "db_path = ""/tmp/controller.db"""
+     & LF
+     & "log_level = ""warning"""
+     & LF;
 
    function Runtime_String (Value : String) return String;
    pragma No_Inline (Runtime_String);
@@ -61,14 +70,24 @@ package body Podmander.Controller.Runtime_Config_Tests is
 
    procedure Assert_Failure
      (Result  : Podmander.Controller.Runtime_Config.Load_Result;
-      Needles : String) is
+      Needles : String := "") is
    begin
       Assert (not Result.Success, "expected failure");
       Assert (To_String (Result.Message)'Length > 0, "message required");
-      Assert
-        (To_String (Result.Message)'Length >= Needles'Length,
-         "message present");
+      if Needles /= "" then
+         Assert
+           (Ada.Strings.Fixed.Index (To_String (Result.Message), Needles) > 0,
+            "expected message to contain: "
+            & Needles
+            & "; got: "
+            & To_String (Result.Message));
+      end if;
    end Assert_Failure;
+
+   procedure Reset_Fixture is
+   begin
+      Write_File (Fixture, Fixture_Content);
+   end Reset_Fixture;
 
    procedure Test_Default_Path_Constant
      (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -118,40 +137,49 @@ package body Podmander.Controller.Runtime_Config_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Result : constant Podmander.Controller.Runtime_Config.Load_Result :=
-        Podmander.Controller.Runtime_Config.Load (Config_Path => Fixture);
    begin
-      Assert_Success (Result);
-      Assert
-        (Podmander.Controller.Get_Bind_Address (Result.Value.Config)
-         = "tcp://127.0.0.1:5556",
-         "bind from file");
-      Assert
-        (Podmander.Controller.Get_DB_Path (Result.Value.Config)
-         = "/tmp/controller.db",
-         "db path from file");
-      Assert
-        (Result.Value.Log_Level = Podmander.Logging.Warning,
-         "log level from file");
+      Reset_Fixture;
+      declare
+         Result : constant Podmander.Controller.Runtime_Config.Load_Result :=
+           Podmander.Controller.Runtime_Config.Load (Config_Path => Fixture);
+      begin
+         Assert_Success (Result);
+         Assert
+           (Podmander.Controller.Get_Bind_Address (Result.Value.Config)
+            = "tcp://127.0.0.1:5556",
+            "bind from file");
+         Assert
+           (Podmander.Controller.Get_DB_Path (Result.Value.Config)
+            = "/tmp/controller.db",
+            "db path from file");
+         Assert
+           (Result.Value.Log_Level = Podmander.Logging.Warning,
+            "log level from file");
+      end;
    end Test_File_Happy_Path_Loads_All_Keys;
 
    procedure Test_CLI_Overrides_Beat_File
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Result : constant Podmander.Controller.Runtime_Config.Load_Result :=
-        Podmander.Controller.Runtime_Config.Load
-          (Config_Path        => Fixture,
-           Bind_Override      => "tcp://*:6000",
-           Log_Level_Override => "error");
    begin
-      Assert_Success (Result);
-      Assert
-        (Podmander.Controller.Get_Bind_Address (Result.Value.Config)
-         = "tcp://*:6000",
-         "bind override");
-      Assert
-        (Result.Value.Log_Level = Podmander.Logging.Error, "log override");
+      Reset_Fixture;
+      declare
+         Result : constant Podmander.Controller.Runtime_Config.Load_Result :=
+           Podmander.Controller.Runtime_Config.Load
+             (Config_Path => Fixture,
+              Overrides   =>
+                (Bind      => To_Unbounded_String ("tcp://*:6000"),
+                 Log_Level => To_Unbounded_String ("error")));
+      begin
+         Assert_Success (Result);
+         Assert
+           (Podmander.Controller.Get_Bind_Address (Result.Value.Config)
+            = "tcp://*:6000",
+            "bind override");
+         Assert
+           (Result.Value.Log_Level = Podmander.Logging.Error, "log override");
+      end;
    end Test_CLI_Overrides_Beat_File;
 
    procedure Test_Invalid_TOML_Fails
@@ -165,7 +193,7 @@ package body Podmander.Controller.Runtime_Config_Tests is
            Podmander.Controller.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert_Failure (Result, "error");
+         Assert_Failure (Result);
       end;
    end Test_Invalid_TOML_Fails;
 
@@ -182,7 +210,7 @@ package body Podmander.Controller.Runtime_Config_Tests is
            Podmander.Controller.Runtime_Config.Load
              (Config_Path => Dir, Config_Path_Explicit => True);
       begin
-         Assert (not Result.Success, "directory path should fail");
+         Assert_Failure (Result, "unable to load config file");
       end;
    end Test_Unreadable_Path_Fails;
 
@@ -197,7 +225,7 @@ package body Podmander.Controller.Runtime_Config_Tests is
            Podmander.Controller.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert (not Result.Success, "wrong type fails");
+         Assert_Failure (Result, "invalid bind address");
       end;
    end Test_Wrong_Type_Fails;
 
@@ -212,7 +240,7 @@ package body Podmander.Controller.Runtime_Config_Tests is
            Podmander.Controller.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert (not Result.Success, "unknown key fails");
+         Assert_Failure (Result, "unknown key: bogus");
       end;
    end Test_Unknown_Key_Fails;
 
@@ -227,7 +255,7 @@ package body Podmander.Controller.Runtime_Config_Tests is
            Podmander.Controller.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert (not Result.Success, "invalid log level fails");
+         Assert_Failure (Result, "invalid value for key: log_level");
       end;
    end Test_Invalid_Log_Level_Fails;
 
@@ -242,7 +270,7 @@ package body Podmander.Controller.Runtime_Config_Tests is
            Podmander.Controller.Runtime_Config.Load
              (Config_Path => Fixture, Config_Path_Explicit => True);
       begin
-         Assert (not Result.Success, "too-long bind fails");
+         Assert_Failure (Result, "invalid bind address");
       end;
    end Test_Too_Long_Bind_Fails_From_File;
 
@@ -252,9 +280,12 @@ package body Podmander.Controller.Runtime_Config_Tests is
       pragma Unreferenced (T);
       Long_Bind : constant String := [1 .. 200 => 'b'];
       Result    : constant Podmander.Controller.Runtime_Config.Load_Result :=
-        Podmander.Controller.Runtime_Config.Load (Bind_Override => Long_Bind);
+        Podmander.Controller.Runtime_Config.Load
+          (Overrides =>
+             (Bind      => To_Unbounded_String (Long_Bind),
+              Log_Level => To_Unbounded_String ("")));
    begin
-      Assert (not Result.Success, "too-long override fails");
+      Assert_Failure (Result, "invalid bind address");
    end Test_Too_Long_Bind_Fails_From_Override;
 
    overriding
@@ -302,13 +333,4 @@ package body Podmander.Controller.Runtime_Config_Tests is
       return Result'Access;
    end Suite;
 
-begin
-   Write_File
-     (Fixture,
-      "bind = ""tcp://127.0.0.1:5556"""
-      & LF
-      & "db_path = ""/tmp/controller.db"""
-      & LF
-      & "log_level = ""warning"""
-      & LF);
 end Podmander.Controller.Runtime_Config_Tests;
