@@ -1,5 +1,5 @@
 # Podmander service configuration example
-# Deploy with: pod_controller --test-config web-service.toml
+# Deploy with: podmander-controller --test-config web-service.toml
 
 [service.web]
 image = "nginx:latest"

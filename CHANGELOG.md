@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Renamed daemon executable artifacts to `podmander-controller` and `podmander-agent` while leaving `podctl` unchanged (#181)
+
 ## [0.1.1] - 2026-06-27
 
 ### Changed

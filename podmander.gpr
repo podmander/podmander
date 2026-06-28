@@ -11,6 +11,11 @@ project Podmander is
    for Exec_Dir use "bin/";
    for Main use ("pod_controller.adb", "pod_agent.adb");
 
+   package Builder is
+      for Executable ("pod_controller.adb") use "podmander-controller";
+      for Executable ("pod_agent.adb") use "podmander-agent";
+   end Builder;
+
    package Compiler is
       for Default_Switches ("Ada") use
 Podmander_Config.Ada_Compiler_Switches &

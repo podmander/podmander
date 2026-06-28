@@ -26,7 +26,7 @@ begin
    begin
       if Token = "" then
          Podmander.Args.Print_Usage
-           ("pod_agent --token <TOKEN> [--connect <ADDR>] "
+           ("podmander-agent --token <TOKEN> [--connect <ADDR>] "
             & "[--name <NAME>] [--interval <SEC>] [--log-level <LEVEL>]");
          return;
       end if;
