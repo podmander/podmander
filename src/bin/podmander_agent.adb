@@ -6,7 +6,7 @@ with Podmander.Agent;
 with Podmander.Args;
 with Podmander.Logging;
 
-procedure Pod_Agent is
+procedure Podmander_Agent is
    use Ada.Strings.Unbounded;
 begin
    declare
@@ -55,4 +55,4 @@ begin
    end;
 
    Podmander.Logging.Info ("agent", "Agent stopped.");
-end Pod_Agent;
+end Podmander_Agent;

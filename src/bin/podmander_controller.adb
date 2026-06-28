@@ -6,7 +6,7 @@ with Podmander.Args;
 with Podmander.Controller;
 with Podmander.Logging;
 
-procedure Pod_Controller is
+procedure Podmander_Controller is
    use Ada.Strings.Unbounded;
    Config : Podmander.Controller.Controller_Config;
    Token  : Unbounded_String;
@@ -38,4 +38,4 @@ begin
    end;
 
    Podmander.Logging.Info ("controller", "Controller stopped.");
-end Pod_Controller;
+end Podmander_Controller;

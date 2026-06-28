@@ -9,11 +9,11 @@ project Podmander is
    for Object_Dir use "obj/" & Podmander_Config.Build_Profile;
    for Create_Missing_Dirs use "True";
    for Exec_Dir use "bin/";
-   for Main use ("pod_controller.adb", "pod_agent.adb");
+   for Main use ("podmander_controller.adb", "podmander_agent.adb");
 
    package Builder is
-      for Executable ("pod_controller.adb") use "podmander-controller";
-      for Executable ("pod_agent.adb") use "podmander-agent";
+      for Executable ("podmander_controller.adb") use "podmander-controller";
+      for Executable ("podmander_agent.adb") use "podmander-agent";
    end Builder;
 
    package Compiler is
