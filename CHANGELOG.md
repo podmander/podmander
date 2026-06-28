@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added daemon config files for controller and agent, with default `/etc/podmander` loading, explicit `--config` support, CLI override precedence, and example configs (#183)
+
 ### Changed
 
 - Renamed daemon executable artifacts to `podmander-controller` and `podmander-agent` while leaving `podctl` unchanged (#181)

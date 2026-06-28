@@ -1,0 +1,6 @@
+# Agent runtime config example.
+connect = "tcp://localhost:5555"
+token = "replace-with-join-token"
+name = "agent-1"
+interval = 30.0
+log_level = "info"
