@@ -34,11 +34,15 @@ package body Podmander.Messages is
    function Decode
      (Msg : in out CZMQ.Messages.Message) return Protocol_Message'Class
    is
-      Raw : constant String := Msg.Pop_String;
-      Obj : GNATCOLL.JSON.JSON_Value;
+      Raw    : constant String := Msg.Pop_String;
+      Result : constant GNATCOLL.JSON.Read_Result := GNATCOLL.JSON.Read (Raw);
    begin
-      Obj := GNATCOLL.JSON.Read (Raw);
+      if not Result.Success then
+         raise Decode_Error with "malformed JSON in message";
+      end if;
+
       declare
+         Obj  : constant GNATCOLL.JSON.JSON_Value := Result.Value;
          Kind : constant String := JSON_Utils.Get_Kind (Obj);
       begin
          if Decoders.Contains (Kind) then
@@ -46,9 +50,6 @@ package body Podmander.Messages is
          end if;
          raise Decode_Error with "unknown message kind: " & Kind;
       end;
-   exception
-      when GNATCOLL.JSON.Invalid_JSON_Stream =>
-         raise Decode_Error with "malformed JSON in message";
    end Decode;
 
 begin

@@ -7,6 +7,7 @@ with Interfaces.C;
 package body Podmander.Logging is
 
    Minimum_Level : Log_Level := Info;
+   Emit_Output   : Boolean := True;
 
    Syslog_Priorities : constant array (Log_Level) of Natural :=
      [Debug => 7, Info => 6, Warning => 4, Error => 3, Critical => 2];
@@ -44,11 +45,25 @@ package body Podmander.Logging is
       return Minimum_Level;
    end Get_Level;
 
+   procedure Set_Output_Enabled (Enabled : Boolean) is
+   begin
+      Emit_Output := Enabled;
+   end Set_Output_Enabled;
+
+   function Output_Enabled return Boolean is
+   begin
+      return Emit_Output;
+   end Output_Enabled;
+
    procedure Emit (Level : Log_Level; Component : String; Message : String) is
       Pri_Str : constant String := Syslog_Priorities (Level)'Image;
       Pri_Tr  : constant String := Pri_Str (Pri_Str'First + 1 .. Pri_Str'Last);
    begin
       if Level < Minimum_Level then
+         return;
+      end if;
+
+      if not Emit_Output then
          return;
       end if;
 

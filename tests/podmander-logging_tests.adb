@@ -82,6 +82,23 @@ package body Podmander.Logging_Tests is
       Assert (True, "Error suppressed at Critical level");
    end Test_Error_Suppressed_At_Critical;
 
+   procedure Test_Output_Can_Be_Disabled
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+   begin
+      Podmander.Logging.Set_Output_Enabled (False);
+      Assert
+        (not Podmander.Logging.Output_Enabled,
+         "Logging output should be disabled");
+
+      Podmander.Logging.Set_Output_Enabled (True);
+      Assert
+        (Podmander.Logging.Output_Enabled, "Logging output should be enabled");
+
+      Podmander.Logging.Set_Output_Enabled (False);
+   end Test_Output_Can_Be_Disabled;
+
    overriding
    procedure Register_Tests (T : in out Logging_Test) is
       use AUnit.Test_Cases.Registration;
@@ -102,6 +119,8 @@ package body Podmander.Logging_Tests is
         (T,
          Test_Error_Suppressed_At_Critical'Access,
          "Error suppressed at Critical");
+      Register_Routine
+        (T, Test_Output_Can_Be_Disabled'Access, "Output can be disabled");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

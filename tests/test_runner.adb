@@ -27,6 +27,7 @@ with Podmander.Config_Tests;
 with Podmander.Database_Tests;
 with Podmander.Generators.Quadlet_Tests;
 with Podmander.Logging_Tests;
+with Podmander.Logging;
 with Podmander.Messages_Tests;
 with Podmander.Agent.Runtime_Config_Tests;
 with Podmander.Controller.Runtime_Config_Tests;
@@ -93,5 +94,6 @@ procedure Test_Runner is
    procedure Run is new AUnit.Run.Test_Runner (All_Suites);
    Reporter : AUnit.Reporter.Text.Text_Reporter;
 begin
+   Podmander.Logging.Set_Output_Enabled (False);
    Run (Reporter);
 end Test_Runner;
