@@ -18,6 +18,11 @@ description = "Clean and rebuild all binaries"
 dir = "{{config_root}}"
 run = "alr clean && alr build"
 
+[tasks."package:rpm"]
+description = "Build local Fedora RPM artifacts"
+dir = "{{config_root}}"
+run = "packaging/rpm/build-rpm.sh"
+
 # --- Format ---
 
 [tasks.format]

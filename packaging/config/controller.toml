@@ -1,0 +1,4 @@
+# Controller runtime config installed by the Fedora RPM.
+bind = "tcp://*:5555"
+db_path = "/var/lib/podmander/controller/podmander.db"
+log_level = "info"

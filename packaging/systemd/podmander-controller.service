@@ -1,0 +1,14 @@
+[Unit]
+Description=Podmander Controller
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/podmander-controller --config /etc/podmander/controller.toml
+StateDirectory=podmander/controller
+RuntimeDirectory=podmander/controller
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
