@@ -32,8 +32,8 @@ run = [
 description = "Check Ada source formatting without modifying files"
 dir = "{{config_root}}"
 run = [
-  "alr exec -- gnatformat -P podmander.gpr --no-subprojects --check'",
-  "alr exec -- gnatformat -P podmander_tests.gpr --no-subprojects --check'"
+  "alr exec -- gnatformat -P podmander.gpr --no-subprojects --check",
+  "alr exec -- gnatformat -P podmander_tests.gpr --no-subprojects --check"
 ]
 
 # --- Test ---
