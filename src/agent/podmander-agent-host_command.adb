@@ -109,8 +109,8 @@ package body Podmander.Agent.Host_Command is
                   & Spoon.Exit_Status'Image (Raw.Exit_Status));
             end if;
             return
-              (State        => Exited,
-               Exit_Status  => Exit_Status (Raw.Exit_Status),
+              (Termination  => Exited,
+               Status       => Exit_Status (Raw.Exit_Status),
                Output       =>
                  (if Err_To_Out
                   then
@@ -128,7 +128,7 @@ package body Podmander.Agent.Host_Command is
                & " for "
                & Program);
             return
-              (State        => Error,
+              (Termination  => Spawn_Error,
                Error_Code   => Raw.Error_Code,
                Output       => Stdout,
                Error_Output => Stderr);
@@ -138,7 +138,7 @@ package body Podmander.Agent.Host_Command is
               ("host-command",
                Program & " crashed with signal" & Positive'Image (Raw.Signal));
             return
-              (State        => Crashed,
+              (Termination  => Crashed,
                Signal       => Raw.Signal,
                Output       => Stdout,
                Error_Output => Stderr);
@@ -177,13 +177,17 @@ package body Podmander.Agent.Host_Command is
       end loop;
 
       declare
-         Spoon_Args : constant Spoon.Argument_Array :=
+         Spoon_Args   : constant Spoon.Argument_Array :=
            Internals.Build_Spoon_Args (Owner);
-         Raw        : constant Spoon.Result :=
+         Program_Kind : constant Spoon.Program_Kind :=
+           (if Ada.Strings.Fixed.Index (Program, "/") > 0
+            then Spoon.File_Path
+            else Spoon.Name);
+         Raw          : constant Spoon.Result :=
            Spoon.Spawn
              (Executable => Program,
               Arguments  => Spoon_Args,
-              Kind       => Spoon.File_Path,
+              Kind       => Program_Kind,
               Output     => Text'Access);
       begin
          return Map_Result (Raw, Program, Text, Err_To_Out);

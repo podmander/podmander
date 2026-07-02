@@ -33,8 +33,8 @@ package body Podmander.Agent.Host_Command_Tests is
       Args   : constant Argument_List (1 .. 1) := [1 => +"hello"];
       Result : constant Command_Result := Run_Command ("/bin/echo", Args);
    begin
-      Assert (Result.State = Exited, "Expected Exited state");
-      Assert (Result.Exit_Status = 0, "Expected exit status 0");
+      Assert (Result.Termination = Exited, "Expected Exited termination");
+      Assert (Result.Status = 0, "Expected exit status 0");
       Assert
         (Contains (Result.Output, "hello"),
          "Expected output to contain 'hello'");
@@ -47,8 +47,8 @@ package body Podmander.Agent.Host_Command_Tests is
       Args   : Argument_List (1 .. 0);
       Result : constant Command_Result := Run_Command ("/bin/false", Args);
    begin
-      Assert (Result.State = Exited, "Expected Exited state");
-      Assert (Result.Exit_Status /= 0, "Expected non-zero exit status");
+      Assert (Result.Termination = Exited, "Expected Exited termination");
+      Assert (Result.Status /= 0, "Expected non-zero exit status");
    end Test_Run_False_Nonzero;
 
    procedure Test_Run_Nonexistent_Error
@@ -59,7 +59,7 @@ package body Podmander.Agent.Host_Command_Tests is
       Result : constant Command_Result :=
         Run_Command ("/nonexistent_cmd_12345", Args);
    begin
-      Assert (Result.State = Error, "Expected Error state");
+      Assert (Result.Termination = Spawn_Error, "Expected spawn error");
    end Test_Run_Nonexistent_Error;
 
    procedure Test_Run_Stderr_Separate
@@ -71,7 +71,7 @@ package body Podmander.Agent.Host_Command_Tests is
       Result : constant Command_Result :=
         Run_Command ("/bin/sh", Args, Err_To_Out => False);
    begin
-      Assert (Result.State = Exited, "Expected Exited state");
+      Assert (Result.Termination = Exited, "Expected Exited termination");
       Assert
         (Contains (Result.Error_Output, "err"),
          "Expected stderr to contain 'err'");
@@ -86,7 +86,7 @@ package body Podmander.Agent.Host_Command_Tests is
       Result : constant Command_Result :=
         Run_Command ("/bin/sh", Args, Err_To_Out => True);
    begin
-      Assert (Result.State = Exited, "Expected Exited state");
+      Assert (Result.Termination = Exited, "Expected Exited termination");
       Assert
         (Contains (Result.Output, "out"),
          "Expected merged output to contain 'out'");
@@ -100,8 +100,8 @@ package body Podmander.Agent.Host_Command_Tests is
       pragma Unreferenced (T);
       Result : constant Command_Result := Run_Command_Shell ("echo hello");
    begin
-      Assert (Result.State = Exited, "Expected Exited state");
-      Assert (Result.Exit_Status = 0, "Expected exit status 0");
+      Assert (Result.Termination = Exited, "Expected Exited termination");
+      Assert (Result.Status = 0, "Expected exit status 0");
       Assert
         (Contains (Result.Output, "hello"),
          "Expected output to contain 'hello'");
@@ -114,7 +114,7 @@ package body Podmander.Agent.Host_Command_Tests is
       Result : constant Command_Result :=
         Run_Command_Shell ("echo hello | tr h H");
    begin
-      Assert (Result.State = Exited, "Expected Exited state");
+      Assert (Result.Termination = Exited, "Expected Exited termination");
       Assert
         (Contains (Result.Output, "Hello"),
          "Expected output to contain 'Hello'");
@@ -138,8 +138,8 @@ package body Podmander.Agent.Host_Command_Tests is
          +"a12"];
       Result : constant Command_Result := Run_Command ("/bin/echo", Args);
    begin
-      Assert (Result.State = Exited, "Expected Exited state");
-      Assert (Result.Exit_Status = 0, "Expected exit status 0");
+      Assert (Result.Termination = Exited, "Expected Exited termination");
+      Assert (Result.Status = 0, "Expected exit status 0");
       Assert
         (Contains (Result.Output, "a01"),
          "Expected output to contain first arg");
@@ -163,7 +163,7 @@ package body Podmander.Agent.Host_Command_Tests is
       Register_Routine
         (T,
          Test_Run_Nonexistent_Error'Access,
-         "Run nonexistent returns Error state");
+         "Run nonexistent reports spawn error");
       Register_Routine
         (T,
          Test_Run_Stderr_Separate'Access,

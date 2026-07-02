@@ -32,8 +32,8 @@ package body Podmander.Agent.Host_Command.Result_Mapping_Tests is
    is
       pragma Unreferenced (T);
       Result : constant Command_Result :=
-        (State        => Exited,
-         Exit_Status  => 0,
+        (Termination  => Exited,
+         Status       => 0,
          Output       => Empty,
          Error_Output => Empty);
    begin
@@ -46,8 +46,8 @@ package body Podmander.Agent.Host_Command.Result_Mapping_Tests is
    is
       pragma Unreferenced (T);
       Result : constant Command_Result :=
-        (State        => Exited,
-         Exit_Status  => 1,
+        (Termination  => Exited,
+         Status       => 1,
          Output       => Empty,
          Error_Output => Empty);
    begin
@@ -56,27 +56,27 @@ package body Podmander.Agent.Host_Command.Result_Mapping_Tests is
          "Exited(non-zero) should map to Failed");
    end Test_Exited_Nonzero_Maps_Failed;
 
-   procedure Test_Error_Maps_Unavailable
+   procedure Test_Spawn_Error_Maps_Unavailable
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       Result : constant Command_Result :=
-        (State        => Error,
+        (Termination  => Spawn_Error,
          Error_Code   => 2,
          Output       => Empty,
          Error_Output => Empty);
    begin
       Assert
         (RM.To_Result_Code (Result) = RC.Unavailable,
-         "Error should map to Unavailable");
-   end Test_Error_Maps_Unavailable;
+         "Spawn_Error should map to Unavailable");
+   end Test_Spawn_Error_Maps_Unavailable;
 
    procedure Test_Crashed_Maps_Internal
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
       Result : constant Command_Result :=
-        (State        => Crashed,
+        (Termination  => Crashed,
          Signal       => 11,
          Output       => Empty,
          Error_Output => Empty);
@@ -91,7 +91,7 @@ package body Podmander.Agent.Host_Command.Result_Mapping_Tests is
    is
       pragma Unreferenced (T);
       Result : constant Command_Result :=
-        (State        => Terminated,
+        (Termination  => Terminated,
          Signal       => 15,
          Output       => Empty,
          Error_Output => Empty);
@@ -112,7 +112,9 @@ package body Podmander.Agent.Host_Command.Result_Mapping_Tests is
          Test_Exited_Nonzero_Maps_Failed'Access,
          "Exited(non-zero) maps to Failed");
       Register_Routine
-        (T, Test_Error_Maps_Unavailable'Access, "Error maps to Unavailable");
+        (T,
+         Test_Spawn_Error_Maps_Unavailable'Access,
+         "Spawn_Error maps to Unavailable");
       Register_Routine
         (T, Test_Crashed_Maps_Internal'Access, "Crashed maps to Internal");
       Register_Routine

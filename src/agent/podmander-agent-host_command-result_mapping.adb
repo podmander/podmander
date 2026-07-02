@@ -5,15 +5,15 @@ package body Podmander.Agent.Host_Command.Result_Mapping is
 
    function To_Result_Code (Result : Command_Result) return RC.Result_Code is
    begin
-      case Result.State is
+      case Result.Termination is
          when Exited               =>
-            if Result.Exit_Status = Host_Command.Success then
+            if Result.Status = Host_Command.Success then
                return RC.Ok;
             else
                return RC.Failed;
             end if;
 
-         when Error                =>
+         when Spawn_Error          =>
             return RC.Unavailable;
 
          when Crashed | Terminated =>

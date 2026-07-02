@@ -7,21 +7,21 @@ package Podmander.Agent.Host_Command is
 
    package SU renames Ada.Strings.Unbounded;
 
-   type Exit_State is (Error, Exited, Crashed, Terminated);
+   type Command_Termination is (Spawn_Error, Exited, Crashed, Terminated);
 
    type Exit_Status is range 0 .. 255;
 
    Success : constant Exit_Status := 0;
 
-   type Command_Result (State : Exit_State) is record
+   type Command_Result (Termination : Command_Termination) is record
       Output       : SU.Unbounded_String;
       Error_Output : SU.Unbounded_String;
-      case State is
-         when Error =>
+      case Termination is
+         when Spawn_Error =>
             Error_Code : Integer;
 
          when Exited =>
-            Exit_Status : Host_Command.Exit_Status;
+            Status : Host_Command.Exit_Status;
 
          when Crashed | Terminated =>
             Signal : Positive;

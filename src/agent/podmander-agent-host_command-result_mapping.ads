@@ -13,7 +13,7 @@ package Podmander.Agent.Host_Command.Result_Mapping is
    -- Bucketing is intentionally coarse:
    --   Exited (0)        -> Ok
    --   Exited (non-zero) -> Failed       (permanent; do not retry)
-   --   Error             -> Unavailable  (binary missing or spawn failed)
+   --   Spawn_Error       -> Unavailable  (binary missing or spawn failed)
    --   Crashed           -> Internal     (signal-induced crash)
    --   Terminated        -> Internal     (signal-induced termination)
    --
