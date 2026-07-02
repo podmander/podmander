@@ -3,6 +3,7 @@
 
 with Ada.Containers.Vectors;
 with Ada.Finalization;
+with Ada.Strings.Fixed;
 with Ada.Unchecked_Deallocation;
 with Podmander.Logging;
 with Spoon;
@@ -149,7 +150,7 @@ package body Podmander.Agent.Host_Command is
                & " terminated with signal"
                & Positive'Image (Raw.Signal));
             return
-              (State        => Terminated,
+              (Termination  => Terminated,
                Signal       => Raw.Signal,
                Output       => Stdout,
                Error_Output => Stderr);

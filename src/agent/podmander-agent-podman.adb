@@ -126,7 +126,7 @@ package body Podmander.Agent.Podman is
          HC."+" ("{{.Names}} {{.Status}}")];
       Result  : constant HC.Command_Result :=
         HC.Run_Command
-          (Program => "/usr/bin/podman", Args => Ps_Args, Err_To_Out => False);
+          (Program => "podman", Args => Ps_Args, Err_To_Out => False);
       Code    : constant RC.Result_Code := RM.To_Result_Code (Result);
    begin
       if Code = RC.Ok then
