@@ -40,14 +40,25 @@ package body Podmander.Controller is
       return To_String (Config.DB_Path);
    end Get_DB_Path;
 
+   function Default_DB_Path return String is
+   begin
+      if Ada.Environment_Variables.Exists ("XDG_STATE_HOME") then
+         return
+           Ada.Environment_Variables.Value ("XDG_STATE_HOME")
+           & "/podmander/controller/podmander.db";
+      else
+         return
+           Ada.Environment_Variables.Value ("HOME")
+           & "/.local/state/podmander/controller/podmander.db";
+      end if;
+   end Default_DB_Path;
+
    function Make_Listening_Controller
      (Config : Controller_Config) return Controller_Instance
    is
       DB_Path : constant String :=
         (if Get_DB_Path (Config) = ""
-         then
-           Ada.Environment_Variables.Value ("HOME")
-           & "/.local/share/podmander/state.db"
+         then Default_DB_Path
          else Get_DB_Path (Config));
    begin
       return

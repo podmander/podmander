@@ -18,6 +18,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Empty controller database paths now default to the XDG state location under
+  `podmander/controller/podmander.db` (#201)
 - Agent Podman status queries now execute `podman` via `PATH` instead of requiring `/usr/bin/podman` (#195)
 
 ## [0.1.1] - 2026-06-27

@@ -105,7 +105,9 @@ package Podmander.Controller is
       DB_Path           : Ada.Strings.Unbounded.Unbounded_String :=
         Ada.Strings.Unbounded.To_Unbounded_String ("");
       -- Path to the SQLite state database.
-      -- Empty string means use default: ~/.local/share/podmander/state.db
+      -- Empty string means use the XDG state database path:
+      -- $XDG_STATE_HOME/podmander/controller/podmander.db, or
+      -- $HOME/.local/state/podmander/controller/podmander.db when unset.
       -- Uses Unbounded_String (not fixed String like Bind_Address) because
       -- filesystem paths vary widely in length; Bind_Address uses fixed
       -- String because it comes from CLI parsing with known max length.

@@ -3,6 +3,7 @@
 
 with Ada.Calendar;
 with Ada.Directories;
+with Ada.Environment_Variables;
 with Ada.Exceptions;
 with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
@@ -291,6 +292,124 @@ package body Podmander.Controller_Tests is
             "Make_Listening_Controller raised: "
             & Ada.Exceptions.Exception_Message (E));
    end Test_Controller_Make_With_DB;
+
+   procedure Cleanup_DB (Path : String);
+
+   procedure Test_Controller_Default_DB_Path_Uses_XDG_State_Home
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config        : Podmander.Controller.Controller_Config;
+      Had_XDG       : constant Boolean :=
+        Ada.Environment_Variables.Exists ("XDG_STATE_HOME");
+      Old_XDG       : constant Unbounded_String :=
+        To_Unbounded_String
+          ((if Had_XDG
+            then Ada.Environment_Variables.Value ("XDG_STATE_HOME")
+            else ""));
+      State_Home    : constant String := "/tmp/podmander_test_xdg_state";
+      Expected_Dir  : constant String :=
+        State_Home & "/podmander/controller";
+      Expected_Path : constant String := Expected_Dir & "/podmander.db";
+   begin
+      Cleanup_DB (Expected_Path);
+      Ada.Directories.Create_Path (Expected_Dir);
+      Ada.Environment_Variables.Set ("XDG_STATE_HOME", State_Home);
+      Podmander.Controller.Set_Bind_Address (Config, "tcp://127.0.0.1:10001");
+
+      declare
+         Ctrl : constant Podmander.Controller.Controller_Instance :=
+           Podmander.Controller.Make_Listening_Controller (Config);
+         pragma Unreferenced (Ctrl);
+      begin
+         Assert
+           (Ada.Directories.Exists (Expected_Path),
+            "Default DB path should use XDG_STATE_HOME");
+      end;
+
+      Cleanup_DB (Expected_Path);
+      if Had_XDG then
+         Ada.Environment_Variables.Set ("XDG_STATE_HOME", To_String (Old_XDG));
+      else
+         Ada.Environment_Variables.Clear ("XDG_STATE_HOME");
+      end if;
+   exception
+      when others =>
+         Cleanup_DB (Expected_Path);
+         if Had_XDG then
+            Ada.Environment_Variables.Set
+              ("XDG_STATE_HOME", To_String (Old_XDG));
+         else
+            Ada.Environment_Variables.Clear ("XDG_STATE_HOME");
+         end if;
+         raise;
+   end Test_Controller_Default_DB_Path_Uses_XDG_State_Home;
+
+   procedure Test_Controller_Default_DB_Path_Uses_Home_State
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Config        : Podmander.Controller.Controller_Config;
+      Had_XDG       : constant Boolean :=
+        Ada.Environment_Variables.Exists ("XDG_STATE_HOME");
+      Old_XDG       : constant Unbounded_String :=
+        To_Unbounded_String
+          ((if Had_XDG
+            then Ada.Environment_Variables.Value ("XDG_STATE_HOME")
+            else ""));
+      Had_Home      : constant Boolean :=
+        Ada.Environment_Variables.Exists ("HOME");
+      Old_Home      : constant Unbounded_String :=
+        To_Unbounded_String
+          ((if Had_Home then Ada.Environment_Variables.Value ("HOME") else ""));
+      Home          : constant String := "/tmp/podmander_test_home_state";
+      Expected_Dir  : constant String :=
+        Home & "/.local/state/podmander/controller";
+      Expected_Path : constant String := Expected_Dir & "/podmander.db";
+   begin
+      Cleanup_DB (Expected_Path);
+      Ada.Directories.Create_Path (Expected_Dir);
+      Ada.Environment_Variables.Clear ("XDG_STATE_HOME");
+      Ada.Environment_Variables.Set ("HOME", Home);
+      Podmander.Controller.Set_Bind_Address (Config, "tcp://127.0.0.1:10002");
+
+      declare
+         Ctrl : constant Podmander.Controller.Controller_Instance :=
+           Podmander.Controller.Make_Listening_Controller (Config);
+         pragma Unreferenced (Ctrl);
+      begin
+         Assert
+           (Ada.Directories.Exists (Expected_Path),
+            "Default DB path should use HOME .local/state fallback");
+      end;
+
+      Cleanup_DB (Expected_Path);
+      if Had_XDG then
+         Ada.Environment_Variables.Set ("XDG_STATE_HOME", To_String (Old_XDG));
+      else
+         Ada.Environment_Variables.Clear ("XDG_STATE_HOME");
+      end if;
+      if Had_Home then
+         Ada.Environment_Variables.Set ("HOME", To_String (Old_Home));
+      else
+         Ada.Environment_Variables.Clear ("HOME");
+      end if;
+   exception
+      when others =>
+         Cleanup_DB (Expected_Path);
+         if Had_XDG then
+            Ada.Environment_Variables.Set
+              ("XDG_STATE_HOME", To_String (Old_XDG));
+         else
+            Ada.Environment_Variables.Clear ("XDG_STATE_HOME");
+         end if;
+         if Had_Home then
+            Ada.Environment_Variables.Set ("HOME", To_String (Old_Home));
+         else
+            Ada.Environment_Variables.Clear ("HOME");
+         end if;
+         raise;
+   end Test_Controller_Default_DB_Path_Uses_Home_State;
 
    -- Test: Agents persist across database connections (simulating restart)
    procedure Test_Startup_Loading (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -820,6 +939,14 @@ package body Podmander.Controller_Tests is
         (T,
          Test_Controller_Make_With_DB'Access,
          "Make_Listening_Controller with memory DB");
+      Register_Routine
+        (T,
+         Test_Controller_Default_DB_Path_Uses_XDG_State_Home'Access,
+         "Default DB path uses XDG_STATE_HOME");
+      Register_Routine
+        (T,
+         Test_Controller_Default_DB_Path_Uses_Home_State'Access,
+         "Default DB path uses HOME .local/state fallback");
       Register_Routine
         (T,
          Test_Startup_Loading'Access,
