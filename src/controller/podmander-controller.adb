@@ -134,7 +134,7 @@ package body Podmander.Controller is
    end Get_Public_Key;
 
    procedure Generate_Join_Token
-     (Self  : in out Controller_Instance;
+     (Self  : Controller_Instance;
       Token : out Ada.Strings.Unbounded.Unbounded_String) is
    begin
       EA.Generate_Join_Token (Self.Certificate, Self.Config.Enrollment, Token);

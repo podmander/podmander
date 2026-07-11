@@ -60,6 +60,19 @@ The main worktree is reserved for `wt switch` operations only.
 5. Push the branch and submit a pull request.
 6. After merge, update the main worktree and remove the feature worktree.
 
+### Version bumps
+
+When a change bumps the project version, update all release-facing version
+sources in the same finishing commit:
+
+- `alire.toml` package `version`
+- `packaging/rpm/podmander.spec` `Version:` and `%changelog`
+- `CHANGELOG.md` with a new release section; do not add new entries under an
+  already-released version
+
+Before committing a version bump, search the repository for the previous version
+string and verify every remaining occurrence is intentional historical text.
+
 ## Dependencies
 
 ### CZMQ

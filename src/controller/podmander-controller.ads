@@ -148,7 +148,7 @@ package Podmander.Controller is
    function Get_Public_Key (Self : Controller_Instance) return String;
 
    procedure Generate_Join_Token
-     (Self  : in out Controller_Instance;
+     (Self  : Controller_Instance;
       Token : out Ada.Strings.Unbounded.Unbounded_String);
    -- Delegates to Podmander.Enrollment.Generate_Join_Token
    -- using this controller's public key and enrollment config.

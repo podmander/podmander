@@ -17,10 +17,8 @@ package body Podmander.Controller.Service.Repository is
    --------------
 
    function Row_To_Service_Version
-     (DB : in out DB_Handle; QH : in out Query_Handle)
-      return Podmander.Controller.Service_Version
+     (QH : in out Query_Handle) return Podmander.Controller.Service_Version
    is
-      pragma Unreferenced (DB);
       Result : Podmander.Controller.Service_Version;
    begin
       Result.Id := Column_Int (QH, 0);
@@ -185,7 +183,7 @@ package body Podmander.Controller.Service.Repository is
       Bind_Int (QH, 1, Integer (Service_Id));
       Bind_Int (QH, 2, Integer (Version));
       if Step (QH) then
-         return Row_To_Service_Version (DB, QH);
+         return Row_To_Service_Version (QH);
       else
          raise Database_Error
            with
@@ -222,7 +220,7 @@ package body Podmander.Controller.Service.Repository is
    begin
       Bind_Int (QH, 1, Integer (Service_Id));
       if Step (QH) then
-         return Row_To_Service_Version (DB, QH);
+         return Row_To_Service_Version (QH);
       else
          raise Database_Error
            with

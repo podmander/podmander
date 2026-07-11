@@ -17,10 +17,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
    ---------------
 
    function Row_To_Entry
-     (DB : in out DB_Handle; QH : in out Query_Handle)
-      return Podmander.Controller.Service_Catalog_Entry
-   is
-      pragma Unreferenced (DB);
+     (QH : in out Query_Handle)
+      return Podmander.Controller.Service_Catalog_Entry is
    begin
       return
         (Id              => Column_Int (QH, 0),
@@ -93,7 +91,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
       end loop;
 
       if Step (SEL) then
-         return Row_To_Entry (DB, SEL);
+         return Row_To_Entry (SEL);
       else
          raise Database_Error
            with
@@ -123,7 +121,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    begin
       Bind_Int (QH, 1, Id);
       if Step (QH) then
-         return Row_To_Entry (DB, QH);
+         return Row_To_Entry (QH);
       else
          raise Database_Error
            with
@@ -154,7 +152,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    begin
       Bind_Int (QH, 1, Integer (Service_Id));
       if Step (QH) then
-         return Row_To_Entry (DB, QH);
+         return Row_To_Entry (QH);
       else
          raise Database_Error
            with
@@ -186,7 +184,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
       Result : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
       while Step (QH) loop
-         Result.Append (Row_To_Entry (DB, QH));
+         Result.Append (Row_To_Entry (QH));
       end loop;
       return Result;
    end Get_Unscheduled;
@@ -209,7 +207,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
       Result : Podmander.Controller.Catalog_Entry_Vectors.Vector;
    begin
       while Step (QH) loop
-         Result.Append (Row_To_Entry (DB, QH));
+         Result.Append (Row_To_Entry (QH));
       end loop;
       return Result;
    end Get_Pending;
