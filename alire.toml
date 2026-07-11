@@ -1,6 +1,6 @@
 name = "podmander"
 description = "Container orchestration for small multi-node deployments"
-version = "0.2.2"
+version = "0.2.3"
 authors = ["Jochen Lillich"]
 maintainers = ["Jochen Lillich <contact@geewiz.dev>"]
 maintainers-logins = ["geewiz"]

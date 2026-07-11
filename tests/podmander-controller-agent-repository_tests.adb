@@ -4,11 +4,11 @@
 with AUnit.Assertions;
 with AUnit.Test_Cases;
 with Ada.Calendar;
-with Ada.Calendar.Formatting;
 with Ada.Strings.Unbounded;
 with Podmander.Controller.Agent.Repository;
 with Podmander.Controller.Node.Repository;
 with Podmander.Database;
+with Podmander.Database.Time_Utils;
 with Podmander.Types;
 
 package body Podmander.Controller.Agent.Repository_Tests is
@@ -39,12 +39,8 @@ package body Podmander.Controller.Agent.Repository_Tests is
      (D : in out DB.DB_Handle; Machine_Name : String) return Node_Id_Type
    is (Node_Repo.Create_Or_Get (D, Machine_Name));
 
-   -- Format time as ISO 8601 for string comparison
-   function Format_Time (T : Ada.Calendar.Time) return String is
-      Raw : constant String := Ada.Calendar.Formatting.Image (T);
-   begin
-      return Raw (1 .. 10) & "T" & Raw (12 .. 19) & "Z";
-   end Format_Time;
+   function Format_Time (T : Ada.Calendar.Time) return String
+   renames Podmander.Database.Time_Utils.Time_To_ISO8601;
 
    ---------
    -- Register + Load_All
