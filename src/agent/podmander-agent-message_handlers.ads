@@ -16,7 +16,7 @@ package Podmander.Agent.Message_Handlers is
    -- the socket as a field managed by the CZMQ Open/Close API.
    type Agent_Handler is limited new Podmander.Messages.Message_Handler
    with record
-      Agt : access Podmander.Agent.Agent_Instance;
+      Agt : not null access Podmander.Agent.Agent_Instance;
    end record;
 
    overriding

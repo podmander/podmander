@@ -308,8 +308,7 @@ package body Podmander.Controller_Tests is
             then Ada.Environment_Variables.Value ("XDG_STATE_HOME")
             else ""));
       State_Home    : constant String := "/tmp/podmander_test_xdg_state";
-      Expected_Dir  : constant String :=
-        State_Home & "/podmander/controller";
+      Expected_Dir  : constant String := State_Home & "/podmander/controller";
       Expected_Path : constant String := Expected_Dir & "/podmander.db";
    begin
       Cleanup_DB (Expected_Path);
@@ -361,7 +360,9 @@ package body Podmander.Controller_Tests is
         Ada.Environment_Variables.Exists ("HOME");
       Old_Home      : constant Unbounded_String :=
         To_Unbounded_String
-          ((if Had_Home then Ada.Environment_Variables.Value ("HOME") else ""));
+          ((if Had_Home
+            then Ada.Environment_Variables.Value ("HOME")
+            else ""));
       Home          : constant String := "/tmp/podmander_test_home_state";
       Expected_Dir  : constant String :=
         Home & "/.local/state/podmander/controller";
@@ -541,7 +542,7 @@ package body Podmander.Controller_Tests is
    end Make_Ctrl;
 
    function Make_Handler
-     (Ctrl     : access Podmander.Controller.Controller_Instance;
+     (Ctrl     : not null access Podmander.Controller.Controller_Instance;
       Identity : String)
       return Podmander.Controller.Message_Handlers.Controller_Handler is
    begin

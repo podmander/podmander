@@ -12,7 +12,7 @@ package Podmander.Controller.Message_Handlers is
    -- Exposed as a public child so tests can drive it without a live socket.
    type Controller_Handler is limited new Podmander.Messages.Message_Handler
    with record
-      Ctrl     : access Controller_Instance;
+      Ctrl     : not null access Controller_Instance;
       Identity : Unbounded_String;
    end record;
 

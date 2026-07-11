@@ -2,7 +2,7 @@
 %global debug_package %{nil}
 
 Name:           podmander
-Version:        0.2.0
+Version:        0.2.1
 Release:        1%{?dist}
 Summary:        Container orchestration for small multi-node deployments
 
@@ -62,5 +62,8 @@ install -Dpm0644 packaging/systemd/podmander-agent.service %{buildroot}%{_unitdi
 %{_unitdir}/podmander-agent.service
 
 %changelog
+* Sat Jul 11 2026 Jochen Lillich <contact@geewiz.dev> - 0.2.1-1
+- Make handler owner references non-null.
+
 * Tue Jun 30 2026 Jochen Lillich <contact@geewiz.dev> - 0.2.0-1
 - Add initial local Fedora RPM packaging.
