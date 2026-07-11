@@ -95,5 +95,4 @@ run = "mise exec npm -- codegraph sync"
 # --- Tools ---
 
 [tools]
-"go:github.com/mjpitz/codesearch" = "latest"
 "npm:@colbymchenry/codegraph" = "latest"
