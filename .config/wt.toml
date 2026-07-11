@@ -3,9 +3,14 @@
 
 [[pre-start]]
 mise = "mise trust"
+
+[[pre-start]]
 codegraph = "mise run utils:codegraph:init"
 
-[[post-commit]]
+[[pre-merge]]
+test = "mise run test"
+
+[[post-merge]]
 codegraph = "mise run utils:codegraph:sync"
 
 [forge]
