@@ -1,5 +1,0 @@
-#!/bin/bash
-
-mise trust
-mise run utils:codegraph:sync
-mise run utils:codesearch:sync

@@ -1,6 +1,13 @@
 # Podmander worktree configuration
 # Worktrees live at .worktrees/<branch> (configured in user config)
 
+[[pre-start]]
+mise = "mise trust"
+codegraph = "mise run utils:codegraph:init"
+
+[[post-commit]]
+codegraph = "mise run utils:codegraph:sync"
+
 [forge]
 platform = "forgejo"
 hostname = "code.monospacementor.com"

@@ -88,18 +88,9 @@ description = "Initialize codegraph"
 run = "test -d .codegraph || mise exec npm -- codegraph init"
 
 [tasks."utils:codegraph:sync"]
-description = "Initialize codegraph"
+description = "Sync codegraph"
 depends = ["utils:codegraph:init"]
 run = "mise exec npm -- codegraph sync"
-
-[tasks."utils:codesearch:init"]
-description = "Initialize codesearch"
-run = "test -d .codesearch || mise exec go -- codesearch init"
-
-[tasks."utils:codesearch:sync"]
-description = "Initialize codesearch"
-depends = ["utils:codesearch:init"]
-run = "mise exec go -- codesearch sync"
 
 # --- Tools ---
 
