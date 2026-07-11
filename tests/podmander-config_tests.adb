@@ -277,6 +277,50 @@ package body Podmander.Config_Tests is
         (not Result.Success, "Port string without colon should fail parsing");
    end Test_Parse_Port_Without_Colon;
 
+   -- Test that a non-numeric host port reports an expected parse failure
+   procedure Test_Parse_Nonnumeric_Host_Port
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [""abc:80""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert
+        (not Result.Success,
+         "Port string with non-numeric host should fail parsing");
+      Assert
+        (To_String (Result.Message) = "Invalid port number 'abc'",
+         "Non-numeric host port should report a clear parse error");
+   end Test_Parse_Nonnumeric_Host_Port;
+
+   -- Test that a non-string port reports an expected parse failure
+   procedure Test_Parse_Nonstring_Port
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [80]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success, "Non-string port should fail parsing");
+      Assert
+        (To_String (Result.Message) = "Invalid port entry: expected string",
+         "Non-string port should report a clear parse error");
+   end Test_Parse_Nonstring_Port;
+
    -- Test that a volume string without a colon separator fails parsing
    procedure Test_Parse_Volume_Without_Colon
      (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -451,6 +495,14 @@ package body Podmander.Config_Tests is
         (T,
          Test_Parse_Port_Without_Colon'Access,
          "Port string without colon should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Nonnumeric_Host_Port'Access,
+         "Port string with non-numeric host should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Nonstring_Port'Access,
+         "Non-string port should fail parsing");
       Register_Routine
         (T,
          Test_Parse_Volume_Without_Colon'Access,
