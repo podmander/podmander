@@ -80,3 +80,29 @@ run = "podman rm -f podmander-test"
 description = "Remove the test container and its image"
 depends = ["test:container:down"]
 run = "podman rmi -f podmander-test"
+
+# --- Agent support ---
+
+[tasks."utils:codegraph:init"]
+description = "Initialize codegraph"
+run = "test -d .codegraph || mise exec npm -- codegraph init"
+
+[tasks."utils:codegraph:sync"]
+description = "Initialize codegraph"
+depends = ["utils:codegraph:init"]
+run = "mise exec npm -- codegraph sync"
+
+[tasks."utils:codesearch:init"]
+description = "Initialize codesearch"
+run = "test -d .codesearch || mise exec go -- codesearch init"
+
+[tasks."utils:codesearch:sync"]
+description = "Initialize codesearch"
+depends = ["utils:codesearch:init"]
+run = "mise exec go -- codesearch sync"
+
+# --- Tools ---
+
+[tools]
+"go:github.com/mjpitz/codesearch" = "latest"
+"npm:@colbymchenry/codegraph" = "latest"

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+mise run utils:codegraph:sync
+mise run utils:codesearch:sync
