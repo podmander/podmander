@@ -267,9 +267,9 @@ maintainers-logins = [
 ]
 name = "gnat_native"
 provides = [
-"gnat=15.2.1",
+"gnat=16.1.0",
 ]
-version = "15.2.1"
+version = "16.1.0"
 website = "https://github.com/alire-project/GNAT-FSF-builds"
 [solution.state.release.configuration]
 auto_gpr_with = true
@@ -290,9 +290,9 @@ prepend = "${CRATE_ROOT}/bin"
 [solution.state.release.origin]
 binary = true
 hashes = [
-"sha256:4640d4b369833947ab1a156753f4db0ecd44b0f14410b5b2bc2a14df496604bb",
+"sha256:9f74f58a827a2ad40dd84c72a413e75ea52888e0d8f7e252fba4d26762402703",
 ]
-url = "https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnat-15.2.0-1/gnat-x86_64-linux-15.2.0-1.tar.gz"
+url = "https://github.com/alire-project/GNAT-FSF-builds/releases/download/gnat-16.1.0-1/gnat-x86_64-linux-16.1.0-1.tar.gz"
 [[solution.state]]
 crate = "gnatcoll"
 fulfilment = "solved"
