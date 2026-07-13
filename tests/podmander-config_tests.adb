@@ -359,7 +359,176 @@ package body Podmander.Config_Tests is
          "Non-numeric host port should report a clear parse error");
    end Test_Parse_Nonnumeric_Host_Port;
 
-   -- Test that a non-string port reports an expected parse failure
+   procedure Test_Parse_Structured_Port
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [{ host = 8080, container = 80 }]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (Result.Success, "Structured port mapping should parse");
+      if Result.Success then
+         Assert (Result.Config.Ports_Count = 1, "Should have one port");
+         Assert (Result.Config.Ports (1).Host = 8080, "Host should be 8080");
+         Assert
+           (Result.Config.Ports (1).Container = 80, "Container should be 80");
+      end if;
+   end Test_Parse_Structured_Port;
+
+   procedure Test_Parse_String_Port_Still_Supported
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [""8080:80""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (Result.Success, "String port mapping should still parse");
+      if Result.Success then
+         Assert (Result.Config.Ports (1).Host = 8080, "Host should be 8080");
+         Assert
+           (Result.Config.Ports (1).Container = 80, "Container should be 80");
+      end if;
+   end Test_Parse_String_Port_Still_Supported;
+
+   procedure Test_Parse_Structured_Port_Missing_Host
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [{ container = 80 }]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success, "Missing structured host should fail");
+      Assert
+        (To_String (Result.Message) = "Invalid port entry: missing host",
+         "Missing host should report a clear parse error");
+   end Test_Parse_Structured_Port_Missing_Host;
+
+   procedure Test_Parse_Structured_Port_Missing_Container
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [{ host = 8080 }]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success, "Missing structured container should fail");
+      Assert
+        (To_String (Result.Message) = "Invalid port entry: missing container",
+         "Missing container should report a clear parse error");
+   end Test_Parse_Structured_Port_Missing_Container;
+
+   procedure Test_Parse_Structured_Port_Noninteger_Host
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [{ host = ""abc"", container = 80 }]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success, "Non-integer structured host should fail");
+      Assert
+        (To_String (Result.Message)
+         = "Invalid port entry: host expected integer",
+         "Non-integer host should report a clear parse error");
+   end Test_Parse_Structured_Port_Noninteger_Host;
+
+   procedure Test_Parse_Structured_Port_Noninteger_Container
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [{ host = 8080, container = ""abc"" }]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert
+        (not Result.Success, "Non-integer structured container should fail");
+      Assert
+        (To_String (Result.Message)
+         = "Invalid port entry: container expected integer",
+         "Non-integer container should report a clear parse error");
+   end Test_Parse_Structured_Port_Noninteger_Container;
+
+   procedure Test_Parse_Structured_Port_Out_Of_Range
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [{ host = 65536, container = 80 }]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success, "Out-of-range structured port should fail");
+      Assert
+        (To_String (Result.Message) = "Invalid port number '65536'",
+         "Out-of-range structured port should report a clear parse error");
+   end Test_Parse_Structured_Port_Out_Of_Range;
+
+   procedure Test_Parse_Structured_Container_Out_Of_Range
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [{ host = 80, container = 65536 }]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert
+        (not Result.Success, "Out-of-range structured container should fail");
+      Assert
+        (To_String (Result.Message) = "Invalid port number '65536'",
+         "Out-of-range structured container should report a clear parse error");
+   end Test_Parse_Structured_Container_Out_Of_Range;
+
+   -- Test that a non-string/non-table port reports an expected parse failure
    procedure Test_Parse_Nonstring_Port
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
@@ -374,10 +543,12 @@ package body Podmander.Config_Tests is
       Result  : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse_Content (Content);
    begin
-      Assert (not Result.Success, "Non-string port should fail parsing");
       Assert
-        (To_String (Result.Message) = "Invalid port entry: expected string",
-         "Non-string port should report a clear parse error");
+        (not Result.Success, "Non-string/non-table port should fail parsing");
+      Assert
+        (To_String (Result.Message)
+         = "Invalid port entry: expected string or table",
+         "Non-string/non-table port should report a clear parse error");
    end Test_Parse_Nonstring_Port;
 
    -- Test that a volume string without a colon separator fails parsing
@@ -572,8 +743,40 @@ package body Podmander.Config_Tests is
          "Port string with non-numeric host should fail parsing");
       Register_Routine
         (T,
+         Test_Parse_Structured_Port'Access,
+         "Structured port mapping parses successfully");
+      Register_Routine
+        (T,
+         Test_Parse_String_Port_Still_Supported'Access,
+         "String port mapping remains supported");
+      Register_Routine
+        (T,
+         Test_Parse_Structured_Port_Missing_Host'Access,
+         "Structured port missing host should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Structured_Port_Missing_Container'Access,
+         "Structured port missing container should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Structured_Port_Noninteger_Host'Access,
+         "Structured port with non-integer host should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Structured_Port_Noninteger_Container'Access,
+         "Structured port with non-integer container should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Structured_Port_Out_Of_Range'Access,
+         "Structured port out of range should fail parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Structured_Container_Out_Of_Range'Access,
+         "Structured container port out of range should fail parsing");
+      Register_Routine
+        (T,
          Test_Parse_Nonstring_Port'Access,
-         "Non-string port should fail parsing");
+         "Non-string/non-table port should fail parsing");
       Register_Routine
         (T,
          Test_Parse_Volume_Without_Colon'Access,

@@ -23,6 +23,30 @@ package body Podmander.Config.Parser is
          return Failure ("Invalid port number '" & Value & "'");
       end Invalid_Port_Number;
 
+      function Port_Number_Image (Value : Long_Long_Integer) return String is
+      begin
+         return Trim (Long_Long_Integer'Image (Value), Ada.Strings.Both);
+      end Port_Number_Image;
+
+      function Add_Port
+        (Config : in out Service_Definition;
+         Host   : Port_Number;
+         Target : Port_Number) return Parse_Result is
+      begin
+         if Config.Ports_Count >= MAX_PORTS_ENTRIES then
+            return
+              Failure
+                ("Too many ports entries (maximum "
+                 & Trim (Natural'Image (MAX_PORTS_ENTRIES), Ada.Strings.Both)
+                 & ")");
+         end if;
+
+         Config.Ports (Config.Ports_Count + 1) :=
+           (Host => Host, Container => Target);
+         Config.Ports_Count := Config.Ports_Count + 1;
+         return (Success => True, Config => Config);
+      end Add_Port;
+
       function Add_Port
         (Config : in out Service_Definition; Port_Str : String)
          return Parse_Result
@@ -35,14 +59,6 @@ package body Podmander.Config.Parser is
                 ("Invalid port format '"
                  & Port_Str
                  & "': expected HOST:CONTAINER");
-         end if;
-
-         if Config.Ports_Count >= MAX_PORTS_ENTRIES then
-            return
-              Failure
-                ("Too many ports entries (maximum "
-                 & Trim (Natural'Image (MAX_PORTS_ENTRIES), Ada.Strings.Both)
-                 & ")");
          end if;
 
          declare
@@ -67,10 +83,63 @@ package body Podmander.Config.Parser is
                   return Invalid_Port_Number (Container_Text);
             end;
 
-            Config.Ports (Config.Ports_Count + 1) :=
-              (Host => Host_Port, Container => Container_Port);
-            Config.Ports_Count := Config.Ports_Count + 1;
-            return (Success => True, Config => Config);
+            return Add_Port (Config, Host_Port, Container_Port);
+         end;
+      end Add_Port;
+
+      function Add_Port
+        (Config : in out Service_Definition; Port_Table : TOML_Value)
+         return Parse_Result is
+      begin
+         if not Port_Table.Has ("host") then
+            return Failure ("Invalid port entry: missing host");
+         end if;
+
+         if not Port_Table.Has ("container") then
+            return Failure ("Invalid port entry: missing container");
+         end if;
+
+         declare
+            Host_Value      : constant TOML_Value := Port_Table.Get ("host");
+            Container_Value : constant TOML_Value :=
+              Port_Table.Get ("container");
+         begin
+            if Host_Value.Kind /= TOML_Integer then
+               return Failure ("Invalid port entry: host expected integer");
+            end if;
+
+            if Container_Value.Kind /= TOML_Integer then
+               return
+                 Failure ("Invalid port entry: container expected integer");
+            end if;
+
+            declare
+               Host_Number      : constant Long_Long_Integer :=
+                 Long_Long_Integer (Host_Value.As_Integer);
+               Container_Number : constant Long_Long_Integer :=
+                 Long_Long_Integer (Container_Value.As_Integer);
+               Host_Port        : Port_Number := Port_Number'First;
+               Container_Port   : Port_Number := Port_Number'First;
+            begin
+               begin
+                  Host_Port := Port_Number (Host_Number);
+               exception
+                  when Constraint_Error =>
+                     return
+                       Invalid_Port_Number (Port_Number_Image (Host_Number));
+               end;
+
+               begin
+                  Container_Port := Port_Number (Container_Number);
+               exception
+                  when Constraint_Error =>
+                     return
+                       Invalid_Port_Number
+                         (Port_Number_Image (Container_Number));
+               end;
+
+               return Add_Port (Config, Host_Port, Container_Port);
+            end;
          end;
       end Add_Port;
 
@@ -206,20 +275,29 @@ package body Podmander.Config.Parser is
                            Port_Value : constant TOML_Value :=
                              Ports_Array.Item (I);
                         begin
-                           if Port_Value.Kind /= TOML_String then
+                           if Port_Value.Kind = TOML_String then
+                              declare
+                                 Result : constant Parse_Result :=
+                                   Add_Port (Config, Port_Value.As_String);
+                              begin
+                                 if not Result.Success then
+                                    return Result;
+                                 end if;
+                              end;
+                           elsif Port_Value.Kind = TOML_Table then
+                              declare
+                                 Result : constant Parse_Result :=
+                                   Add_Port (Config, Port_Value);
+                              begin
+                                 if not Result.Success then
+                                    return Result;
+                                 end if;
+                              end;
+                           else
                               return
                                 Failure
-                                  ("Invalid port entry: expected string");
+                                  ("Invalid port entry: expected string or table");
                            end if;
-
-                           declare
-                              Result : constant Parse_Result :=
-                                Add_Port (Config, Port_Value.As_String);
-                           begin
-                              if not Result.Success then
-                                 return Result;
-                              end if;
-                           end;
                         end;
                      end loop;
                   end;
