@@ -5,6 +5,14 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- Hardened controller bind-address and database timestamp parsing invariants so
+  overlong bind addresses and malformed ISO8601 timestamps fail before unsafe
+  fixed-string slicing (#191)
+
 ## [0.2.5] - 2026-07-13
 
 ### Changed

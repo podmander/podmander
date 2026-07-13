@@ -316,13 +316,14 @@ package body Podmander.Controller.Service.Json_Utils_Tests is
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Ports : constant Podmander.Config.Port_Array (1 .. 1) :=
+      Ports  : constant Podmander.Config.Port_Array (1 .. 1) :=
         [1 => (Host => 1, Container => 65_535)];
       Parsed :
         Podmander.Config.Port_Array (1 .. Podmander.Config.MAX_PORTS_ENTRIES);
       Count  : Natural;
    begin
-      Json.Parse_Port_Array (Json.Port_Array_To_JSON (Ports, 1), Parsed, Count);
+      Json.Parse_Port_Array
+        (Json.Port_Array_To_JSON (Ports, 1), Parsed, Count);
       Assert (Count = 1, "one port should survive round-trip");
       Assert (Parsed (1).Host = 1, "host lower boundary should survive");
       Assert

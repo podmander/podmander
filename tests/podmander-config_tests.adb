@@ -207,7 +207,8 @@ package body Podmander.Config_Tests is
       Result  : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Parse_Content (Content);
    begin
-      Assert (not Result.Success, "Negative container port should fail parsing");
+      Assert
+        (not Result.Success, "Negative container port should fail parsing");
       Assert
         (To_String (Result.Message) = "Invalid port number '-1'",
          "Negative container port should report a clear parse error");

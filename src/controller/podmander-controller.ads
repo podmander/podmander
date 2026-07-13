@@ -109,8 +109,11 @@ package Podmander.Controller is
 
    Default_Agent_Timeout : constant Duration := 30.0;
 
+   Max_Bind_Address_Length : constant := 120;
+
    type Controller_Config is record
-      Bind_Address      : String (1 .. 120) := [others => ' '];
+      Bind_Address      : String (1 .. Max_Bind_Address_Length) :=
+        [others => ' '];
       Bind_Address_Last : Natural := 0;
       Agent_Timeout     : Duration := Default_Agent_Timeout;
       Enrollment        : Podmander.Enrollment.Enrollment_Config;
@@ -126,7 +129,8 @@ package Podmander.Controller is
    end record;
 
    procedure Set_Bind_Address
-     (Config : in out Controller_Config; Address : String);
+     (Config : in out Controller_Config; Address : String)
+   with Pre => Address'Length <= Max_Bind_Address_Length;
 
    function Get_Bind_Address (Config : Controller_Config) return String;
 

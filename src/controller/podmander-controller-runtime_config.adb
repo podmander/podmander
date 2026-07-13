@@ -98,7 +98,7 @@ package body Podmander.Controller.Runtime_Config is
             Podmander.Controller.Set_Bind_Address
               (Config, To_String (Overrides.Bind));
          exception
-            when Constraint_Error | Program_Error =>
+            when others =>
                return (Success => False, Message => Invalid_Bind);
          end;
       end if;
