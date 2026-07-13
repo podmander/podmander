@@ -12,18 +12,27 @@ package Podmander.Types is
 
    type Agent_State is (Registered, Unresponsive, Lost);
 
-   type Node_Id_Type is new Integer;
+   type Node_Id_Type is new Natural;
    --  Row identifier in the nodes table. 0 means unassigned (no node
-   --  has been linked yet). Distinct from Integer so a generic integer
+   --  has been linked yet). Negative node IDs are not representable.
+   --  Distinct from Integer so a generic integer
    --  cannot be passed by mistake.
 
+   Unassigned_Node_Id : constant Node_Id_Type := 0;
+
+   subtype Agent_Id_Type is Natural;
+   --  Row identifier in the agents table. 0 means unassigned before
+   --  the agent record has been persisted.
+
+   Unassigned_Agent_Id : constant Agent_Id_Type := 0;
+
    type Node_Info is record
-      Id   : Node_Id_Type := 0;
+      Id   : Node_Id_Type := Unassigned_Node_Id;
       Name : Ada.Strings.Unbounded.Unbounded_String;
    end record;
 
    type Agent_Info is record
-      Id            : Integer := 0;
+      Id            : Agent_Id_Type := Unassigned_Agent_Id;
       Name          : Ada.Strings.Unbounded.Unbounded_String;
       Connection_Id : Ada.Strings.Unbounded.Unbounded_String;
       State         : Agent_State := Registered;

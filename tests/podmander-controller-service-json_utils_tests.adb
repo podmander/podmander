@@ -280,6 +280,56 @@ package body Podmander.Controller.Service.Json_Utils_Tests is
          null;
    end Test_Invalid_Port_Value_Failure;
 
+   procedure Test_Port_Above_Range_Failure
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Parsed :
+        Podmander.Config.Port_Array (1 .. Podmander.Config.MAX_PORTS_ENTRIES);
+      Count  : Natural;
+   begin
+      Json.Parse_Port_Array
+        ("[{""host"":65536,""container"":80}]", Parsed, Count);
+      Assert (False, "expected Parse_Error for out-of-range port");
+   exception
+      when Json.Parse_Error =>
+         null;
+   end Test_Port_Above_Range_Failure;
+
+   procedure Test_Negative_Container_Port_Failure
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Parsed :
+        Podmander.Config.Port_Array (1 .. Podmander.Config.MAX_PORTS_ENTRIES);
+      Count  : Natural;
+   begin
+      Json.Parse_Port_Array
+        ("[{""host"":80,""container"":-1}]", Parsed, Count);
+      Assert (False, "expected Parse_Error for negative container port");
+   exception
+      when Json.Parse_Error =>
+         null;
+   end Test_Negative_Container_Port_Failure;
+
+   procedure Test_Port_Boundary_Round_Trip
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Ports : constant Podmander.Config.Port_Array (1 .. 1) :=
+        [1 => (Host => 1, Container => 65_535)];
+      Parsed :
+        Podmander.Config.Port_Array (1 .. Podmander.Config.MAX_PORTS_ENTRIES);
+      Count  : Natural;
+   begin
+      Json.Parse_Port_Array (Json.Port_Array_To_JSON (Ports, 1), Parsed, Count);
+      Assert (Count = 1, "one port should survive round-trip");
+      Assert (Parsed (1).Host = 1, "host lower boundary should survive");
+      Assert
+        (Parsed (1).Container = 65_535,
+         "container upper boundary should survive");
+   end Test_Port_Boundary_Round_Trip;
+
    overriding
    procedure Register_Tests (T : in out Test_Case) is
       use AUnit.Test_Cases.Registration;
@@ -322,6 +372,18 @@ package body Podmander.Controller.Service.Json_Utils_Tests is
         (T,
          Test_Invalid_Port_Value_Failure'Access,
          "Invalid port value raises Parse_Error");
+      Register_Routine
+        (T,
+         Test_Port_Above_Range_Failure'Access,
+         "Port above range raises Parse_Error");
+      Register_Routine
+        (T,
+         Test_Negative_Container_Port_Failure'Access,
+         "Negative container port raises Parse_Error");
+      Register_Routine
+        (T,
+         Test_Port_Boundary_Round_Trip'Access,
+         "Port boundary values round-trip through JSON");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

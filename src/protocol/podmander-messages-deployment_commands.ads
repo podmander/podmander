@@ -10,7 +10,7 @@ package Podmander.Messages.Deployment_Commands is
 
    -- Controller -> Agent: deploy a service Quadlet
    type Deployment_Command is new Deployment_Command_Type with record
-      Catalog_Id   : Integer := 0;
+      Catalog_Id   : Catalog_Id_Type := Legacy_Catalog_Id;
       Service_Name : Unbounded_String;
       Quadlet      : Unbounded_String;
    end record;

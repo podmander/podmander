@@ -30,6 +30,7 @@ with Podmander.Generators.Quadlet_Tests;
 with Podmander.Logging_Tests;
 with Podmander.Logging;
 with Podmander.Messages_Tests;
+with Podmander.Types_Tests;
 with Podmander.Agent.Runtime_Config_Tests;
 with Podmander.Controller.Runtime_Config_Tests;
 with Podmander.Podctl.Config_Tests;
@@ -49,6 +50,7 @@ procedure Test_Runner is
         (Result, Podmander.Agent.Host_Command.Result_Mapping_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Agent.Podman_Tests.Suite);
       AUnit.Test_Suites.Add_Test (Result, Podmander.Messages_Tests.Suite);
+      AUnit.Test_Suites.Add_Test (Result, Podmander.Types_Tests.Suite);
       AUnit.Test_Suites.Add_Test
         (Result, Podmander.Controller.Agent.Liveness_Tests.Suite);
       AUnit.Test_Suites.Add_Test

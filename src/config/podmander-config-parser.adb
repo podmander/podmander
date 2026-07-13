@@ -50,18 +50,18 @@ package body Podmander.Config.Parser is
               Port_Str (Port_Str'First .. Colon_Pos - 1);
             Container_Text : constant String :=
               Port_Str (Colon_Pos + 1 .. Port_Str'Last);
-            Host_Port      : Positive := 1;
-            Container_Port : Positive := 1;
+            Host_Port      : Port_Number := Port_Number'First;
+            Container_Port : Port_Number := Port_Number'First;
          begin
             begin
-               Host_Port := Positive'Value (Host_Text);
+               Host_Port := Port_Number'Value (Host_Text);
             exception
                when Constraint_Error =>
                   return Invalid_Port_Number (Host_Text);
             end;
 
             begin
-               Container_Port := Positive'Value (Container_Text);
+               Container_Port := Port_Number'Value (Container_Text);
             exception
                when Constraint_Error =>
                   return Invalid_Port_Number (Container_Text);
@@ -315,27 +315,6 @@ package body Podmander.Config.Parser is
            (Success => False,
             Message => To_Unbounded_String ("Image must not be empty"));
       end if;
-
-      -- Port host/container must be in valid range
-      for I in 1 .. Config.Ports_Count loop
-         if Config.Ports (I).Host not in MIN_PORT .. MAX_PORT then
-            return
-              (Success => False,
-               Message =>
-                 To_Unbounded_String
-                   ("Port host out of range (1-65535): "
-                    & Trim (Config.Ports (I).Host'Image, Ada.Strings.Both)));
-         end if;
-         if Config.Ports (I).Container not in MIN_PORT .. MAX_PORT then
-            return
-              (Success => False,
-               Message =>
-                 To_Unbounded_String
-                   ("Port container out of range (1-65535): "
-                    & Trim
-                        (Config.Ports (I).Container'Image, Ada.Strings.Both)));
-         end if;
-      end loop;
 
       -- Volume host/container paths must not be empty
       for I in 1 .. Config.Volumes_Count loop

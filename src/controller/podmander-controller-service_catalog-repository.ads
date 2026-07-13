@@ -21,7 +21,7 @@ package Podmander.Controller.Service_Catalog.Repository is
    -- auto-generated id.
 
    function Get_By_Id
-     (DB : in out DB_Handle; Id : Integer)
+     (DB : in out DB_Handle; Id : Podmander.Controller.Service_Catalog_Row_Id)
       return Podmander.Controller.Service_Catalog_Entry;
    -- Return a catalog entry by id.
    -- Raises Database_Error with Not_Found if no matching entry exists.
@@ -45,35 +45,37 @@ package Podmander.Controller.Service_Catalog.Repository is
 
    function Update_On_Success
      (DB              : in out DB_Handle;
-      Id              : Integer;
+      Id              : Podmander.Controller.Service_Catalog_Row_Id;
       Current_Version : Podmander.Controller.Service_Version_Type)
       return Boolean;
    -- Set current_version = Current_Version, state = Deployed, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Update_On_Failure
-     (DB : in out DB_Handle; Id : Integer) return Boolean;
+     (DB : in out DB_Handle; Id : Podmander.Controller.Service_Catalog_Row_Id)
+      return Boolean;
    -- Set state = Failed, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Assign_Node
      (DB      : in out DB_Handle;
-      Id      : Integer;
+      Id      : Podmander.Controller.Service_Catalog_Row_Id;
       Node_Id : Podmander.Types.Node_Id_Type) return Boolean;
    -- Set node_id = Node_Id, update updated_at.
    -- Returns True if a row was updated, False otherwise.
 
    function Set_Target
      (DB             : in out DB_Handle;
-      Id             : Integer;
+      Id             : Podmander.Controller.Service_Catalog_Row_Id;
       Target_Version : Podmander.Controller.Service_Version_Type)
       return Boolean;
    -- Set target_version = Target_Version, state = Pending,
    -- update updated_at.  Returns True if a row was updated, False otherwise.
 
    function Set_State
-     (DB : in out DB_Handle; Id : Integer; State : Catalog_Entry_State)
-      return Boolean;
+     (DB    : in out DB_Handle;
+      Id    : Podmander.Controller.Service_Catalog_Row_Id;
+      State : Catalog_Entry_State) return Boolean;
    --  Set state = State, update updated_at.
    --  Returns True if a row was updated, False otherwise.
 

@@ -14,11 +14,13 @@ package Podmander.Config is
    MIN_PORT : constant := 1;
    MAX_PORT : constant := 65535;
 
+   subtype Port_Number is Positive range MIN_PORT .. MAX_PORT;
+
    type String_Array is array (Positive range <>) of Unbounded_String;
 
    type Port_Mapping is record
-      Host      : Positive;
-      Container : Positive;
+      Host      : Port_Number;
+      Container : Port_Number;
    end record;
 
    type Port_Array is array (Positive range <>) of Port_Mapping;

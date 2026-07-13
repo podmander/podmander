@@ -27,6 +27,18 @@ package Podmander.Controller is
    --  Semantic version number for a service deployment (always >= 1).
    --  Used for both Service_Version.Version and catalog Target_Version.
 
+   subtype Service_Version_Row_Id is Natural;
+   --  Row identifier in the service_versions table. 0 means unassigned
+   --  before the service version record has been persisted.
+
+   Unassigned_Service_Version_Row_Id : constant Service_Version_Row_Id := 0;
+
+   subtype Service_Catalog_Row_Id is Natural;
+   --  Row identifier in the service_catalog table. 0 means unassigned
+   --  before the catalog entry record has been persisted.
+
+   Unassigned_Service_Catalog_Row_Id : constant Service_Catalog_Row_Id := 0;
+
    type Node_Option (Present : Boolean := False) is record
       case Present is
          when True =>
@@ -54,7 +66,7 @@ package Podmander.Controller is
    -- State tracking types
 
    type Service_Version is record
-      Id            : Integer;
+      Id            : Service_Version_Row_Id;
       Service_Id    : Service_Id_Type;
       Version       : Service_Version_Type;
       Image         : Ada.Strings.Unbounded.Unbounded_String;
@@ -81,7 +93,7 @@ package Podmander.Controller is
       Deployed);    -- current_version == target_version
 
    type Service_Catalog_Entry is record
-      Id              : Integer;
+      Id              : Service_Catalog_Row_Id;
       Service_Id      : Service_Id_Type;
       Assigned_Node   : Node_Option;
       Current_Version : Version_Option;

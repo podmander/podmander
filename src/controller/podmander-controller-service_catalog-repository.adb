@@ -109,7 +109,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
    ---------------
 
    function Get_By_Id
-     (DB : in out DB_Handle; Id : Integer)
+     (DB : in out DB_Handle; Id : Podmander.Controller.Service_Catalog_Row_Id)
       return Podmander.Controller.Service_Catalog_Entry
    is
       QH : Query_Handle :=
@@ -218,7 +218,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
 
    function Update_On_Success
      (DB              : in out DB_Handle;
-      Id              : Integer;
+      Id              : Podmander.Controller.Service_Catalog_Row_Id;
       Current_Version : Podmander.Controller.Service_Version_Type)
       return Boolean
    is
@@ -244,7 +244,8 @@ package body Podmander.Controller.Service_Catalog.Repository is
    ----------------------
 
    function Update_On_Failure
-     (DB : in out DB_Handle; Id : Integer) return Boolean
+     (DB : in out DB_Handle; Id : Podmander.Controller.Service_Catalog_Row_Id)
+      return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=
@@ -267,8 +268,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
    -----------------
 
    function Assign_Node
-     (DB : in out DB_Handle; Id : Integer; Node_Id : Node_Id_Type)
-      return Boolean
+     (DB      : in out DB_Handle;
+      Id      : Podmander.Controller.Service_Catalog_Row_Id;
+      Node_Id : Node_Id_Type) return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=
@@ -292,8 +294,9 @@ package body Podmander.Controller.Service_Catalog.Repository is
    ----------------
 
    function Set_State
-     (DB : in out DB_Handle; Id : Integer; State : Catalog_Entry_State)
-      return Boolean
+     (DB    : in out DB_Handle;
+      Id    : Podmander.Controller.Service_Catalog_Row_Id;
+      State : Catalog_Entry_State) return Boolean
    is
       Now_Str : constant String := Time_To_ISO8601 (Ada.Calendar.Clock);
       QH      : Query_Handle :=
@@ -359,7 +362,7 @@ package body Podmander.Controller.Service_Catalog.Repository is
 
    function Set_Target
      (DB             : in out DB_Handle;
-      Id             : Integer;
+      Id             : Podmander.Controller.Service_Catalog_Row_Id;
       Target_Version : Podmander.Controller.Service_Version_Type)
       return Boolean
    is

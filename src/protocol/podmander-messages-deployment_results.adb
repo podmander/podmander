@@ -8,6 +8,17 @@ pragma Elaborate (Podmander.Messages);
 
 package body Podmander.Messages.Deployment_Results is
 
+   function Catalog_Id_Field
+     (Obj : GNATCOLL.JSON.JSON_Value) return Catalog_Id_Type is
+   begin
+      return
+        Catalog_Id_Type (Integer'(JSON_Utils.Get_Field (Obj, "catalog_id")));
+   exception
+      when Constraint_Error =>
+         raise Podmander.Messages.Decode_Error
+           with "field 'catalog_id' is not a valid catalog id";
+   end Catalog_Id_Field;
+
    overriding
    procedure Encode
      (Self : Deployment_Result; Msg : in out CZMQ.Messages.Message)
@@ -41,7 +52,7 @@ package body Podmander.Messages.Deployment_Results is
    begin
       return
         Deployment_Result'
-          (Catalog_Id    => JSON_Utils.Get_Field (Obj, "catalog_id"),
+          (Catalog_Id    => Catalog_Id_Field (Obj),
            Code          =>
              RC.Decode_Code (JSON_Utils.Get_Field (Obj, "code")),
            Service_Name  => SU.To_Unbounded_String (Service_Name),

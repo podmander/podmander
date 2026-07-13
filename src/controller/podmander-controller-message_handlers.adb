@@ -177,7 +177,7 @@ package body Podmander.Controller.Message_Handlers is
       use type Podmander.Messages.Result_Codes.Result_Code;
       Result : constant Deployment_Result := Deployment_Result (M);
    begin
-      if Result.Catalog_Id > 0 then
+      if Result.Catalog_Id > Podmander.Messages.Legacy_Catalog_Id then
          -- Catalog-based deploy: update the catalog entry
          if Result.Code = Podmander.Messages.Result_Codes.Ok then
             declare

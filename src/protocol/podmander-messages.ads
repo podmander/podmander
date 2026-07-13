@@ -13,6 +13,11 @@ package Podmander.Messages is
    Decode_Error       : exception;
    Already_Registered : exception;
 
+   subtype Catalog_Id_Type is Natural;
+   Legacy_Catalog_Id : constant Catalog_Id_Type := 0;
+   --  Deployment messages use 0 only for legacy deploy results that predate
+   --  service-catalog tracking. Persisted catalog rows use positive IDs.
+
    -- Message kind discriminator strings used as the JSON "kind" field
    Registration_Request_Kind    : constant String := "registration";
    Registration_Response_Kind   : constant String := "registered";

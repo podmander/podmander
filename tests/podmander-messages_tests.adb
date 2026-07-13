@@ -163,6 +163,29 @@ package body Podmander.Messages_Tests is
       end;
    end Test_Deploy_Command_Round_Trip;
 
+   -- Test: Deployment_Command rejects a negative catalog ID on decode
+   procedure Test_Deploy_Command_Negative_Catalog_Id
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Msg.Add_String
+        ("{""kind"":""deployment"",""catalog_id"":-1,"
+         & """service_name"":""api"",""quadlet"":""[Container]""}");
+
+      declare
+         use Podmander.Messages;
+         Ignored : constant Protocol_Message'Class := Decode (Msg);
+         pragma Unreferenced (Ignored);
+      begin
+         Assert (False, "Expected Decode_Error for negative catalog_id");
+      end;
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;
+   end Test_Deploy_Command_Negative_Catalog_Id;
+
    -- Test: Deployment_Result round-trip encode/decode (Ok)
    procedure Test_Deploy_Result_Ok_Round_Trip
      (T : in out AUnit.Test_Cases.Test_Case'Class)
@@ -198,6 +221,30 @@ package body Podmander.Messages_Tests is
             "Expected empty error message");
       end;
    end Test_Deploy_Result_Ok_Round_Trip;
+
+   -- Test: Deployment_Result rejects a negative catalog ID on decode
+   procedure Test_Deploy_Result_Negative_Catalog_Id
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Msg : CZMQ.Messages.Message := CZMQ.Messages.New_Message;
+   begin
+      Msg.Add_String
+        ("{""kind"":""deployment_ack"",""catalog_id"":-1,"
+         & """code"":""ok"",""service_name"":""api"","
+         & """error_message"":""""}");
+
+      declare
+         use Podmander.Messages;
+         Ignored : constant Protocol_Message'Class := Decode (Msg);
+         pragma Unreferenced (Ignored);
+      begin
+         Assert (False, "Expected Decode_Error for negative catalog_id");
+      end;
+   exception
+      when Podmander.Messages.Decode_Error =>
+         null;
+   end Test_Deploy_Result_Negative_Catalog_Id;
 
    -- Test: Deployment_Result round-trip encode/decode (Failed)
    procedure Test_Deploy_Result_Failed_Round_Trip
@@ -810,8 +857,16 @@ package body Podmander.Messages_Tests is
          "Deployment_Command round-trip encode/decode");
       Register_Routine
         (T,
+         Test_Deploy_Command_Negative_Catalog_Id'Access,
+         "Deployment_Command rejects negative catalog_id");
+      Register_Routine
+        (T,
          Test_Deploy_Result_Ok_Round_Trip'Access,
          "Deployment_Result (success) round-trip encode/decode");
+      Register_Routine
+        (T,
+         Test_Deploy_Result_Negative_Catalog_Id'Access,
+         "Deployment_Result rejects negative catalog_id");
       Register_Routine
         (T,
          Test_Deploy_Result_Failed_Round_Trip'Access,

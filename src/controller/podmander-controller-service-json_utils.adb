@@ -56,15 +56,15 @@ package body Podmander.Controller.Service.Json_Utils is
       return Val.Get;
    end Integer_Field;
 
-   function Positive_Field
-     (Obj : GNATCOLL.JSON.JSON_Value; Key : String) return Positive is
+   function Port_Field
+     (Obj : GNATCOLL.JSON.JSON_Value; Key : String) return Port_Number is
    begin
-      return Positive (Integer_Field (Obj, Key));
+      return Port_Number (Integer_Field (Obj, Key));
    exception
       when Constraint_Error =>
          raise Parse_Error
-           with "field '" & Key & "' is not a positive integer";
-   end Positive_Field;
+           with "field '" & Key & "' is not a valid port number";
+   end Port_Field;
 
    function Make_Object return GNATCOLL.JSON.JSON_Value
    is (GNATCOLL.JSON.Create_Object);
@@ -177,8 +177,8 @@ package body Podmander.Controller.Service.Json_Utils is
             Obj : constant GNATCOLL.JSON.JSON_Value := Item;
          begin
             Count := Count + 1;
-            Arr (Count).Host := Positive_Field (Obj, "host");
-            Arr (Count).Container := Positive_Field (Obj, "container");
+            Arr (Count).Host := Port_Field (Obj, "host");
+            Arr (Count).Container := Port_Field (Obj, "container");
          end;
       end loop;
    end Parse_Port_Array;

@@ -150,34 +150,92 @@ package body Podmander.Config_Tests is
       Assert (not Result.Success, "Empty image should fail validation");
    end Test_Empty_Image_Fails_Validation;
 
-   -- Test port out of range fails validation (65536)
-   procedure Test_Port_Out_Of_Range_Fails_Validation
+   -- Test port out of range fails parsing before it reaches validation
+   procedure Test_Parse_Host_Port_Above_Range
      (T : in out AUnit.Test_Cases.Test_Case'Class)
    is
       pragma Unreferenced (T);
-      Config : constant Podmander.Config.Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
-           [others =>
-              (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         =>
-           [1      => (Host => 65536, Container => 80),
-            others => (Host => 1, Container => 1)],
-         Ports_Count   => 1,
-         Volumes       =>
-           [others =>
-              (Host      => Null_Unbounded_String,
-               Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
-      Result : constant Podmander.Config.Parser.Parse_Result :=
-        Podmander.Config.Parser.Validate (Config);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [""65536:80""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
    begin
-      Assert (not Result.Success, "Port host 65536 should fail validation");
-   end Test_Port_Out_Of_Range_Fails_Validation;
+      Assert (not Result.Success, "Port host 65536 should fail parsing");
+      Assert
+        (To_String (Result.Message) = "Invalid port number '65536'",
+         "Out-of-range host port should report a clear parse error");
+   end Test_Parse_Host_Port_Above_Range;
+
+   -- Test host port below valid range fails parsing
+   procedure Test_Parse_Host_Port_Below_Range
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [""0:80""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success, "Port host 0 should fail parsing");
+      Assert
+        (To_String (Result.Message) = "Invalid port number '0'",
+         "Below-range host port should report a clear parse error");
+   end Test_Parse_Host_Port_Below_Range;
+
+   -- Test negative container port fails parsing
+   procedure Test_Parse_Negative_Container_Port
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [""80:-1""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (not Result.Success, "Negative container port should fail parsing");
+      Assert
+        (To_String (Result.Message) = "Invalid port number '-1'",
+         "Negative container port should report a clear parse error");
+   end Test_Parse_Negative_Container_Port;
+
+   -- Test valid port boundary values parse successfully
+   procedure Test_Parse_Port_Boundaries
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Content : constant String :=
+        "[service.web]"
+        & ASCII.LF
+        & "image = ""nginx:latest"""
+        & ASCII.LF
+        & "ports = [""1:65535""]"
+        & ASCII.LF;
+      Result  : constant Podmander.Config.Parser.Parse_Result :=
+        Podmander.Config.Parser.Parse_Content (Content);
+   begin
+      Assert (Result.Success, "Valid port boundary values should parse");
+      if Result.Success then
+         Assert (Result.Config.Ports (1).Host = 1, "Host port should be 1");
+         Assert
+           (Result.Config.Ports (1).Container = 65535,
+            "Container port should be 65535");
+      end if;
+   end Test_Parse_Port_Boundaries;
 
    -- Test empty volume path fails validation
    procedure Test_Empty_Volume_Path_Fails_Validation
@@ -473,8 +531,20 @@ package body Podmander.Config_Tests is
          "Empty image fails validation");
       Register_Routine
         (T,
-         Test_Port_Out_Of_Range_Fails_Validation'Access,
-         "Port out of range (65536) fails validation");
+         Test_Parse_Host_Port_Above_Range'Access,
+         "Host port above range (65536) fails parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Host_Port_Below_Range'Access,
+         "Host port below range (0) fails parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Negative_Container_Port'Access,
+         "Negative container port fails parsing");
+      Register_Routine
+        (T,
+         Test_Parse_Port_Boundaries'Access,
+         "Port boundary values parse successfully");
       Register_Routine
         (T,
          Test_Empty_Volume_Path_Fails_Validation'Access,
