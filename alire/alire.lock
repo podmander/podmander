@@ -488,3 +488,4 @@ compile_checks = "warnings"
 [solution.state.release.origin]
 commit = "c07167a55d5fa2ebbfa7ff4689959e08128e8a69"
 url = "git+https://github.com/onox/spoon.git"
+
