@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Added `mise run setup` as a file task for installing local development system
+  packages.
+
 ## [0.3.0] - 2026-07-13
 
 ### Added

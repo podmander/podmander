@@ -1,0 +1,131 @@
+#!/usr/bin/env bash
+#MISE description="Install local development system packages"
+#MISE dir="{{config_root}}"
+#USAGE flag "--dry-run" help="Print the package-manager commands without running them"
+
+set -euo pipefail
+
+dry_run="${usage_dry_run:-false}"
+
+usage() {
+  cat <<'EOF'
+Usage: mise run setup [--dry-run]
+
+Install the operating-system packages needed for local Podmander development.
+
+Options:
+  --dry-run   Print the package-manager commands without running them.
+  -h, --help  Show this help text.
+EOF
+}
+
+log() {
+  printf '%s\n' "$*"
+}
+
+fail() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
+
+require_command() {
+  if ! command -v "$1" >/dev/null 2>&1; then
+    fail "required command not found: $1"
+  fi
+}
+
+run_command() {
+  if [ "$dry_run" = true ]; then
+    printf 'Would run:'
+    printf ' %q' "$@"
+    printf '\n'
+    return 0
+  fi
+
+  "$@"
+}
+
+run_privileged() {
+  if [ "${EUID:-$(id -u)}" -eq 0 ]; then
+    run_command "$@"
+    return 0
+  fi
+
+  if [ "$dry_run" = true ]; then
+    run_command sudo "$@"
+    return 0
+  fi
+
+  require_command sudo
+  run_command sudo "$@"
+}
+
+install_fedora_packages() {
+  local packages=(
+    git
+    gcc-gnat
+    podman
+    zeromq-devel
+    czmq-devel
+  )
+
+  log "Installing Fedora/RHEL development packages: ${packages[*]}"
+  run_privileged dnf install -y "${packages[@]}"
+}
+
+install_debian_packages() {
+  local packages=(
+    git
+    gnat
+    podman
+    libzmq3-dev
+    libczmq-dev
+  )
+
+  log "Installing Debian/Ubuntu development packages: ${packages[*]}"
+  run_privileged apt-get update
+  run_privileged apt-get install -y "${packages[@]}"
+}
+
+install_arch_packages() {
+  local packages=(
+    git
+    gcc-ada
+    podman
+    zeromq
+    czmq
+  )
+
+  log "Installing Arch development packages: ${packages[*]}"
+  run_privileged pacman -S --needed --noconfirm "${packages[@]}"
+}
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --dry-run)
+      dry_run=true
+      ;;
+    -h | --help)
+      usage
+      exit 0
+      ;;
+    *)
+      fail "unknown option: $1"
+      ;;
+  esac
+  shift
+done
+
+if command -v dnf >/dev/null 2>&1; then
+  install_fedora_packages
+elif command -v apt-get >/dev/null 2>&1; then
+  install_debian_packages
+elif command -v pacman >/dev/null 2>&1; then
+  install_arch_packages
+else
+  fail "unsupported system: expected dnf, apt-get, or pacman"
+fi
+
+if ! command -v alr >/dev/null 2>&1; then
+  log "warning: alr is not installed; install Alire separately before building."
+fi
