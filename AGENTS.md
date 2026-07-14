@@ -123,3 +123,14 @@ Single-context repo. See `notes/agents/domain-docs.md`.
   expect it to paste it into files. Markdown code blocks lose indentation, and
   the subagent can't match GNAT style from markdown. If you've already designed
   the exact code, edit the files directly — no subagent needed.
+
+## Repository Map
+
+A full codemap is available at `codemap.md` in the project root.
+
+Before working on any task, read `codemap.md` to understand:
+- Project architecture and entry points
+- Directory responsibilities and design patterns
+- Data flow and integration points between modules
+
+For deep work on a specific folder, also read that folder's `codemap.md`.
