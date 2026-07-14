@@ -100,8 +100,8 @@ Read them all now.
 ### Issue tracker
 
 Issues live as Forgejo issues (owner: `podmander`, repo: `podmander`). Use the
-Forgejo MCP server or the `fj` CLI for Forgejo operations. See
-`notes/agents/issue-tracker.md` and the `/forgejo` skill.
+Forgejo MCP server or the `fgj` CLI for Forgejo operations. See
+`notes/agents/issue-tracker.md`.
 
 ### Triage labels
 

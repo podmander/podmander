@@ -1,6 +1,6 @@
 # Issue tracker: Forgejo
 
-Issues for this repo live in [Forgejo](https://code.monospacementor.com/podmander/podmander). Use the Forgejo MCP server for all operations.
+Issues for this repo live in [Forgejo](https://code.monospacementor.com/podmander/podmander). Use the Forgejo MCP server or the `fgj` CLI for operations the MCP server does not support.
 
 ## Conventions
 
