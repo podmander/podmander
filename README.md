@@ -25,6 +25,23 @@ Podmander generates configuration for proven tools — systemd, Podman, Caddy, R
 - [`notes/plans/`](notes/plans/) — Implementation plans
 - [`notes/brainstorms/`](notes/brainstorms/) — Design explorations
 
+## Testing
+
+Run the AUnit test suite with:
+
+```sh
+mise run test
+```
+
+`podmander_tests.gpr` builds the test runner from `tests/`. Each test package
+defines an AUnit suite, and `tests/test_runner.adb` explicitly registers every
+suite with the runner.
+
+To add a test suite, create its specification and body in `tests/`, implement
+its `Suite` function, then import the package and add its suite to
+`tests/test_runner.adb`. See `tests/podmander-enrollment_tests.ads` and
+`tests/podmander-enrollment_tests.adb` for an example.
+
 ## Project Management
 
 We track all work in Forgejo issues, organized as follows:
