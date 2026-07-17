@@ -16,7 +16,7 @@ Key forces:
 
 ## Decision
 
-We will use Caddy as the reverse proxy for public-facing ingress. The controller generates a Caddyfile from service ingress declarations in the stack TOML, distributes it to ingress nodes via SSH, and Caddy reloads on configuration change.
+We will use Caddy as the reverse proxy for public-facing ingress. The controller generates a Caddyfile from service ingress declarations in the stack TOML and delivers it to ingress nodes over the existing ZeroMQ/CURVE channel. Caddy reloads on configuration change.
 
 Caddy runs as a Quadlet on ingress node(s), following the same generate-then-execute pattern as CoreDNS zone files and Restic configuration.
 
@@ -65,3 +65,4 @@ Caddy runs as a Quadlet on ingress node(s), following the same generate-then-exe
 
 - [ADR-0024](0024-infrastructure-component-versioning.md) — Infrastructure component versioning (Caddyfile is versioned)
 - [ADR-0012](0012-rootless-containers-rootful-agent.md) — Rootless containers with rootful agent (ingress nodes are typically rootful)
+- [ADR-0036](0036-zeromq-unified-transport.md) — ZeroMQ as sole runtime transport
