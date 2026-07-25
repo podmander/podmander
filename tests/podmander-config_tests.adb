@@ -102,21 +102,27 @@ package body Podmander.Config_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Validate (Config);
    begin
@@ -129,21 +135,27 @@ package body Podmander.Config_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => Null_Unbounded_String,
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => Null_Unbounded_String,
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Validate (Config);
    begin
@@ -244,24 +256,30 @@ package body Podmander.Config_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Podmander.Config.Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [1      =>
               (Host      => Null_Unbounded_String,
                Container => To_Unbounded_String ("/data")),
             others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 1,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 1,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Result : constant Podmander.Config.Parser.Parse_Result :=
         Podmander.Config.Parser.Validate (Config);
    begin

@@ -22,16 +22,19 @@ package body Podmander.Controller.Supervisor is
      (SV : Service_Version; Name : String) return Service_Definition is
    begin
       return
-        (Service_Name  => To_Unbounded_String (Name),
-         Image         => SV.Image,
-         Env           => SV.Env,
-         Env_Count     => SV.Env_Count,
-         Ports         => SV.Ports,
-         Ports_Count   => SV.Ports_Count,
-         Volumes       => SV.Volumes,
-         Volumes_Count => SV.Volumes_Count,
-         Description   => SV.Description,
-         WantedBy      => SV.Wanted_By);
+        (Service_Name      => To_Unbounded_String (Name),
+         Image             => SV.Image,
+         Env               => SV.Env,
+         Env_Count         => SV.Env_Count,
+         Ports             => SV.Ports,
+         Ports_Count       => SV.Ports_Count,
+         Named_Ports       => SV.Named_Ports,
+         Named_Ports_Count => SV.Named_Ports_Count,
+         Ingress           => SV.Ingress,
+         Volumes           => SV.Volumes,
+         Volumes_Count     => SV.Volumes_Count,
+         Description       => SV.Description,
+         WantedBy          => SV.Wanted_By);
    end To_Service_Definition;
 
    --  Send a Deployment_Command to the agent identified by Cat_Entry's assigned
@@ -81,16 +84,19 @@ package body Podmander.Controller.Supervisor is
          Svc          : constant Podmander.Controller.Service.Service :=
            Service.Repository.Get_By_Id (DB, Cat_Entry.Service_Id);
          SD_With_Name : constant Service_Definition :=
-           (Service_Name  => Svc.Name,
-            Image         => SD.Image,
-            Env           => SD.Env,
-            Env_Count     => SD.Env_Count,
-            Ports         => SD.Ports,
-            Ports_Count   => SD.Ports_Count,
-            Volumes       => SD.Volumes,
-            Volumes_Count => SD.Volumes_Count,
-            Description   => SD.Description,
-            WantedBy      => SD.WantedBy);
+           (Service_Name      => Svc.Name,
+            Image             => SD.Image,
+            Env               => SD.Env,
+            Env_Count         => SD.Env_Count,
+            Ports             => SD.Ports,
+            Ports_Count       => SD.Ports_Count,
+            Named_Ports       => SD.Named_Ports,
+            Named_Ports_Count => SD.Named_Ports_Count,
+            Ingress           => SD.Ingress,
+            Volumes           => SD.Volumes,
+            Volumes_Count     => SD.Volumes_Count,
+            Description       => SD.Description,
+            WantedBy          => SD.WantedBy);
          Quadlet      : constant String :=
            Podmander.Generators.Quadlet.Render (SD_With_Name);
          Cmd          : constant Deployment_Command :=

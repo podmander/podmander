@@ -15,6 +15,9 @@ package Podmander.Controller.Service.Json_Utils is
    function Env_Array_To_JSON (Arr : Env_Array; Count : Natural) return String;
    -- Serialize the first Count elements of Arr as a JSON array of objects.
 
+   function Named_Port_Array_To_JSON
+     (Arr : Named_Port_Array; Count : Natural) return String;
+
    function Port_Array_To_JSON
      (Arr : Port_Array; Count : Natural) return String;
    -- Serialize the first Count elements of Arr as a JSON array of objects.
@@ -35,6 +38,9 @@ package Podmander.Controller.Service.Json_Utils is
      (JSON_Str : String; Arr : in out Env_Array; Count : out Natural);
    -- Parse a JSON array of {"key":"...","value":"..."} objects into Arr.
    -- Count is set to the number of objects parsed.
+
+   procedure Parse_Named_Port_Array
+     (JSON_Str : String; Arr : in out Named_Port_Array; Count : out Natural);
 
    procedure Parse_Port_Array
      (JSON_Str : String; Arr : in out Port_Array; Count : out Natural);

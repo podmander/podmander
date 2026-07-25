@@ -94,6 +94,24 @@ package body Podmander.Controller.Service.Json_Utils is
       return GNATCOLL.JSON.Write (GNATCOLL.JSON.Create (Items));
    end Env_Array_To_JSON;
 
+   function Named_Port_Array_To_JSON
+     (Arr : Named_Port_Array; Count : Natural) return String
+   is
+      Items : GNATCOLL.JSON.JSON_Array := GNATCOLL.JSON.Empty_Array;
+   begin
+      for I in 1 .. Count loop
+         declare
+            Item : constant GNATCOLL.JSON.JSON_Value := Make_Object;
+         begin
+            Item.Set_Field ("name", To_String (Arr (I).Name));
+            Item.Set_Field ("host", Integer (Arr (I).Host));
+            Item.Set_Field ("container", Integer (Arr (I).Container));
+            GNATCOLL.JSON.Append (Items, Item);
+         end;
+      end loop;
+      return GNATCOLL.JSON.Write (GNATCOLL.JSON.Create (Items));
+   end Named_Port_Array_To_JSON;
+
    function Port_Array_To_JSON
      (Arr : Port_Array; Count : Natural) return String
    is
@@ -162,6 +180,26 @@ package body Podmander.Controller.Service.Json_Utils is
       end loop;
    end Parse_Env_Array;
 
+   procedure Parse_Named_Port_Array
+     (JSON_Str : String; Arr : in out Named_Port_Array; Count : out Natural)
+   is
+      Items : constant GNATCOLL.JSON.JSON_Array := Root_Array (JSON_Str);
+   begin
+      Count := 0;
+      for Item of Items loop
+         if Count = MAX_NAMED_PORTS_ENTRIES then
+            raise Parse_Error with "too many entries in named ports array";
+         end if;
+         if Item.Kind /= GNATCOLL.JSON.JSON_Object_Type then
+            raise Parse_Error with "expected object in named ports array";
+         end if;
+         Count := Count + 1;
+         Arr (Count).Name := To_Unbounded_String (String_Field (Item, "name"));
+         Arr (Count).Host := Port_Field (Item, "host");
+         Arr (Count).Container := Port_Field (Item, "container");
+      end loop;
+   end Parse_Named_Port_Array;
+
    procedure Parse_Port_Array
      (JSON_Str : String; Arr : in out Port_Array; Count : out Natural)
    is
@@ -169,7 +207,9 @@ package body Podmander.Controller.Service.Json_Utils is
    begin
       Count := 0;
       for Item of Items loop
-         exit when Count = MAX_PORTS_ENTRIES;
+         if Count = MAX_PORTS_ENTRIES then
+            raise Parse_Error with "too many entries in ports array";
+         end if;
          if Item.Kind /= GNATCOLL.JSON.JSON_Object_Type then
             raise Parse_Error with "expected object in ports array";
          end if;

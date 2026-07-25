@@ -145,6 +145,184 @@ package body Podmander.Controller.Stack_Submission_Tests is
          "Error should be Registration_Failed");
    end Test_Submit_Registration_Failed;
 
+   procedure Test_Submit_Rolls_Back_On_Late_Scheduler_Trigger
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      Result : Submission.Submission_Result;
+   begin
+      DB.Execute
+        (D,
+         "CREATE TRIGGER reject_catalog_insert AFTER INSERT ON service_catalog "
+         & "BEGIN SELECT RAISE(ABORT, 'scheduler persistence rejected'); END;");
+      Result := Submission.Submit (D, Valid_TOML);
+      Assert
+        (not Result.Ok, "late scheduler failure should reject submission");
+      declare
+         Query : DB.Query_Handle :=
+           DB.Prepare (D, "SELECT COUNT(*) FROM services");
+      begin
+         Assert (DB.Step (Query), "services count should be queryable");
+         Assert
+           (DB.Column_Int (Query, 0) = 0,
+            "service registration must roll back");
+      end;
+      declare
+         Query : DB.Query_Handle :=
+           DB.Prepare (D, "SELECT COUNT(*) FROM service_versions");
+      begin
+         Assert (DB.Step (Query), "service version count should be queryable");
+         Assert
+           (DB.Column_Int (Query, 0) = 0,
+            "service version persistence must roll back");
+      end;
+      declare
+         Query : DB.Query_Handle :=
+           DB.Prepare (D, "SELECT COUNT(*) FROM service_catalog");
+      begin
+         Assert (DB.Step (Query), "catalog count should be queryable");
+         Assert
+           (DB.Column_Int (Query, 0) = 0,
+            "catalog persistence must roll back");
+      end;
+   end Test_Submit_Rolls_Back_On_Late_Scheduler_Trigger;
+
+   procedure Test_Submit_Fails_Closed_On_Malformed_Active_Ports
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      First  : Submission.Submission_Result;
+      Second : Submission.Submission_Result;
+      Web    : Podmander.Controller.Service.Service;
+   begin
+      First := Submission.Submit (D, Valid_TOML);
+      Assert (First.Ok, "fixture service should submit");
+      Web := Svc_Repo.Get_By_Name (D, "web");
+      DB.Execute
+        (D,
+         "UPDATE service_versions SET ports = 'not-json'"
+         & " WHERE service_id = "
+         & Web.Id'Image
+         & " AND version = 1");
+      Second :=
+        Submission.Submit
+          (D,
+           "[service.other]"
+           & ASCII.LF
+           & "image = ""nginx:latest"""
+           & ASCII.LF
+           & "ports = [""8080:80""]"
+           & ASCII.LF);
+      Assert
+        (not Second.Ok,
+         "reservation parsing must reject malformed active port JSON");
+   end Test_Submit_Fails_Closed_On_Malformed_Active_Ports;
+
+   procedure Test_Current_Version_Remains_Reserved_Beside_Target
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      First   : Submission.Submission_Result;
+      Target  : Submission.Submission_Result;
+      Other   : Submission.Submission_Result;
+      Web     : Podmander.Controller.Service.Service;
+      Catalog : Podmander.Controller.Service_Catalog_Entry;
+   begin
+      First :=
+        Submission.Submit
+          (D,
+           "[service.web]"
+           & ASCII.LF
+           & "image = ""nginx:old"""
+           & ASCII.LF
+           & "ports = [""8080:80""]"
+           & ASCII.LF);
+      Assert (First.Ok, "initial service should submit");
+      Web := Svc_Repo.Get_By_Name (D, "web");
+      Catalog := Cat_Repo.Get_By_Service_Id (D, Web.Id);
+      Assert
+        (Cat_Repo.Update_On_Success (D, Catalog.Id, 1),
+         "initial service should become current");
+      Target :=
+        Submission.Submit
+          (D,
+           "[service.web]"
+           & ASCII.LF
+           & "image = ""nginx:new"""
+           & ASCII.LF
+           & "ports = [""9090:80""]"
+           & ASCII.LF);
+      Assert (Target.Ok, "new target version should submit");
+      Other :=
+        Submission.Submit
+          (D,
+           "[service.other]"
+           & ASCII.LF
+           & "image = ""nginx:other"""
+           & ASCII.LF
+           & "ports = [""8080:80""]"
+           & ASCII.LF);
+      Assert (not Other.Ok, "another service must not reuse current port");
+      Assert
+        (To_String (Other.Message)
+         = "Host port '8080' is already reserved by service 'web'",
+         "current-version reservation message is precise");
+   end Test_Current_Version_Remains_Reserved_Beside_Target;
+
+   procedure Test_Historical_Version_Releases_Reservation
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D       : DB.DB_Handle := DB.Open (":memory:");
+      First   : Submission.Submission_Result;
+      Target  : Submission.Submission_Result;
+      Other   : Submission.Submission_Result;
+      Web     : Podmander.Controller.Service.Service;
+      Catalog : Podmander.Controller.Service_Catalog_Entry;
+   begin
+      First :=
+        Submission.Submit
+          (D,
+           "[service.web]"
+           & ASCII.LF
+           & "image = ""nginx:old"""
+           & ASCII.LF
+           & "ports = [""8080:80""]"
+           & ASCII.LF);
+      Assert (First.Ok, "initial service should submit");
+      Web := Svc_Repo.Get_By_Name (D, "web");
+      Catalog := Cat_Repo.Get_By_Service_Id (D, Web.Id);
+      Assert
+        (Cat_Repo.Update_On_Success (D, Catalog.Id, 1),
+         "initial service should become current");
+      Target :=
+        Submission.Submit
+          (D,
+           "[service.web]"
+           & ASCII.LF
+           & "image = ""nginx:new"""
+           & ASCII.LF
+           & "ports = [""9090:80""]"
+           & ASCII.LF);
+      Assert (Target.Ok, "new target version should submit");
+      Assert
+        (Cat_Repo.Update_On_Success (D, Catalog.Id, 2),
+         "new target should become current");
+      Other :=
+        Submission.Submit
+          (D,
+           "[service.other]"
+           & ASCII.LF
+           & "image = ""nginx:other"""
+           & ASCII.LF
+           & "ports = [""8080:80""]"
+           & ASCII.LF);
+      Assert (Other.Ok, "historical port should no longer be reserved");
+   end Test_Historical_Version_Releases_Reservation;
+
    ------------------------------------
    -- Register tests
    ------------------------------------
@@ -173,6 +351,22 @@ package body Podmander.Controller.Stack_Submission_Tests is
         (T,
          Test_Submit_Registration_Failed'Access,
          "Submit returns Registration_Failed on database error");
+      Register_Routine
+        (T,
+         Test_Submit_Rolls_Back_On_Late_Scheduler_Trigger'Access,
+         "Submit rolls back all writes after late scheduler failure");
+      Register_Routine
+        (T,
+         Test_Submit_Fails_Closed_On_Malformed_Active_Ports'Access,
+         "Submit fails closed on malformed active port JSON");
+      Register_Routine
+        (T,
+         Test_Current_Version_Remains_Reserved_Beside_Target'Access,
+         "Current version remains reserved while newer target exists");
+      Register_Routine
+        (T,
+         Test_Historical_Version_Releases_Reservation'Access,
+         "Historical version releases its host-port reservation");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

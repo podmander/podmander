@@ -18,19 +18,22 @@ package body Podmander.Controller.Registrar is
       return Podmander.Controller.Service_Version is
    begin
       return
-        (Id            => 0,
-         Service_Id    => Service_Id,
-         Version       => Version,
-         Image         => ASD.Image,
-         Env           => ASD.Env,
-         Env_Count     => ASD.Env_Count,
-         Ports         => ASD.Ports,
-         Ports_Count   => ASD.Ports_Count,
-         Volumes       => ASD.Volumes,
-         Volumes_Count => ASD.Volumes_Count,
-         Description   => ASD.Description,
-         Wanted_By     => ASD.WantedBy,
-         Created_At    => Clock);
+        (Id                => 0,
+         Service_Id        => Service_Id,
+         Version           => Version,
+         Image             => ASD.Image,
+         Env               => ASD.Env,
+         Env_Count         => ASD.Env_Count,
+         Ports             => ASD.Ports,
+         Ports_Count       => ASD.Ports_Count,
+         Named_Ports       => ASD.Named_Ports,
+         Named_Ports_Count => ASD.Named_Ports_Count,
+         Ingress           => ASD.Ingress,
+         Volumes           => ASD.Volumes,
+         Volumes_Count     => ASD.Volumes_Count,
+         Description       => ASD.Description,
+         Wanted_By         => ASD.WantedBy,
+         Created_At        => Clock);
    end To_Service_Version;
 
    --------------

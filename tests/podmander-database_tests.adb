@@ -8,6 +8,9 @@ with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada_Sqlite3;
 with Podmander.Database;
+with Podmander.Database.Migrations;
+with Podmander.Controller.Service.Repository;
+with Podmander.Controller;
 
 package body Podmander.Database_Tests is
 
@@ -17,6 +20,7 @@ package body Podmander.Database_Tests is
    package DB renames Podmander.Database;
    use type DB.Error_Kind;
    use type Ada_Sqlite3.Result_Code;
+   package Service_Repo renames Podmander.Controller.Service.Repository;
 
    type Database_Test is new AUnit.Test_Cases.Test_Case with null record;
 
@@ -1267,6 +1271,58 @@ package body Podmander.Database_Tests is
          raise;
    end Test_Migration_013_Backfill;
 
+   procedure Test_Migration_016_Upgrades_Schema_15_Data
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Path : constant String := Unique_Temp_Path;
+   begin
+      declare
+         D   : DB.DB_Handle := DB.Open (Path);
+         Svc : constant Podmander.Controller.Service.Service :=
+           Service_Repo.Create (D, "upgrade-web");
+      begin
+         DB.Execute
+           (D,
+            "INSERT INTO service_versions "
+            & "(service_id, version, image, env, ports, volumes, "
+            & "description, wanted_by, created_at) VALUES ("
+            & Svc.Id'Image
+            & ", 1, 'nginx:old', '[]', '[]', '[]', "
+            & "'old data', '', '2026-01-01T00:00:00Z');");
+         DB.Execute
+           (D, "ALTER TABLE service_versions DROP COLUMN named_ports;");
+         DB.Execute
+           (D, "ALTER TABLE service_versions DROP COLUMN ingress_host;");
+         DB.Execute
+           (D, "ALTER TABLE service_versions DROP COLUMN ingress_port_name;");
+         DB.Execute (D, "UPDATE schema_version SET version = 15;");
+         Podmander.Database.Migrations.Run_Pending (D);
+         declare
+            Loaded : constant Podmander.Controller.Service_Version :=
+              Service_Repo.Get_Version (D, Svc.Id, 1);
+         begin
+            Assert
+              (To_String (Loaded.Image) = "nginx:old",
+               "schema 15 service version data survives migration 016");
+            Assert
+              (Loaded.Named_Ports_Count = 0,
+               "migrated named ports default empty");
+            Assert
+              (Length (Loaded.Ingress.Host) = 0,
+               "migrated ingress host defaults empty");
+            Assert
+              (Length (Loaded.Ingress.Port_Name) = 0,
+               "migrated ingress port defaults empty");
+         end;
+      end;
+      Cleanup_DB (Path);
+   exception
+      when others =>
+         Cleanup_DB (Path);
+         raise;
+   end Test_Migration_016_Upgrades_Schema_15_Data;
+
    -- Register all test routines
    overriding
    procedure Register_Tests (T : in out Database_Test) is
@@ -1402,6 +1458,10 @@ package body Podmander.Database_Tests is
         (T,
          Test_Set_Setting_Upsert'Access,
          "Set_Setting upsert overwrites existing value");
+      Register_Routine
+        (T,
+         Test_Migration_016_Upgrades_Schema_15_Data'Access,
+         "Migration 016 upgrades schema 15 and retains service data");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

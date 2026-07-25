@@ -7,6 +7,7 @@ with Ada.Calendar;
 with Ada.Calendar.Formatting;
 with Ada.Strings.Unbounded;
 with Podmander.Controller.Service.Repository;
+with Podmander.Controller.Service.Json_Utils;
 with Podmander.Database;
 
 package body Podmander.Controller.Service.Repository_Tests is
@@ -16,8 +17,10 @@ package body Podmander.Controller.Service.Repository_Tests is
 
    package DB renames Podmander.Database;
    package Repo renames Podmander.Controller.Service.Repository;
+   package Json renames Podmander.Controller.Service.Json_Utils;
 
    use type DB.Error_Kind;
+   --  Forgejo #205 persistence regressions are registered below.
 
    type Repository_Test is new AUnit.Test_Cases.Test_Case with null record;
 
@@ -394,6 +397,60 @@ package body Podmander.Controller.Service.Repository_Tests is
         (Got_Error, "Get_By_Id on unknown should have raised Database_Error");
    end Test_Service_Get_By_Id_Not_Found;
 
+   procedure Test_Named_Port_And_Ingress_Persistence_Defaults
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      Svc    : constant Podmander.Controller.Service.Service :=
+        Repo.Create (D, My_Service);
+      SV     : Podmander.Controller.Service_Version :=
+        Make_Version (1, Svc.Id);
+      Loaded : Podmander.Controller.Service_Version;
+   begin
+      SV.Named_Ports_Count := 0;
+      SV.Ingress :=
+        (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String);
+      Repo.Create_Version (D, SV);
+      Loaded := Repo.Get_Version (D, Svc.Id, 1);
+      Assert (Loaded.Named_Ports_Count = 0, "named ports default empty");
+      Assert (Length (Loaded.Ingress.Host) = 0, "ingress host defaults empty");
+      Assert
+        (Length (Loaded.Ingress.Port_Name) = 0, "ingress port defaults empty");
+   end Test_Named_Port_And_Ingress_Persistence_Defaults;
+
+   procedure Test_Malformed_Active_Port_JSON_Fails_Closed
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      D      : DB.DB_Handle := DB.Open (":memory:");
+      Svc    : constant Podmander.Controller.Service.Service :=
+        Repo.Create (D, "malformed");
+      SV     : constant Podmander.Controller.Service_Version :=
+        Make_Version (1, Svc.Id);
+      Raised : Boolean := False;
+   begin
+      Repo.Create_Version (D, SV);
+      DB.Execute
+        (D,
+         "UPDATE service_versions SET ports = 'not-json'"
+         & " WHERE service_id = "
+         & Svc.Id'Image
+         & " AND version = 1");
+      begin
+         declare
+            Ignored : constant Podmander.Controller.Service_Version :=
+              Repo.Get_Version (D, Svc.Id, 1);
+         begin
+            pragma Unreferenced (Ignored);
+         end;
+      exception
+         when Json.Parse_Error =>
+            Raised := True;
+      end;
+      Assert (Raised, "malformed active port JSON must fail closed");
+   end Test_Malformed_Active_Port_JSON_Fails_Closed;
+
    overriding
    procedure Register_Tests (T : in out Repository_Test) is
       use AUnit.Test_Cases.Registration;
@@ -406,6 +463,14 @@ package body Podmander.Controller.Service.Repository_Tests is
         (T,
          Test_Create_Version_Duplicate_Raises'Access,
          "Create duplicate version raises Constraint_Violation");
+      Register_Routine
+        (T,
+         Test_Named_Port_And_Ingress_Persistence_Defaults'Access,
+         "Named-port and ingress persistence defaults are empty");
+      Register_Routine
+        (T,
+         Test_Malformed_Active_Port_JSON_Fails_Closed'Access,
+         "Malformed active port JSON fails closed");
       Register_Routine
         (T,
          Test_Get_Version_Not_Found'Access,

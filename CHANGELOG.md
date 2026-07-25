@@ -12,6 +12,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Added `mise run setup` as a file task for installing local development system
   packages.
 
+## [0.4.0] - 2026-07-25
+
+### Added
+
+- Added named-port ingress configuration with persistent host/port reservations,
+  loopback-bound Quadlet ports, and Caddy route rendering (#205)
+
 ## [0.3.0] - 2026-07-13
 
 ### Added

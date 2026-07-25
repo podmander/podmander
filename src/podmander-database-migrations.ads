@@ -309,6 +309,11 @@ private
    --  NULL represents "not yet deployed" rather than the sentinel value 0.
    --  Recreate the table (SQLite cannot ALTER column constraints inline).
    --  Existing rows with current_version = 0 are converted to NULL.
+   Migration_016_SQL : constant String :=
+     "ALTER TABLE service_versions ADD COLUMN named_ports TEXT NOT NULL DEFAULT '[]';"
+     & "ALTER TABLE service_versions ADD COLUMN ingress_host TEXT NOT NULL DEFAULT '';"
+     & "ALTER TABLE service_versions ADD COLUMN ingress_port_name TEXT NOT NULL DEFAULT '';";
+
    Migration_015_SQL : constant String :=
      "CREATE TABLE service_catalog_new ("
      & "id              INTEGER PRIMARY KEY AUTOINCREMENT,"
@@ -395,6 +400,10 @@ private
       15 =>
         (Version => 15,
          SQL     =>
-           Ada.Strings.Unbounded.To_Unbounded_String (Migration_015_SQL))];
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_015_SQL)),
+      16 =>
+        (Version => 16,
+         SQL     =>
+           Ada.Strings.Unbounded.To_Unbounded_String (Migration_016_SQL))];
 
 end Podmander.Database.Migrations;

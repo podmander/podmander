@@ -66,19 +66,28 @@ package Podmander.Controller is
    -- State tracking types
 
    type Service_Version is record
-      Id            : Service_Version_Row_Id;
-      Service_Id    : Service_Id_Type;
-      Version       : Service_Version_Type;
-      Image         : Ada.Strings.Unbounded.Unbounded_String;
-      Env           : Env_Array (1 .. MAX_ENV_ENTRIES);
-      Env_Count     : Natural := 0;
-      Ports         : Port_Array (1 .. MAX_PORTS_ENTRIES);
-      Ports_Count   : Natural := 0;
-      Volumes       : Volume_Array (1 .. MAX_VOLUMES_ENTRIES);
-      Volumes_Count : Natural := 0;
-      Description   : Ada.Strings.Unbounded.Unbounded_String;
-      Wanted_By     : Ada.Strings.Unbounded.Unbounded_String;
-      Created_At    : Ada.Calendar.Time;
+      Id                : Service_Version_Row_Id;
+      Service_Id        : Service_Id_Type;
+      Version           : Service_Version_Type;
+      Image             : Ada.Strings.Unbounded.Unbounded_String;
+      Env               : Env_Array (1 .. MAX_ENV_ENTRIES);
+      Env_Count         : Natural := 0;
+      Ports             : Port_Array (1 .. MAX_PORTS_ENTRIES);
+      Ports_Count       : Natural := 0;
+      Named_Ports       : Named_Port_Array (1 .. MAX_NAMED_PORTS_ENTRIES) :=
+        [others =>
+           (Name      => Ada.Strings.Unbounded.Null_Unbounded_String,
+            Host      => Port_Number'First,
+            Container => Port_Number'First)];
+      Named_Ports_Count : Natural := 0;
+      Ingress           : Ingress_Definition :=
+        (Host      => Ada.Strings.Unbounded.Null_Unbounded_String,
+         Port_Name => Ada.Strings.Unbounded.Null_Unbounded_String);
+      Volumes           : Volume_Array (1 .. MAX_VOLUMES_ENTRIES);
+      Volumes_Count     : Natural := 0;
+      Description       : Ada.Strings.Unbounded.Unbounded_String;
+      Wanted_By         : Ada.Strings.Unbounded.Unbounded_String;
+      Created_At        : Ada.Calendar.Time;
    end record;
 
    type Service_Node_Key is record

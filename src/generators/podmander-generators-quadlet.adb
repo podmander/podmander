@@ -54,6 +54,26 @@ package body Podmander.Generators.Quadlet is
          end;
       end loop;
 
+      for I in 1 .. Service.Named_Ports_Count loop
+         declare
+            Host_Port      : constant String :=
+              Positive'Image (Service.Named_Ports (I).Host);
+            Container_Port : constant String :=
+              Positive'Image (Service.Named_Ports (I).Container);
+            Loopback       : constant Boolean :=
+              Service.Ingress.Port_Name = Service.Named_Ports (I).Name;
+         begin
+            Append (Buffer, "PublishPort=");
+            if Loopback then
+               Append (Buffer, "127.0.0.1:");
+            end if;
+            Append (Buffer, Host_Port (2 .. Host_Port'Last));
+            Append (Buffer, ":");
+            Append (Buffer, Container_Port (2 .. Container_Port'Last));
+            Append (Buffer, ASCII.LF);
+         end;
+      end loop;
+
       -- Volume mappings
       for I in 1 .. Service.Volumes_Count loop
          Append (Buffer, "Volume=");

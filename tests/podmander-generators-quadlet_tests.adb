@@ -31,21 +31,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -62,24 +68,30 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [1      =>
               (Key   => To_Unbounded_String ("FOO"),
                Value => To_Unbounded_String ("bar")),
             others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 1,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 1,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -93,9 +105,9 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [1      =>
               (Key   => To_Unbounded_String ("FOO"),
                Value => To_Unbounded_String ("bar")),
@@ -104,16 +116,22 @@ package body Podmander.Generators.Quadlet_Tests is
                Value => To_Unbounded_String ("qux")),
             others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 2,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 2,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -130,23 +148,29 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         =>
+         Env_Count         => 0,
+         Ports             =>
            [1      => (Host => 8080, Container => 80),
             others => (Host => 1, Container => 1)],
-         Ports_Count   => 1,
-         Volumes       =>
+         Ports_Count       => 1,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -160,24 +184,30 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         =>
+         Env_Count         => 0,
+         Ports             =>
            [1      => (Host => 8080, Container => 80),
             2      => (Host => 443, Container => 443),
             others => (Host => 1, Container => 1)],
-         Ports_Count   => 2,
-         Volumes       =>
+         Ports_Count       => 2,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -194,24 +224,30 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [1      =>
               (Host      => To_Unbounded_String ("/data"),
                Container => To_Unbounded_String ("/data")),
             others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 1,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 1,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -225,9 +261,9 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("myapp:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("myapp:latest"),
+         Env               =>
            [1      =>
               (Key   => To_Unbounded_String ("FOO"),
                Value => To_Unbounded_String ("bar")),
@@ -236,22 +272,28 @@ package body Podmander.Generators.Quadlet_Tests is
                Value => To_Unbounded_String ("qux")),
             others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 2,
-         Ports         =>
+         Env_Count         => 2,
+         Ports             =>
            [1      => (Host => 8080, Container => 80),
             2      => (Host => 443, Container => 443),
             others => (Host => 1, Container => 1)],
-         Ports_Count   => 2,
-         Volumes       =>
+         Ports_Count       => 2,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [1      =>
               (Host      => To_Unbounded_String ("/data"),
                Container => To_Unbounded_String ("/data")),
             others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 1,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 1,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -283,21 +325,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("myapp:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("myapp:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => To_Unbounded_String ("My web app"),
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => To_Unbounded_String ("My web app"),
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -314,21 +362,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("myapp:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("myapp:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -342,21 +396,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("myapp:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("myapp:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => To_Unbounded_String ("multi-user.target"));
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => To_Unbounded_String ("multi-user.target"));
       Output : constant String := Render (Config);
    begin
       Assert
@@ -373,21 +433,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("myapp:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("myapp:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Output : constant String := Render (Config);
    begin
       Assert
@@ -404,21 +470,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config        : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("myapp:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("myapp:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => To_Unbounded_String ("My web app"),
-         WantedBy      => To_Unbounded_String ("multi-user.target"));
+         Volumes_Count     => 0,
+         Description       => To_Unbounded_String ("My web app"),
+         WantedBy          => To_Unbounded_String ("multi-user.target"));
       Output        : constant String := Render (Config);
       Unit_Pos      : constant Natural :=
         Ada.Strings.Fixed.Index (Output, "[Unit]");
@@ -444,21 +516,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Dir    : constant String := "/tmp/podmander-test-write";
       FName  : constant String := "test-svc";
       FPath  : constant String := Dir & "/" & FName & ".container";
@@ -495,21 +573,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Dir    : constant String := "/tmp/podmander-test-mkdir/sub";
       FName  : constant String := "test-svc";
       FPath  : constant String := Dir & "/" & FName & ".container";
@@ -548,21 +632,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config   : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Dir      : constant String := "/tmp/podmander-test-content";
       FName    : constant String := "test-svc";
       FPath    : constant String := Dir & "/" & FName & ".container";
@@ -639,21 +729,27 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 0,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => Null_Unbounded_String,
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => Null_Unbounded_String,
+         WantedBy          => Null_Unbounded_String);
       Golden : constant String :=
         Read_File ("tests/fixtures/quadlet/minimal.container") & ASCII.LF;
       Output : constant String := Render (Config);
@@ -667,9 +763,9 @@ package body Podmander.Generators.Quadlet_Tests is
    procedure Test_Golden_Full (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [1      =>
               (Key   => To_Unbounded_String ("FOO"),
                Value => To_Unbounded_String ("bar")),
@@ -678,22 +774,28 @@ package body Podmander.Generators.Quadlet_Tests is
                Value => To_Unbounded_String ("qux")),
             others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 2,
-         Ports         =>
+         Env_Count         => 2,
+         Ports             =>
            [1      => (Host => 80, Container => 80),
             2      => (Host => 443, Container => 443),
             others => (Host => 1, Container => 1)],
-         Ports_Count   => 2,
-         Volumes       =>
+         Ports_Count       => 2,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [1      =>
               (Host      => To_Unbounded_String ("/data"),
                Container => To_Unbounded_String ("/data")),
             others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 1,
-         Description   => To_Unbounded_String ("My web app"),
-         WantedBy      => To_Unbounded_String ("multi-user.target"));
+         Volumes_Count     => 1,
+         Description       => To_Unbounded_String ("My web app"),
+         WantedBy          => To_Unbounded_String ("multi-user.target"));
       Golden : constant String :=
         Read_File ("tests/fixtures/quadlet/full.container") & ASCII.LF;
       Output : constant String := Render (Config);
@@ -709,9 +811,9 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("app:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("app:latest"),
+         Env               =>
            [1      =>
               (Key   => To_Unbounded_String ("FOO"),
                Value => To_Unbounded_String ("bar")),
@@ -723,16 +825,22 @@ package body Podmander.Generators.Quadlet_Tests is
                Value => To_Unbounded_String ("production")),
             others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 3,
-         Ports         => [others => (Host => 1, Container => 1)],
-         Ports_Count   => 0,
-         Volumes       =>
+         Env_Count         => 3,
+         Ports             => [others => (Host => 1, Container => 1)],
+         Ports_Count       => 0,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => To_Unbounded_String ("Env test"),
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => To_Unbounded_String ("Env test"),
+         WantedBy          => Null_Unbounded_String);
       Golden : constant String :=
         Read_File ("tests/fixtures/quadlet/multi-env.container") & ASCII.LF;
       Output : constant String := Render (Config);
@@ -748,25 +856,31 @@ package body Podmander.Generators.Quadlet_Tests is
    is
       pragma Unreferenced (T);
       Config : constant Service_Definition :=
-        (Service_Name  => Null_Unbounded_String,
-         Image         => To_Unbounded_String ("nginx:latest"),
-         Env           =>
+        (Service_Name      => Null_Unbounded_String,
+         Image             => To_Unbounded_String ("nginx:latest"),
+         Env               =>
            [others =>
               (Key => Null_Unbounded_String, Value => Null_Unbounded_String)],
-         Env_Count     => 0,
-         Ports         =>
+         Env_Count         => 0,
+         Ports             =>
            [1      => (Host => 80, Container => 8080),
             2      => (Host => 443, Container => 8443),
             3      => (Host => 53, Container => 53),
             others => (Host => 1, Container => 1)],
-         Ports_Count   => 3,
-         Volumes       =>
+         Ports_Count       => 3,
+         Named_Ports       =>
+           [others =>
+              (Name => Null_Unbounded_String, Host => 1, Container => 1)],
+         Named_Ports_Count => 0,
+         Ingress           =>
+           (Host => Null_Unbounded_String, Port_Name => Null_Unbounded_String),
+         Volumes           =>
            [others =>
               (Host      => Null_Unbounded_String,
                Container => Null_Unbounded_String)],
-         Volumes_Count => 0,
-         Description   => To_Unbounded_String ("Port test"),
-         WantedBy      => Null_Unbounded_String);
+         Volumes_Count     => 0,
+         Description       => To_Unbounded_String ("Port test"),
+         WantedBy          => Null_Unbounded_String);
       Golden : constant String :=
         Read_File ("tests/fixtures/quadlet/multi-port.container") & ASCII.LF;
       Output : constant String := Render (Config);

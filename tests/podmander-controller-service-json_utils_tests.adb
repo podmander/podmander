@@ -25,6 +25,62 @@ package body Podmander.Controller.Service.Json_Utils_Tests is
    overriding
    procedure Register_Tests (T : in out Test_Case);
 
+   procedure Test_Port_Arrays_Above_Capacity_Raise_Parse_Error
+     (T : in out AUnit.Test_Cases.Test_Case'Class)
+   is
+      pragma Unreferenced (T);
+      Named_JSON    : Unbounded_String := To_Unbounded_String ("[");
+      Legacy_JSON   : Unbounded_String := To_Unbounded_String ("[");
+      Named         :
+        Podmander.Config.Named_Port_Array
+          (1 .. Podmander.Config.MAX_NAMED_PORTS_ENTRIES);
+      Legacy        :
+        Podmander.Config.Port_Array (1 .. Podmander.Config.MAX_PORTS_ENTRIES);
+      Named_Count   : Natural;
+      Legacy_Count  : Natural;
+      Named_Raised  : Boolean := False;
+      Legacy_Raised : Boolean := False;
+   begin
+      for Index in 1 .. Podmander.Config.MAX_NAMED_PORTS_ENTRIES + 1 loop
+         declare
+            Image  : constant String := Index'Image;
+            Number : constant String := Image (Image'First + 1 .. Image'Last);
+         begin
+            if Index > 1 then
+               Append (Named_JSON, ",");
+               Append (Legacy_JSON, ",");
+            end if;
+            Append
+              (Named_JSON,
+               "{""name"":""p"
+               & Number
+               & """,""host"":"
+               & Number
+               & ",""container"":80}");
+            Append (Legacy_JSON, "{""host"":" & Number & ",""container"":80}");
+         end;
+      end loop;
+      Append (Named_JSON, "]");
+      Append (Legacy_JSON, "]");
+      begin
+         Json.Parse_Named_Port_Array
+           (To_String (Named_JSON), Named, Named_Count);
+      exception
+         when Json.Parse_Error =>
+            Named_Raised := True;
+      end;
+      begin
+         Json.Parse_Port_Array (To_String (Legacy_JSON), Legacy, Legacy_Count);
+      exception
+         when Json.Parse_Error =>
+            Legacy_Raised := True;
+      end;
+      Assert
+        (Named_Raised, "oversized named-port JSON must raise Parse_Error");
+      Assert
+        (Legacy_Raised, "oversized legacy-port JSON must raise Parse_Error");
+   end Test_Port_Arrays_Above_Capacity_Raise_Parse_Error;
+
    procedure Test_Round_Trip (T : in out AUnit.Test_Cases.Test_Case'Class) is
       pragma Unreferenced (T);
       Env           :
@@ -385,6 +441,10 @@ package body Podmander.Controller.Service.Json_Utils_Tests is
         (T,
          Test_Port_Boundary_Round_Trip'Access,
          "Port boundary values round-trip through JSON");
+      Register_Routine
+        (T,
+         Test_Port_Arrays_Above_Capacity_Raise_Parse_Error'Access,
+         "Oversized named and legacy port JSON raises Parse_Error");
    end Register_Tests;
 
    Result : aliased AUnit.Test_Suites.Test_Suite;

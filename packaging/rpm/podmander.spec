@@ -2,7 +2,7 @@
 %global debug_package %{nil}
 
 Name:           podmander
-Version:        0.3.0
+Version:        0.4.0
 Release:        1%{?dist}
 Summary:        Container orchestration for small multi-node deployments
 
@@ -62,6 +62,10 @@ install -Dpm0644 packaging/systemd/podmander-agent.service %{buildroot}%{_unitdi
 %{_unitdir}/podmander-agent.service
 
 %changelog
+* Sat Jul 25 2026 Jochen Lillich <contact@geewiz.dev> - 0.4.0-1
+- Add named-port ingress configuration with persistent host/port reservations,
+  loopback-bound Quadlet ports, and Caddy route rendering (#205).
+
 * Mon Jul 13 2026 Jochen Lillich <contact@geewiz.dev> - 0.3.0-1
 - Add TOML-native service port mappings.
 - Harden bind-address and timestamp parsing invariants.

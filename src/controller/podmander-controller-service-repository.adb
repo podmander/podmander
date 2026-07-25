@@ -29,11 +29,15 @@ package body Podmander.Controller.Service.Repository is
       Result.Image := To_Unbounded_String (Column_Text (QH, 3));
       Parse_Env_Array (Column_Text (QH, 4), Result.Env, Result.Env_Count);
       Parse_Port_Array (Column_Text (QH, 5), Result.Ports, Result.Ports_Count);
+      Parse_Named_Port_Array
+        (Column_Text (QH, 6), Result.Named_Ports, Result.Named_Ports_Count);
+      Result.Ingress.Host := To_Unbounded_String (Column_Text (QH, 7));
+      Result.Ingress.Port_Name := To_Unbounded_String (Column_Text (QH, 8));
       Parse_Volume_Array
-        (Column_Text (QH, 6), Result.Volumes, Result.Volumes_Count);
-      Result.Description := To_Unbounded_String (Column_Text (QH, 7));
-      Result.Wanted_By := To_Unbounded_String (Column_Text (QH, 8));
-      Result.Created_At := ISO8601_To_Time (Column_Text (QH, 9));
+        (Column_Text (QH, 9), Result.Volumes, Result.Volumes_Count);
+      Result.Description := To_Unbounded_String (Column_Text (QH, 10));
+      Result.Wanted_By := To_Unbounded_String (Column_Text (QH, 11));
+      Result.Created_At := ISO8601_To_Time (Column_Text (QH, 12));
       return Result;
    exception
       when Constraint_Error =>
@@ -142,9 +146,10 @@ package body Podmander.Controller.Service.Repository is
         Prepare
           (DB,
            "INSERT INTO service_versions "
-           & "(service_id, version, image, env, ports, volumes, "
-           & "description, wanted_by, created_at) "
-           & "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+           & "(service_id, version, image, env, ports, named_ports, "
+           & "ingress_host, ingress_port_name, volumes, description, "
+           & "wanted_by, created_at) "
+           & "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
    begin
       Bind_Int (QH, 1, Integer (Version.Service_Id));
       Bind_Int (QH, 2, Integer (Version.Version));
@@ -153,10 +158,17 @@ package body Podmander.Controller.Service.Repository is
       Bind_Text
         (QH, 5, Port_Array_To_JSON (Version.Ports, Version.Ports_Count));
       Bind_Text
-        (QH, 6, Volume_Array_To_JSON (Version.Volumes, Version.Volumes_Count));
-      Bind_Text (QH, 7, To_String (Version.Description));
-      Bind_Text (QH, 8, To_String (Version.Wanted_By));
-      Bind_Text (QH, 9, Time_To_ISO8601 (Version.Created_At));
+        (QH,
+         6,
+         Named_Port_Array_To_JSON
+           (Version.Named_Ports, Version.Named_Ports_Count));
+      Bind_Text (QH, 7, To_String (Version.Ingress.Host));
+      Bind_Text (QH, 8, To_String (Version.Ingress.Port_Name));
+      Bind_Text
+        (QH, 9, Volume_Array_To_JSON (Version.Volumes, Version.Volumes_Count));
+      Bind_Text (QH, 10, To_String (Version.Description));
+      Bind_Text (QH, 11, To_String (Version.Wanted_By));
+      Bind_Text (QH, 12, Time_To_ISO8601 (Version.Created_At));
       while Step (QH) loop
          null;
       end loop;
@@ -175,8 +187,9 @@ package body Podmander.Controller.Service.Repository is
       QH : Query_Handle :=
         Prepare
           (DB,
-           "SELECT id, service_id, version, image, env, ports, volumes, "
-           & "description, wanted_by, created_at "
+           "SELECT id, service_id, version, image, env, ports, named_ports, "
+           & "ingress_host, ingress_port_name, volumes, description, "
+           & "wanted_by, created_at "
            & "FROM service_versions "
            & "WHERE service_id = ? AND version = ?");
    begin
@@ -212,8 +225,9 @@ package body Podmander.Controller.Service.Repository is
       QH : Query_Handle :=
         Prepare
           (DB,
-           "SELECT id, service_id, version, image, env, ports, volumes, "
-           & "description, wanted_by, created_at "
+           "SELECT id, service_id, version, image, env, ports, named_ports, "
+           & "ingress_host, ingress_port_name, volumes, description, "
+           & "wanted_by, created_at "
            & "FROM service_versions "
            & "WHERE service_id = ? "
            & "ORDER BY version DESC LIMIT 1");
