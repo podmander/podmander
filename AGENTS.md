@@ -26,13 +26,21 @@ immediately and rebuild. Only address remaining warnings after formatting.
 
 ### Labels
 
-Issue **category** is an organization-level label (no prefix), shared across org repos: `bug`, `documentation`, `epic`, `feature`, `infra`, `refactor`, `test`.
+Issue **category** uses the organization-level `Kind/` labels: `Kind/Bug`,
+`Kind/Documentation`, `Kind/Enhancement`, `Kind/Feature`, `Kind/Security`, and
+`Kind/Testing`. Use `Kind/Enhancement` for refactors or existing infrastructure
+work; use `Kind/Feature` for new infrastructure capabilities.
 
-Issue **triage state** is a repo-level `triage/` label: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `blocked`. See `notes/agents/triage-labels.md`.
+Issue **triage state** uses the organization-level `Status/` labels:
+`Status/Review needed`, `Status/Need More Info`, `Status/Ready for agent`,
+`Status/Ready for human`, and `Status/Blocked`. See
+`notes/agents/triage-labels.md`.
 
-Issues that will not be actioned get the organization-level `wontfix` label.
+Issues that will not be actioned get the organization-level
+`Reviewed/Won't Fix` label.
 
-Epic issues (label: `epic`) are top-level tracking issues with a checklist breakdown of work items.
+Epic issues are top-level tracking issues with a checklist breakdown of work
+items; they are not represented by a label.
 
 ### Milestones
 
