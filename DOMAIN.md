@@ -128,6 +128,25 @@ generator consumes. It is the source of truth for what a service *is*; the
 quadlet is a derived artifact rendered from it on demand.
 _Avoid_: Service definition (ambiguous — could mean the ASD or the TOML input)
 
+### Ingress
+
+The public HTTPS entry point for a Service. An Ingress maps one hostname to one
+named Service port. For the MVP, the hostname is a lowercased DNS hostname;
+schemes, paths, ports, wildcards, and IP literals are not Ingress hostnames.
+The named port resolves to that Service Version's published host-port mapping;
+the operator does not repeat or manage the host port in the Ingress declaration.
+That mapping is private to the ingress Node; Caddy is the only public endpoint.
+Among current and target Service Versions, an Ingress hostname identifies at
+most one Service in a Fleet.
+An Ingress belongs to the ASD and is captured in each Service Version.
+_Avoid_: Proxy route, public port
+
+### Named Port
+
+A Service port identified by a stable name and mapped to one container port and
+one published host port. An Ingress selects its backend through a Named Port.
+_Avoid_: Port label, port alias
+
 ### Service Version
 
 An immutable snapshot of a service's ASD at a point in time. Every `podctl
@@ -333,6 +352,7 @@ drift detection.
 ## Relationships
 
 - A **Service** has zero or more **Service Versions** (1:N)
+- A **Service Version** has zero or one **Ingress** (1:0..1)
 - A **Service** has zero or more **Service Catalog Entries** (1:N, one per node)
 - A **Service Catalog Entry** references one **Service Version** as its target (N:1)
 - A **Service Catalog Entry** references one **Service Version** as its current version (N:1, or 0 = not deployed)

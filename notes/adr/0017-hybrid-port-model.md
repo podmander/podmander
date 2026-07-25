@@ -23,7 +23,11 @@ We will use a hybrid port model with three tiers:
 2. **Auto-detected port** — no port declared; Podmander reads the `EXPOSE` directive from the container image. The scheduler tries the natural port first. If unavailable, it auto-assigns from a managed range (default 30000–32767, configurable).
 3. **No port** — no declaration and no `EXPOSE` in the image. The service deploys without port allocation or service discovery. Valid for batch jobs and cron tasks.
 
-Multiple named ports are supported (`ports = { http = 8080, grpc = 9090 }`), each tracked as a separate scheduling constraint.
+Multiple named ports use complete published host-to-container mappings, for
+example `ports = { http = { host = 8080, container = 8080 } }`. Each is tracked
+as a separate scheduling constraint. The older `ports = { http = 8080 }`
+shorthand is unsupported because it cannot express both ports. Existing unnamed
+string and structured port forms remain valid for Services without Ingress.
 
 Port assignments are stable: once assigned, a port stays the same across moves. It only changes when forced (the only available node already uses that port). All replicas of a service use the same port.
 
