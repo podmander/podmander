@@ -90,11 +90,12 @@ run services.
 
 ### Agent
 
-The Podmander process running on each node. Agents are stateless beyond Quadlet
-files on disk. They receive configuration from the controller, write it to the
-local filesystem, manage systemd units, query Podman for container state, and
-report status back over ZeroMQ. On restart, an agent rediscovers its workloads
-from the filesystem and Podman API.
+The Podmander process running on each node. Agents retain generated artifacts
+and the limited durable state needed to recover managed configuration applies.
+They receive configuration from the controller, write it to the local filesystem,
+manage systemd units, query Podman for container state, and report status back
+over ZeroMQ. On restart, an agent rediscovers its workloads and incomplete
+managed configuration applies from local state.
 
 The Agent is the protocol-layer executor the controller reaches a Node
 *through*; it is not itself the unit of placement. Scheduling targets the Node;
@@ -337,22 +338,50 @@ Infrastructure components include:
 - **CoreDNS** — service discovery, configured via generated zone files
 - **Restic** — backups, configured via generated config and systemd timers
 
-Infrastructure components have their own versioning (like services) and are
-subject to drift detection. When the agent detects that a config file hash
-doesn't match the expected value, the controller auto-repairs by redeploying
-the expected config.
+Infrastructure components have their own versioning (like services). Hash-based
+drift detection and automatic repair are planned infrastructure capabilities;
+they are not part of the current Caddy reconciliation lifecycle.
+
+### Ingress Node
+
+The persisted Node selected while the first Ingress-bearing Service Version is
+scheduled. It hosts the singleton Caddy Infrastructure Component and later
+Ingress-bearing Services co-locate with it. The selection survives an empty
+route set, Agent loss, and Node deletion until an explicit future failover or
+operator workflow replaces it. When multi-node scheduling is introduced,
+Ingress-bearing Services must co-locate with this Node or use an explicit
+cross-node migration lifecycle.
+_Avoid_: Caddy Agent, proxy node
 
 ### Infra Version
 
 An immutable snapshot of an infrastructure component's configuration at a point
 in time. Like service versions, infra versions use monotonic numbering and
 revert-style rollback. Each version stores the config content and its hash for
-drift detection.
+future drift detection.
+
+### Caddy Configuration Version
+
+An Infra Version for Caddy on the Ingress Node. It captures the complete desired
+Caddyfile, its content hash, lineage, and source. Its delivery outcome belongs
+to a Caddy Apply Attempt. It is separate from Service Versions: a Service can be
+deployed while its new Ingress route is not yet applied.
+_Avoid_: Caddy deployment, proxy route version
+
+### Caddy Apply Attempt
+
+A durable, monotonic correlation record for one delivery of a Caddy
+Configuration Version to the Ingress Node. It records the mutable delivery
+outcome, active hash when known, failure stage, and diagnostic. The Controller
+uses it to correlate a Caddy_Config_Command with its Caddy_Config_Result.
+_Avoid_: Caddy request, Caddy deployment ID
 
 ## Relationships
 
 - A **Service** has zero or more **Service Versions** (1:N)
 - A **Service Version** has zero or one **Ingress** (1:0..1)
+- An **Ingress Node** hosts one **Caddy Infrastructure Component** (1:1)
+- A **Caddy Infrastructure Component** has zero or more **Caddy Configuration Versions** (1:N)
 - A **Service** has zero or more **Service Catalog Entries** (1:N, one per node)
 - A **Service Catalog Entry** references one **Service Version** as its target (N:1)
 - A **Service Catalog Entry** references one **Service Version** as its current version (N:1, or 0 = not deployed)

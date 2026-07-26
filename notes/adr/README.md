@@ -52,3 +52,4 @@ ADRs capture architecturally significant decisions — the *why* behind the syst
 | [0042](0042-control-channel-owns-its-socket.md) | The Control Channel owns its socket | Proposed | 2026-06-14 |
 | [0043](0043-enrollment-secret-from-getrandom.md) | Enrollment secret from getrandom(2) | Proposed | 2026-06-14 |
 | [0044](0044-native-rpm-packaging-for-podmander-deliverables.md) | Native RPM packaging for Podmander deliverables | Proposed | 2026-06-20 |
+| [0045](0045-caddy-configuration-reconciliation.md) | Caddy configuration reconciliation | Proposed | 2026-07-25 |
