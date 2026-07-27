@@ -426,6 +426,39 @@ url = "https://github.com/AdaCore/gnatcoll-core/archive/refs/tags/v26.0.0.zip"
 [[solution.state.release.depends-on]]
 gnat = ">=14"
 [[solution.state]]
+crate = "hmac_ada"
+fulfilment = "solved"
+pinned = false
+transitivity = "direct"
+versions = "^0.2.0"
+[solution.state.release]
+authors = [
+"Baris Erdem",
+]
+description = "SPARK-proved HMAC (RFC 2104) implementation for Ada/SPARK"
+licenses = "Apache-2.0"
+long-description = "SPARK-proved HMAC (RFC 2104) with standalone SHA-256 (FIPS 180-4) for Ada 2022.\n175 proof obligations fully discharged at Level 2 with zero pragma Assume.\nConstant-time digest comparison (the default `=` operator), secure wipe of\nkey material, no heap allocation, pragma Pure. Suitable for embedded and\nsafety-critical systems. Includes streaming and one-shot APIs, plus a generic\nHMAC package for other hash functions.\n"
+maintainers = [
+"Baris Erdem <baris@erdem.dev>",
+]
+maintainers-logins = [
+"b-erdem",
+]
+name = "hmac_ada"
+tags = [
+"hmac",
+"rfc2104",
+"cryptography",
+"spark",
+"embedded",
+"security",
+]
+version = "0.2.0"
+website = "https://github.com/b-erdem/hmac_ada"
+[solution.state.release.origin]
+commit = "6cab790417b3672fe821fdd68f6668026c8e26cb"
+url = "git+https://github.com/b-erdem/hmac_ada.git"
+[[solution.state]]
 crate = "simple_logging"
 fulfilment = "solved"
 pinned = false
