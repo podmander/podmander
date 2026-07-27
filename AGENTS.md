@@ -117,6 +117,14 @@ Issues live as Forgejo issues (owner: `podmander`, repo: `podmander`). Use the
 Forgejo MCP server or the `fgj` CLI for Forgejo operations. See
 `notes/agents/issue-tracker.md`.
 
+### Issue closure
+
+For a commit that completes tracked work, include the current tracker's
+recognized closing directive in the commit body. For example, Forgejo and GitHub
+recognize `Closes #<id>`. `Issue:` and `Tracker:` trailers are metadata only and
+do not close an issue. Before pushing, inspect the final commit message and
+confirm that it contains the required closing directive.
+
 ### Triage labels
 
 Triage state uses a repo-level `triage/` prefix; issue category uses shared organization-level labels. See `notes/agents/triage-labels.md`.
